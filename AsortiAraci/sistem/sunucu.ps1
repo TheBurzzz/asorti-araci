@@ -45,7 +45,7 @@ function UzakSurum([bool]$taze) {
 function SurenIs { @(Get-ChildItem (Join-Path $Root 'kopru\gelen'), (Join-Path $Root 'kopru\isleniyor') -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq '.txt' }).Count -gt 0 }
 function Guncelle {
   Web
-  $tmp = Join-Path $env:TEMP ('asorti_guncelleme_' + [guid]::NewGuid().ToString('N').Substring(0, 8)); New-Item -ItemType Directory -Force -Path $tmp | Out-Null
+  $tmp = Join-Path ([IO.Path]::GetTempPath()) ('asorti_guncelleme_' + [guid]::NewGuid().ToString('N').Substring(0, 8)); New-Item -ItemType Directory -Force -Path $tmp | Out-Null
   try {
     $zip = Join-Path $tmp 'paket.zip'
     Invoke-WebRequest -UseBasicParsing -TimeoutSec 120 -Uri "https://codeload.github.com/$($A.guncelleme)/zip/refs/heads/main" -OutFile $zip
