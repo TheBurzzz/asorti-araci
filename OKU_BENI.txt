@@ -1,0 +1,23 @@
+﻿ASORTİ ARACI - KURULUM PAKETİ
+=============================
+
+Kurmak için: Kurulum.bat dosyasına çift tıkla. Sihirbaz adım adım kurar.
+
+Klasörler
+  Kurulum.bat          sihirbazı açar
+  kurulum\             sihirbaz ve paket denetimi
+  AsortiAraci\         uygulamanın kendisi (kurulum bunu C:\AsortiAraci'ye kopyalar)
+    uygulama.html        sekmeli ana pencere
+    asorti_araci.html    asorti hesabı (her sekme bir çalışma sayfası)
+    sistem\              başlatma, yerel sunucu, ayarlar, simge, Batch şablonu
+    kopru\               Gerber köprüsü (sipariş → Batch → OTOPASTAL → sonuç)
+
+Yeni bilgisayara kurarken
+  1. Bu bilgisayarda Gerber AccuMark kurulu ve C:\userroot dolu olmalı.
+  2. Kurulum.bat → sihirbaz kontrolleri yapar, eksik C: paylaşımını açar,
+     K: sürücüsünü bağlar ve masaüstüne "Asorti Araci" simgesini koyar.
+  3. Sihirbazın son sayfasında yazan "net use ..." komutunu OTOPASTAL'da bir kere çalıştır
+     (ya da kurulum klasöründeki OTOPASTAL_icin_baglanti.bat dosyasını OTOPASTAL'a götürüp çalıştır).
+
+Güncelleme: yeni paketi aynı şekilde kur; ayarların ve çalışma sayfaların korunur.
+Kaldırma : C:\AsortiAraci\Kaldir.bat
