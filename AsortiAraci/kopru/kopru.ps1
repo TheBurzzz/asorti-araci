@@ -140,7 +140,7 @@ function Alanlar {
   ($o | ConvertTo-Json -Depth 5 -Compress) | Set-Content -Path (Join-Path $K 'alanlar.json') -Encoding UTF8
 }
 
-function Bekle($base, $res, $orders, $sub0) {
+function Bekle($base, $res, $orders, $sub0, $ek = @()) {
     $t0 = Get-Date; $bitti = @{}; $yok = @{}; $lastLog = Get-Date; $inv = [Globalization.CultureInfo]::InvariantCulture
     while ($bitti.Count -lt $orders.Count) {
       Start-Sleep 5
@@ -162,7 +162,7 @@ function Bekle($base, $res, $orders, $sub0) {
           $rq = @($E | Where-Object { $_.d['marker'] -eq $o.ToLowerInvariant() -and $_.d['submittime'] -and [double]::Parse($_.d['submittime'], $inv) -ge $sub0 -and -not $_.d['result'] } | ForEach-Object { $_.d['RequestNum'] } | Sort-Object -Unique)
           if ($rq.Count) { $o2 = $(try { & (Join-Path $K 'kuyruktan_sil.ps1') -Requests ($rq -join ',') -Queue $QUEUE 2>&1 | Out-String } catch { 'kuyruktan silinemedi: ' + $_.Exception.Message }); Log ("$o : " + $o2.Trim()) }
           $bitti[$o] = @{ ad = $o; tamam = $false; boy_cm = 0; verim = 0; adet = 0; sonuc = 'iptal' }; Remove-Item -Force $pf -ErrorAction SilentlyContinue
-          Log "$o : programdan durduruldu"; $res.pastallar = @($bitti.Values); Durum $base $res; continue
+          Log "$o : programdan durduruldu"; $res.pastallar = @(@($ek) + @($bitti.Values)); Durum $base $res; continue
         }
         # OTOPASTAL'da elle silindiyse (hic kaydi kalmadiysa ya da sadece bekleyen Save Best kaldiysa) iptal say
         $mineO = @($E | Where-Object { $_.d['marker'] -eq $o.ToLowerInvariant() -and $_.d['submittime'] -and [double]::Parse($_.d['submittime'], $inv) -ge $sub0 })
@@ -170,7 +170,7 @@ function Bekle($base, $res, $orders, $sub0) {
         if (-not $mineO.Count -or (-not $frO.Count -and $cmO.Count -and -not ($cmO | Where-Object { $_.d['result'] }))) {
           # kuyruk dosyasi baska bir program tarafindan yeniden yazilirken kayitlar kisa sure gorunmeyebilir; 3 dakika boyunca hic yoksa silinmis say
           if (-not $yok.ContainsKey($o)) { $yok[$o] = Get-Date }
-          if (((Get-Date) - $yok[$o]).TotalSeconds -ge 180) { $bitti[$o] = @{ ad = $o; tamam = $false; boy_cm = 0; verim = 0; adet = 0; sonuc = 'iptal' }; Log "$o : kuyrukta yok (silinmis), atlandi"; $res.pastallar = @($bitti.Values); Durum $base $res }
+          if (((Get-Date) - $yok[$o]).TotalSeconds -ge 180) { $bitti[$o] = @{ ad = $o; tamam = $false; boy_cm = 0; verim = 0; adet = 0; sonuc = 'iptal' }; Log "$o : kuyrukta yok (silinmis), atlandi"; $res.pastallar = @(@($ek) + @($bitti.Values)); Durum $base $res }
           continue
         } else { $yok.Remove($o) }
         $c = $E | Where-Object { $_.d['marker'] -eq $o.ToLowerInvariant() -and $_.d['type'] -eq 'commit' -and $_.d['result'] -and $_.d['submittime'] -and [double]::Parse($_.d['submittime'], $inv) -ge $sub0 } | Select-Object -Last 1
@@ -190,7 +190,7 @@ function Bekle($base, $res, $orders, $sub0) {
           $ef = if ($d['efficiency']) { [double]::Parse($d['efficiency'], $inv) / 10000 } else { 0 }
           $bitti[$o] = @{ ad = $o; tamam = $ok; kaydedildi = ($ok -and $kay); boy_cm = [math]::Round($cm, 2); verim = [math]::Round($ef, 2); adet = [int]('0' + $d['bundle_count']); sonuc = $(if ($d['result'] -eq '0') { 'yerlesmedi' } else { $d['result'] }) }
           Log "$o : $($d['result']) boy $([math]::Round($cm,2)) cm verim %$([math]::Round($ef,2))"
-          $res.pastallar = @($bitti.Values); Durum $base $res
+          $res.pastallar = @(@($ek) + @($bitti.Values)); Durum $base $res
         }
       }
       if (((Get-Date) - $lastLog).TotalSeconds -gt 60) {
@@ -201,21 +201,24 @@ function Bekle($base, $res, $orders, $sub0) {
       }
       if (((Get-Date) - $t0).TotalMinutes -gt (15 + 3 * $orders.Count)) { throw 'OTOPASTAL zamaninda bitirmedi. OTOPASTAL''daki QueueSubmit listesine bak.' }
     }
-  $res.pastallar = @($orders | ForEach-Object { $bitti[$_] })
-  $res.asama = $(if (@($res.pastallar | Where-Object { $_.tamam }).Count) { 'bitti' } else { 'iptal' }); Durum $base $res
+  $sonuclar = @($orders | ForEach-Object { $bitti[$_] })
+  $res.pastallar = @(@($ek) + $sonuclar)
+  $res.asama = $(if (@($sonuclar | Where-Object { $_.tamam }).Count) { 'bitti' } else { 'iptal' }); Durum $base $res
 }
 
 function Isle($file) {
   $base = [IO.Path]::GetFileNameWithoutExtension($file.Name)
   $work = Join-Path $K "isleniyor\$($file.Name)"; Move-Item -Force $file.FullName $work
   $lines = Get-Content -Path $work -Encoding Default
-  $area = ''; $over = $false; $orders = @(); $mods = @(); $temiz = $false
+  $area = ''; $over = $false; $orders = @(); $mods = @(); $temiz = $false; $nq = @()
   foreach ($l in $lines) {
     if ($l -match '^#\s*alan\s*:\s*(\S+)') { $area = $matches[1].ToUpperInvariant() }
     if ($l -match '^#\s*uzerine-yaz\s*:\s*evet') { $over = $true }
     if ($l -match '^o:(.+)$') { $orders += $matches[1].Trim().ToUpperInvariant() }
     if ($l -match '^m:(.+)$') { $mods += $matches[1].Trim().ToUpperInvariant() }
     if ($l -match '^#\s*temizle-deneme\s*:\s*evet') { $temiz = $true }
+    # Gerber'de olusturulacak ama OTOPASTAL'a gonderilmeyecek pastallar (ek asorti tablolari)
+    if ($l -match '^#\s*kuyruksuz\s*:\s*(.+)$') { $nq += @($matches[1] -split ',' | ForEach-Object { $_.Trim().ToUpperInvariant() } | Where-Object { $_ }) }
   }
   $res = @{ dosya = $file.Name; alan = $area; asama = 'basladi'; mesaj = ''; pastallar = @() }
   try {
@@ -260,15 +263,23 @@ function Isle($file) {
     $varM = CtlNames $area 'mark'; $eksik = @($orders | Where-Object { $varM -notcontains $_ })
     if ($eksik.Count) { throw ('Pastal olusmadi: ' + ($eksik -join ', ')) }
     Log "$base : pastallar hazir"
+    $hazir = @($orders | Where-Object { $nq -contains $_ } | ForEach-Object { @{ ad = $_; tamam = $true; kaydedildi = $true; boy_cm = 0; verim = 0; adet = 0; sonuc = 'olusturuldu' } })
+    $qo = @($orders | Where-Object { $nq -notcontains $_ })
+    if ($hazir.Count) { Log ("$base : OTOPASTAL'a gonderilmeyen (sadece Gerber'de) " + (($hazir | ForEach-Object { $_.ad }) -join ', ')) }
+    if (-not $qo.Count) {
+      $res.pastallar = $hazir; $res.asama = 'bitti'; Durum $base $res; Log "$base : bitti (OTOPASTAL'a gonderilecek pastal yok)"
+      Move-Item -Force $work (Join-Path $K "bitti\$($file.Name)"); return
+    }
+    $res.pastallar = $hazir
     # 3) OTOPASTAL kuyruguna yolla
     $res.asama = 'yerlesim'; Durum $base $res
     $sub0 = (Get-Date).AddSeconds(-5).ToOADate()
-    $out = & (Join-Path $K 'kuyruga_ekle.ps1') -Area $area -Markers $orders -Queue $QUEUE -Device $DEV 2>&1 | Out-String
+    $out = & (Join-Path $K 'kuyruga_ekle.ps1') -Area $area -Markers $qo -Queue $QUEUE -Device $DEV 2>&1 | Out-String
     Log ($out.Trim() -replace '\s+', ' ')
     $req = @{}; foreach ($m in [regex]::Matches($out, 'EKLENDI: (\S+) \(is (\d+)')) { $req[$m.Groups[1].Value] = $m.Groups[2].Value }
-    if ($req.Count -ne $orders.Count) { throw 'Kuyruga eklenemedi: ' + $out.Trim() }
+    if ($req.Count -ne $qo.Count) { throw 'Kuyruga eklenemedi: ' + $out.Trim() }
     $res.gonderim = $sub0; Durum $base $res
-    Bekle $base $res $orders $sub0
+    Bekle $base $res $qo $sub0 $hazir
     Log "$base : bitti"
   } catch {
     $res.asama = 'hata'; $res.mesaj = $_.Exception.Message; Durum $base $res; Log "$base : HATA $($res.mesaj)"
@@ -289,10 +300,11 @@ Get-ChildItem -Path (Join-Path $K 'isleniyor') -Filter *.txt -ErrorAction Silent
   try {
     $res = @{}; (Get-Content $js -Raw -Encoding UTF8 | ConvertFrom-Json).PSObject.Properties | ForEach-Object { $res[$_.Name] = $_.Value }
     if ($res.asama -eq 'yerlesim') {
-      $orders = @(); Get-Content $f.FullName -Encoding Default | ForEach-Object { if ($_ -match '^o:(.+)$') { $orders += $matches[1].Trim().ToUpperInvariant() } }
+      $orders = @(); $nq = @(); Get-Content $f.FullName -Encoding Default | ForEach-Object { if ($_ -match '^o:(.+)$') { $orders += $matches[1].Trim().ToUpperInvariant() }; if ($_ -match '^#\s*kuyruksuz\s*:\s*(.+)$') { $nq += @($matches[1] -split ',' | ForEach-Object { $_.Trim().ToUpperInvariant() } | Where-Object { $_ }) } }
+      $hazir = @($orders | Where-Object { $nq -contains $_ } | ForEach-Object { @{ ad = $_; tamam = $true; kaydedildi = $true; boy_cm = 0; verim = 0; adet = 0; sonuc = 'olusturuldu' } }); $orders = @($orders | Where-Object { $nq -notcontains $_ })
       $sub0 = if ($res.gonderim) { [double]$res.gonderim } else { ([datetime]$res.zaman).AddMinutes(-5).ToOADate() }
       Log "$base : yarim kalan is surduruluyor"
-      try { Bekle $base $res $orders $sub0; Log "$base : bitti" } catch { $res.asama = 'hata'; $res.mesaj = $_.Exception.Message; Durum $base $res; Log "$base : HATA $($res.mesaj)" }
+      try { Bekle $base $res $orders $sub0 $hazir; Log "$base : bitti" } catch { $res.asama = 'hata'; $res.mesaj = $_.Exception.Message; Durum $base $res; Log "$base : HATA $($res.mesaj)" }
     } elseif ($res.asama -notin @('bitti', 'hata', 'iptal')) {
       $res.asama = 'hata'; $res.mesaj = 'Program bu is bitmeden kapatildi. Tekrar gonder (gerekirse "var olanin uzerine yaz" ile).'; Durum $base $res; Log "$base : yarim kalmisti, hata olarak isaretlendi"
     }

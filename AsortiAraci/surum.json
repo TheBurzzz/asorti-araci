@@ -1,8 +1,12 @@
 {
- "surum": "1.0.2",
+ "surum": "1.1.0",
  "tarih": "2026-10-27",
  "notlar": [
-  "Görev çubuğunda ve pencere başlığında uygulamanın kendi simgesi görünür",
-  "Uygulama simge durumunda ya da arkadayken kapanma sorunu düzeltildi (1.0.1)"
+  "Yeni üst çubuk: açık olan sayfa mavi çerçeveyle belirgin, Yeni sayfa düğmesi sekmelerin hemen yanında (boş yere çift tıklayınca da açılır)",
+  "Ayarlar menüsü (⚙): açık / koyu / otomatik görünüm (gün doğumunda açık, gün batımında koyu)",
+  "Gece ışığı: mavi ışık filtresi, sarı tonu ayarlanabilir; istersen sadece akşamları açılır",
+  "Ek asorti tablolarına kumaş eni yazılıyor",
+  "Ek asorti tablolarında 'Ana asortinin katı': ana asortinin aynısı, 2 katı, 3 katı…; kat sayıları kendiliğinden düşer",
+  "Ek asorti pastalları Gerber'de tek pastal olarak oluşur (örn. MODEL-URT-H), OTOPASTAL'a gönderilmez"
  ]
 }

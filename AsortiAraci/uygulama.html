@@ -3,55 +3,107 @@
 <title>Asorti Aracı</title>
 <link rel="icon" type="image/png" sizes="192x192" href="sistem/asorti.png"><link rel="icon" href="sistem/asorti.ico" sizes="16x16 32x32 48x48 256x256"><link rel="apple-touch-icon" href="sistem/asorti.png">
 <style>
-:root{--ink:#2b3440;--mut:#6b7684;--line:#d5d9df;--bg:#eef0f3;--bar:#ffffff;--tab:#e7eaee;--tabon:#ffffff;--acc:#2f7cf6}
-html[data-theme=dark]{--ink:#e6e9ee;--mut:#a3adba;--line:#4d5662;--bg:#2b3036;--bar:#353c45;--tab:#3d4550;--tabon:#2b3036;--acc:#5b9bff}
+:root{--ink:#1d1d1f;--mut:#6e6e73;--line:rgba(60,60,67,.14);--bg:#eef0f6;--bar:rgba(246,247,250,.86);--tabh:rgba(60,60,67,.07);--on:#fff;--acc:#0071e3;--accs:rgba(0,113,227,.12);--ok:#1f9d55;--bad:#d13b30;--pop:rgba(255,255,255,.9);--sh:0 1px 2px rgba(0,0,0,.08),0 3px 10px rgba(30,45,90,.10);--psh:0 18px 50px rgba(20,30,60,.22),0 2px 8px rgba(20,30,60,.10)}
+html[data-theme=dark]{--ink:#f5f5f7;--mut:#a1a1a6;--line:rgba(255,255,255,.12);--bg:#0a0c13;--bar:rgba(28,30,38,.88);--tabh:rgba(255,255,255,.07);--on:#3a3f4e;--acc:#0a84ff;--accs:rgba(10,132,255,.22);--ok:#32d17a;--bad:#ff6b61;--pop:rgba(40,43,54,.94);--sh:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.35);--psh:0 18px 50px rgba(0,0,0,.55),0 2px 8px rgba(0,0,0,.4)}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.4 "Segoe UI",Arial,sans-serif}
-#bar{display:flex;align-items:flex-end;gap:8px;padding:8px 12px 0;background:var(--bar);border-bottom:1px solid var(--line);height:52px}
-#ttl{font-weight:600;font-size:15px;padding:0 6px 12px 2px;white-space:nowrap}
-#tabs{display:flex;gap:4px;overflow-x:auto;flex:1;align-items:flex-end;scrollbar-width:thin}
-.tab{display:flex;align-items:center;gap:6px;padding:8px 10px 8px 14px;border:1px solid var(--line);border-bottom:0;border-radius:10px 10px 0 0;background:var(--tab);cursor:pointer;white-space:nowrap;max-width:220px;user-select:none}
-.tab.on{background:var(--tabon);font-weight:600;position:relative;top:1px}
-.tab .ad{overflow:hidden;text-overflow:ellipsis}
-.tab .x{border:0;background:transparent;color:var(--mut);cursor:pointer;font-size:15px;line-height:1;padding:0 2px;border-radius:6px}
-.tab .x:hover{color:#d33;background:rgba(220,60,60,.12)}
-.tab .dot{font-size:11px}
-#yeni{border:1px dashed var(--line);background:transparent;color:var(--ink);border-radius:10px;padding:7px 12px;cursor:pointer;margin-bottom:6px;white-space:nowrap}
-#yeni:hover{border-color:var(--acc);color:var(--acc)}
-#sag{display:flex;align-items:center;gap:10px;padding-bottom:10px}
-#durum{font-size:12px;color:var(--mut);white-space:nowrap}
-#th{width:46px;height:26px;border-radius:13px;border:0;background:rgba(120,120,128,.32);position:relative;cursor:pointer}
-#th i{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:#fff;color:#f5a623;font-style:normal;font-size:12px;line-height:22px;text-align:center;transition:left .2s}
-#th i::before{content:'☀'}
-html[data-theme=dark] #th{background:var(--acc)}
-html[data-theme=dark] #th i{left:22px;color:#4a5cff}
-html[data-theme=dark] #th i::before{content:'☾'}
-#sayfalar{position:absolute;top:52px;left:0;right:0;bottom:0}
-#surum{font-size:11px;color:var(--mut);white-space:nowrap}
-#gun{display:none;align-items:center;gap:8px;font-size:12.5px;background:rgba(47,124,246,.12);border:1px solid rgba(47,124,246,.45);border-radius:10px;padding:4px 6px 4px 10px;white-space:nowrap}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:13.5px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+#bar{position:relative;z-index:5;display:flex;align-items:center;gap:10px;height:54px;padding:0 12px 0 14px;background:var(--bar);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line);user-select:none}
+#logo{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;white-space:nowrap;padding-right:6px}
+#logo img{width:22px;height:22px;border-radius:6px}
+#serit{flex:1;min-width:0;display:flex;align-items:center;gap:6px;align-self:stretch}
+#tabs{display:flex;align-items:center;gap:4px;overflow-x:auto;scrollbar-width:none;padding:6px 2px;min-width:0;scroll-behavior:smooth}
+#tabs::-webkit-scrollbar{display:none}
+.tab{position:relative;display:flex;align-items:center;gap:7px;height:34px;padding:0 8px 0 12px;border-radius:10px;cursor:pointer;white-space:nowrap;max-width:230px;min-width:96px;color:var(--mut);transition:background .18s,color .18s,box-shadow .18s}
+.tab:hover{background:var(--tabh);color:var(--ink)}
+.tab+.tab:not(.on)::before{content:'';position:absolute;left:-3px;top:9px;bottom:9px;width:1px;background:var(--line)}
+.tab.on+.tab::before,.tab:hover::before,.tab:hover+.tab::before{display:none}
+.tab.on{background:var(--on);color:var(--ink);font-weight:600;box-shadow:var(--sh),inset 0 0 0 1.5px var(--acc)}
+.tab .ad{overflow:hidden;text-overflow:ellipsis;flex:1}
+.tab .ad.bos{font-style:italic;font-weight:400}
+.tab .ik{width:8px;height:8px;border-radius:50%;flex:none;background:var(--line)}
+.tab.on .ik{background:var(--acc)}
+.tab .ik.is{background:var(--acc);animation:nb 1.2s ease-in-out infinite}
+.tab .ik.ok{background:var(--ok)}
+@keyframes nb{50%{opacity:.25}}
+.tab .x{flex:none;width:20px;height:20px;border:0;border-radius:6px;background:transparent;color:var(--mut);cursor:pointer;font-size:14px;line-height:20px;padding:0;opacity:0;transition:opacity .15s,background .15s}
+.tab:hover .x,.tab.on .x{opacity:1}
+.tab .x:hover{background:rgba(220,60,60,.14);color:var(--bad)}
+#yeni{flex:none;display:flex;align-items:center;gap:6px;height:32px;padding:0 13px 0 10px;border:0;border-radius:16px;background:var(--accs);color:var(--acc);font-weight:600;cursor:pointer;white-space:nowrap;transition:background .18s,color .18s,transform .12s}
+#yeni:hover{background:var(--acc);color:#fff}
+#yeni:active{transform:scale(.96)}
+#yeni svg{width:16px;height:16px}
+#sag{display:flex;align-items:center;gap:8px;white-space:nowrap}
+#durum{display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:14px;background:var(--tabh);font-size:12px;color:var(--mut)}
+#durum i{width:7px;height:7px;border-radius:50%;background:var(--mut)}
+#durum.ok i{background:var(--ok);box-shadow:0 0 0 3px rgba(31,157,85,.18)}
+#durum.bad{color:var(--bad)}#durum.bad i{background:var(--bad)}
+#gun{display:none;align-items:center;gap:8px;height:30px;padding:0 4px 0 12px;border-radius:15px;background:var(--accs);color:var(--acc);font-size:12.5px}
 #gun.on{display:flex}
-#gun b{font-weight:600}
-#gun button{border:0;border-radius:7px;background:var(--acc);color:#fff;padding:5px 10px;cursor:pointer;font:inherit;font-weight:600}
+#gun a{cursor:pointer;text-decoration:underline;opacity:.8}
+#gun button{border:0;border-radius:12px;background:var(--acc);color:#fff;height:24px;padding:0 11px;cursor:pointer;font-weight:600}
 #gun button:disabled{opacity:.6;cursor:default}
-#gun a{color:var(--mut);cursor:pointer;text-decoration:underline;font-size:11.5px}
+#ayar{width:32px;height:32px;border:0;border-radius:16px;background:transparent;color:var(--mut);cursor:pointer;display:grid;place-items:center;transition:background .15s,color .15s}
+#ayar:hover,#ayar.acik{background:var(--tabh);color:var(--ink)}
+#ayar svg{width:19px;height:19px;pointer-events:none}
+/* görünüm menüsü */
+#menu{position:absolute;top:50px;right:10px;width:320px;padding:14px;border-radius:16px;background:var(--pop);backdrop-filter:saturate(180%) blur(24px);box-shadow:var(--psh);border:1px solid var(--line);opacity:0;transform:translateY(-6px) scale(.98);transform-origin:top right;pointer-events:none;transition:opacity .16s,transform .16s;z-index:20}
+#menu.on{opacity:1;transform:none;pointer-events:auto}
+#menu h4{margin:2px 2px 8px;font-size:11.5px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;color:var(--mut)}
+.blok{padding:10px;border-radius:12px;background:var(--tabh);margin-bottom:12px}
+.seg{display:flex;padding:2px;border-radius:9px;background:rgba(120,120,128,.14)}
+.seg button{flex:1;height:28px;border:0;border-radius:7px;background:transparent;cursor:pointer;font-size:12.5px;color:var(--ink);transition:background .15s,box-shadow .15s}
+.seg button.on{background:var(--on);box-shadow:0 1px 3px rgba(0,0,0,.16);font-weight:600}
+.not{font-size:11.5px;color:var(--mut);margin:7px 2px 0}
+.satir{display:flex;align-items:center;gap:10px;margin-top:10px}
+.satir span{font-size:12px;color:var(--mut)}
+input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:linear-gradient(90deg,#ffe9b8,#ff9f2e);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.35);cursor:pointer}
+input[type=range]:disabled{opacity:.4}
+.alt{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--mut);padding:0 2px}
+.alt button{border:0;background:transparent;color:var(--acc);cursor:pointer;padding:4px 2px}
+#sayfalar{position:absolute;top:54px;left:0;right:0;bottom:0}
 #sayfalar iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:var(--bg)}
 #sayfalar iframe.on{display:block}
+/* mavi ışık filtresi: her şeyin üstünde, tıklamaları engellemez */
+#gece{position:fixed;inset:0;pointer-events:none;z-index:50;background:#ff8a1c;mix-blend-mode:multiply;opacity:0;transition:opacity .6s}
 </style></head><body>
-<div id="bar"><div id="ttl">Asorti Aracı</div><div id="tabs"></div><button id="yeni" type="button" title="Yeni çalışma sayfası aç">+ Yeni sayfa</button>
-<div id="sag"><div id="gun"><span id="gunYazi"></span><a id="gunNot" title="Bu sürümde neler var">neler yeni?</a><button id="gunBtn" type="button">Güncelle</button></div><span id="durum">Gerber köprüsü…</span><span id="surum"></span><button id="th" type="button" title="Gece / gündüz modu"><i></i></button></div></div>
+<div id="bar">
+ <div id="logo"><img src="sistem/asorti.png" alt="">Asorti Aracı</div>
+ <div id="serit"><div id="tabs"></div>
+  <button id="yeni" type="button" title="Yeni çalışma sayfası aç (sekme çubuğunda boş yere çift tıklayarak da açılır)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>Yeni sayfa</button></div>
+ <div id="sag">
+  <div id="gun"><span id="gunYazi"></span><a id="gunNot" title="Bu sürümde neler var">neler yeni?</a><button id="gunBtn" type="button">Güncelle</button></div>
+  <div id="durum" title="Gerber köprüsünün durumu"><i></i><span id="durumYazi">Bağlanıyor…</span></div>
+  <button id="ayar" type="button" title="Görünüm ayarları"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+ </div>
+ <div id="menu" role="dialog" aria-label="Görünüm ayarları">
+  <h4>Görünüm</h4>
+  <div class="blok"><div class="seg" id="tmSeg"><button data-v="acik">☀ Açık</button><button data-v="koyu">☾ Koyu</button><button data-v="oto">Otomatik</button></div>
+   <div class="not" id="tmNot"></div></div>
+  <h4>Gece ışığı · mavi ışık filtresi</h4>
+  <div class="blok"><div class="seg" id="gcSeg"><button data-v="kapali">Kapalı</button><button data-v="acik">Açık</button><button data-v="oto">Akşamları</button></div>
+   <div class="satir"><span>Az</span><input type="range" id="sicak" min="10" max="100" step="1" aria-label="Sarı tonu"><span>Çok sarı</span></div>
+   <div class="not" id="gcNot"></div></div>
+  <div class="alt"><span id="surum"></span><button id="denetle" type="button">Güncellemeleri denetle</button></div>
+ </div>
+</div>
 <div id="sayfalar"></div>
+<div id="gece"></div>
 <script>
-const $=i=>document.getElementById(i),LS='asorti-sayfalar';
+const $=i=>document.getElementById(i),LS='asorti-sayfalar',LG='asorti-gorunum';
 let S=(()=>{try{return JSON.parse(localStorage.getItem(LS)||'null')}catch(e){return null}})()||{list:[],on:''};
 const info={};
 function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
 function yeniId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5)}
 function frame(id){let f=document.querySelector('iframe[data-id="'+id+'"]');if(!f){f=document.createElement('iframe');f.dataset.id=id;f.src='asorti_araci.html?sayfa='+encodeURIComponent(id);$('sayfalar').appendChild(f)}return f}
 function ciz(){const T=$('tabs');T.innerHTML='';S.list.forEach((id,i)=>{const d=info[id]||{},b=document.createElement('div');b.className='tab'+(id===S.on?' on':'');
-  const ad=d.ad||'Sayfa '+(i+1),dot=d.busy?'⏳':(d.bitti&&id!==S.on?'✔':'');
-  b.innerHTML=(dot?'<span class="dot">'+dot+'</span>':'')+'<span class="ad"></span><button class="x" title="Sayfayı kapat">×</button>';b.querySelector('.ad').textContent=ad;b.title=ad;
+  const ad=d.ad||'Sayfa '+(i+1),ik=d.busy?'is':(d.bitti?'ok':'');
+  b.innerHTML='<span class="ik '+ik+'"></span><span class="ad'+(d.ad?'':' bos')+'"></span><button class="x" title="Sayfayı kapat">×</button>';b.querySelector('.ad').textContent=ad;
+  b.title=ad+(d.busy?' · Gerber işi sürüyor':d.bitti?' · Gerber işi bitti':'');
   b.onclick=e=>{if(e.target.classList.contains('x'))return kapat(id);ac(id)};T.appendChild(b)});
- document.querySelectorAll('#sayfalar iframe').forEach(f=>f.classList.toggle('on',f.dataset.id===S.on))}
+ document.querySelectorAll('#sayfalar iframe').forEach(f=>f.classList.toggle('on',f.dataset.id===S.on));
+ const a=T.querySelector('.tab.on');if(a)a.scrollIntoView({block:'nearest',inline:'nearest'})}
 function ac(id){S.on=id;save();frame(id);ciz()}
 function yeni(){const id=yeniId();S.list.push(id);ac(id)}
 function kapat(id){const d=info[id]||{};if(!confirm((d.ad?d.ad+' sayfası':'Bu sayfa')+' kapatılsın mı?'+(d.busy?'\n\nDikkat: bu sayfanın Gerber işi hâlâ sürüyor.':'')+'\nSayfadaki bilgiler silinir (Excel\'e kaydettiklerin durur).'))return;
@@ -59,23 +111,61 @@ function kapat(id){const d=info[id]||{};if(!confirm((d.ad?d.ad+' sayfası':'Bu s
  try{localStorage.removeItem('asorti-sayfa-'+id);localStorage.removeItem('asorti-gjob-'+id)}catch(e){}
  if(!S.list.length)return yeni();if(S.on===id)S.on=S.list[Math.max(0,i-1)];save();frame(S.on);ciz()}
 $('yeni').onclick=yeni;
+$('serit').addEventListener('dblclick',e=>{if(e.target===$('serit')||e.target===$('tabs'))yeni()});
+$('tabs').addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){$('tabs').scrollLeft+=e.deltaY;e.preventDefault()}},{passive:false});
 window.addEventListener('message',e=>{const d=e.data||{};if(d.t==='sayfa'&&S.list.includes(d.id)){const o=info[d.id]||{};if(o.ad!==d.ad||o.busy!==d.busy||o.bitti!==d.bitti){info[d.id]={ad:d.ad,busy:d.busy,bitti:d.bitti};ciz()}}
- if(d.t==='tema')tema(d.v,true)});
-function tema(t,fromFrame){document.documentElement.dataset.theme=t;try{localStorage.setItem('asorti-tema',t)}catch(e){}document.querySelectorAll('#sayfalar iframe').forEach(f=>{try{f.contentWindow.postMessage({t:'tema',v:t},'*')}catch(e){}})}
-try{const t=localStorage.getItem('asorti-tema');if(t)document.documentElement.dataset.theme=t}catch(e){}
-$('th').onclick=()=>tema(document.documentElement.dataset.theme==='dark'?'light':'dark');
-/* sunucuya "pencere açık" haberi: pencere kapanınca köprü ve Batch de kapanır */
-async function nabiz(){try{const r=await fetch('/nabiz',{cache:'no-store'});const j=await r.json();
-  if(j.gerber===false){$('durum').textContent='Sadece asorti (Gerber yok)';$('durum').style.color=''}
-  else{$('durum').textContent=j.kopru?'Gerber köprüsü çalışıyor':'Gerber köprüsü kapalı';$('durum').style.color=j.kopru?'':'#d33'}}catch(e){$('durum').textContent='Bağlantı koptu: pencereyi kapatıp yeniden aç';$('durum').style.color='#d33'}}
+ if(d.t==='tema'){G0.tema=d.v==='dark'?'koyu':'acik';kaydet();uygula()}});
+
+/* ---------- görünüm: tema, otomatik gece modu, mavi ışık filtresi ---------- */
+let G0=Object.assign({tema:'acik',gece:'kapali',sicak:45},(()=>{try{return JSON.parse(localStorage.getItem(LG)||'{}')}catch(e){return{}}})());
+try{const t=localStorage.getItem('asorti-tema');if(!localStorage.getItem(LG)&&t)G0.tema=t==='dark'?'koyu':'acik'}catch(e){}
+function kaydet(){try{localStorage.setItem(LG,JSON.stringify(G0))}catch(e){}}
+/* gün doğumu / batımı (İstanbul'a göre; Türkiye içinde birkaç dakikalık fark yapar) */
+const KONUM={lat:41.01,lon:28.98};
+function gunes(t){const r=Math.PI/180,jd=t.getTime()/864e5+2440587.5,n=Math.round(jd-2451545.0009-KONUM.lon/360),J=n+KONUM.lon/-360,
+  M=(357.5291+0.98560028*J)%360,C=1.9148*Math.sin(M*r)+0.02*Math.sin(2*M*r)+0.0003*Math.sin(3*M*r),L=(M+C+282.9372)%360,
+  Jt=2451545.0009+J+0.0053*Math.sin(M*r)-0.0069*Math.sin(2*L*r),d=Math.asin(Math.sin(L*r)*Math.sin(23.4397*r)),
+  w=Math.acos((Math.sin(-0.833*r)-Math.sin(KONUM.lat*r)*Math.sin(d))/(Math.cos(KONUM.lat*r)*Math.cos(d)))/r,tj=j=>new Date((j-2440587.5)*864e5);
+ return{dogus:tj(Jt-w/360),batis:tj(Jt+w/360)}}
+const saat=d=>String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+function gecemi(){const g=gunes(new Date()),s=new Date();return s<g.dogus||s>=g.batis}
+let sonTema='';
+function temaYolla(f,t){try{f.contentWindow.postMessage({t:'tema',v:t},'*')}catch(e){}}
+function uygula(){const gn=gunes(new Date()),gc=gecemi(),t=G0.tema==='oto'?(gc?'dark':'light'):(G0.tema==='koyu'?'dark':'light');
+ document.documentElement.dataset.theme=t;try{localStorage.setItem('asorti-tema',t)}catch(e){}
+ if(t!==sonTema){sonTema=t;document.querySelectorAll('#sayfalar iframe').forEach(f=>temaYolla(f,t))}
+ const filtre=G0.gece==='acik'||(G0.gece==='oto'&&gc);$('gece').style.opacity=filtre?(G0.sicak/100*0.42).toFixed(3):'0';
+ document.querySelectorAll('#tmSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===G0.tema));
+ document.querySelectorAll('#gcSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===G0.gece));
+ $('sicak').value=G0.sicak;$('sicak').disabled=G0.gece==='kapali';
+ $('tmNot').textContent=G0.tema==='oto'?'Gün doğumunda açık, gün batımında koyu olur. Bugün ☀ '+saat(gn.dogus)+' · ☾ '+saat(gn.batis):G0.tema==='koyu'?'Koyu görünüm hep açık.':'Açık görünüm hep açık.';
+ $('gcNot').textContent=G0.gece==='oto'?'Gün batımından ('+saat(gn.batis)+') gün doğumuna kadar ekran sarı tona döner.':G0.gece==='acik'?'Ekran sarı tonda; akşamları gözü daha az yorar.':'Ekran renkleri olduğu gibi.'}
+document.querySelectorAll('#tmSeg button').forEach(b=>b.onclick=()=>{G0.tema=b.dataset.v;kaydet();uygula()});
+document.querySelectorAll('#gcSeg button').forEach(b=>b.onclick=()=>{G0.gece=b.dataset.v;kaydet();uygula()});
+$('sicak').oninput=e=>{G0.sicak=+e.target.value;kaydet();uygula()};
+document.addEventListener('load',e=>{if(e.target.tagName==='IFRAME')temaYolla(e.target,document.documentElement.dataset.theme)},true);
+uygula();setInterval(uygula,60000);
+function menu(on){$('menu').classList.toggle('on',on);$('ayar').classList.toggle('acik',on)}
+$('ayar').onclick=e=>{e.stopPropagation();menu(!$('menu').classList.contains('on'))};
+document.addEventListener('click',e=>{if(!$('menu').contains(e.target))menu(false)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')menu(false)});
+window.addEventListener('blur',()=>menu(false));
+
+/* ---------- sunucuya "pencere açık" haberi: pencere kapanınca köprü ve Batch de kapanır ---------- */
+async function nabiz(){const d=$('durum'),y=$('durumYazi');try{const r=await fetch('/nabiz',{cache:'no-store'});const j=await r.json();
+  if(j.gerber===false){d.className='';y.textContent='Sadece asorti'}
+  else{d.className=j.kopru?'ok':'bad';y.textContent=j.kopru?'Gerber bağlı':'Gerber köprüsü kapalı'}}
+ catch(e){d.className='bad';y.textContent='Bağlantı koptu: pencereyi kapatıp yeniden aç'}}
 nabiz();setInterval(nabiz,5000);
-/* pencere kapanırken sunucuya haber ver (yenilemede yeni sayfa hemen nabız gönderir, kapanış iptal olur) */
 window.addEventListener('pagehide',()=>{try{navigator.sendBeacon('/kapaniyor','x')}catch(e){}});
-/* güncelleme: GitHub'da yeni sürüm varsa üstte "Güncelle" çıkar */
+window.addEventListener('beforeunload',e=>{if(Object.values(info).some(d=>d.busy)){e.preventDefault();e.returnValue=''}});
+
+/* ---------- güncelleme: GitHub'da yeni sürüm varsa üstte "Güncelle" çıkar ---------- */
 let G=null;
-async function surumYaz(){try{const j=await (await fetch('/surum',{cache:'no-store'})).json();$('surum').textContent=j.surum?'v'+j.surum:'';return j}catch(e){return null}}
+async function surumYaz(){try{const j=await (await fetch('/surum',{cache:'no-store'})).json();$('surum').textContent=j.surum?'Asorti Aracı v'+j.surum:'';$('denetle').style.display=j.guncelleme?'':'none';return j}catch(e){return null}}
 async function gunKontrol(taze){try{const j=await (await fetch('/guncelleme'+(taze?'?taze=1':''),{cache:'no-store'})).json();
-  if(j.var){G=j;$('gunYazi').innerHTML='Yeni sürüm <b>v'+j.yeni+'</b> hazır';$('gun').classList.add('on')}else{G=null;$('gun').classList.remove('on')}}catch(e){}}
+  if(j.var){G=j;$('gunYazi').innerHTML='Yeni sürüm <b>v'+j.yeni+'</b>';$('gun').classList.add('on')}else{G=null;$('gun').classList.remove('on')}return j}catch(e){return{hata:e.message}}}
+$('denetle').onclick=async()=>{const b=$('denetle');b.textContent='Denetleniyor…';const j=await gunKontrol(true);b.textContent=j&&j.hata?'Ulaşılamadı, tekrar dene':j&&j.var?'Yeni sürüm var ↑':'Güncel ✓';setTimeout(()=>b.textContent='Güncellemeleri denetle',4000)};
 $('gunNot').onclick=()=>{if(G)alert('v'+G.yeni+(G.tarih?' · '+G.tarih:'')+'\n\n'+((G.notlar||[]).map(x=>'• '+x).join('\n')||'Not yazılmamış.'))};
 $('gunBtn').onclick=async()=>{if(!G)return;
   if(Object.values(info).some(d=>d.busy)){alert('Gerber\'e gönderilen pastallar var. Onlar bitince güncelle.');return}
@@ -88,6 +178,6 @@ $('gunBtn').onclick=async()=>{if(!G)return;
   for(let i=0;i<40;i++){try{const r=await fetch('/surum',{cache:'no-store'});if(r.ok){const j=await r.json();if(j.surum===G.yeni)break}}catch(e){}await new Promise(r=>setTimeout(r,750))}
   location.reload()};
 surumYaz().then(j=>{if(j&&j.guncelleme){gunKontrol(false);setInterval(()=>gunKontrol(false),2*3600*1000)}});
-window.addEventListener('beforeunload',e=>{if(Object.values(info).some(d=>d.busy)){e.preventDefault();e.returnValue=''}});
+
 if(!S.list.length)yeni();else{S.list.forEach(frame);if(!S.list.includes(S.on))S.on=S.list[0];ac(S.on)}
 </script></body></html>
