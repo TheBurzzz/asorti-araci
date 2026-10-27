@@ -115,6 +115,12 @@ html[data-theme=dark] [style*="#f4f5f7"]{background:rgba(255,255,255,.08)!import
 <script>
 const KHTTP=/^https?:$/.test(location.protocol),SAYFA=new URLSearchParams(location.search).get('sayfa')||'',JK='asorti-gjob'+(SAYFA?'-'+SAYFA:'');
 const $=i=>document.getElementById(i);
+/* tarayıcının "kaydedilen bilgiler" önerileri (daha önce yazılanlar, kişisel bilgiler) hiçbir kutuda çıkmasın;
+   müşteri klasörü listesi gibi programın kendi listeleri çalışmaya devam eder */
+(function(){const S='input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=button]),textarea',
+  k=e=>{if(e.getAttribute('autocomplete')!=='off')e.setAttribute('autocomplete','off');if(!e.hasAttribute('spellcheck'))e.setAttribute('spellcheck','false')},
+  t=r=>{if(r.matches&&r.matches(S))k(r);if(r.querySelectorAll)r.querySelectorAll(S).forEach(k)};
+ t(document);new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)t(n)}))).observe(document.documentElement,{childList:true,subtree:true})})();
 function workerBody(){
  if(typeof WorkerGlobalScope!=='undefined')onmessage=e=>{const d=e.data;postMessage(d.x?solveX(d.n,d.O,d.P,d.T,d.cap,d.S,d.tmax,d.one,d.kmin):solve(d.n,d.O,d.PC,d.T,d.S,d.tmax,d.lock,d.ban,d.fix,d.cap,d.kmin,d.plus))};
  const pop=x=>{let c=0;while(x){x&=x-1;c++}return c};
