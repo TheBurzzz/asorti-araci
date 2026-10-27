@@ -18,7 +18,8 @@ Uygulama açılışta da kendisi bakar; yeni sürüm varsa üst çubukta **Günc
 Sürüm bilgisi: `AsortiAraci/surum.json`
 
 ## Eski sürümler
-Her sürüm GitHub'da saklanır: sağdaki **Releases** bölümünden (ya da **Tags**) istediğin sürümü seç →
-**Source code (zip)** → ZIP'i çıkar → **Kurulum.bat**. Kurulum ayarlarına ve çalışma sayfalarına dokunmaz.
+Her sürüm GitHub'da kendi dalında saklanır: `surum-v1.0.0`, `surum-v1.0.1`, … `surum-v1.1.7`.
+Sayfanın üstündeki dal seçiciden (**main** yazan düğme) istediğin sürümü seç → yeşil **Code** → **Download ZIP** →
+ZIP'i çıkar → **Kurulum.bat**. Kurulum ayarlara ve çalışma sayfalarına dokunmaz; uygulama sonra yine en yeni sürümü önerir.
 
 İlk deneme sürümü (paketlenmeden önce `C:\AccuNest` içinde çalışan hali) `arsiv` dalında duruyor.

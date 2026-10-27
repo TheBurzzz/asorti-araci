@@ -4,6 +4,6 @@
  "notlar": [
   "Ana pastallarda Batch'ten sonraki 1 dakikalık bekleme kalktı: pastallar Gerber'e yazıldıktan 5 saniye sonra OTOPASTAL'a gider",
   "Durdurulan işlerin işaretleri iş bitince temizlenir",
-  "Eski sürümler GitHub'da saklanıyor (Releases bölümünden indirilebilir)"
+  "Eski sürümler GitHub'da saklanıyor (her sürüm kendi dalında: surum-v1.0.0, surum-v1.0.1…)"
  ]
 }
