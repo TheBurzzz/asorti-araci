@@ -309,10 +309,10 @@ function Isle($file) {
     while ($true) {
       $st = @($orders | ForEach-Object { EngineStatus $skip $_ })
       if (-not ($st | Where-Object { $_ -ne 'ok' -and $_ -ne 'hata' })) { break }
-      # Batch pastali yazinca kaydin zamani bu gonderimden sonrasini gosterir: beklemeden devam et
-      # (OTOPASTAL'a gidecek AUTO pastallarda Batch pastali bir sure daha tutar; OTOPASTAL erken acarsa yerlestiremez: en az 60 sn bekle)
+      # Batch pastali yazinca kaydin zamani bu gonderimden sonrasini gosterir: hepsi yazildiktan 5 sn sonra devam et
+      # (Batch pastala sonradan bir daha yazarsa zaman ilerler ve bekleme de kendiliginden uzar)
       $zm = CtlZaman $area 'mark'; $hep = -not @($orders | Where-Object { -not $zm.ContainsKey($_) -or $zm[$_] -lt $u0 }).Count
-      if ($hep -and (-not @($orders | Where-Object { $nq -notcontains $_ }).Count -or ((Get-Date) - $t0).TotalSeconds -gt 60)) { Start-Sleep 3; break }
+      if ($hep) { $enYeni = ($orders | ForEach-Object { $zm[$_] } | Measure-Object -Maximum).Maximum; if (([DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - $enYeni) -ge 5) { break } }
       $varM = CtlNames $area 'mark'
       if (((Get-Date) - $t0).TotalSeconds -gt 60 -and -not (@($orders | Where-Object { $varM -notcontains $_ }).Count)) { break }
       if (((Get-Date) - $t0).TotalMinutes -gt 10) { throw 'Batch 10 dakikada pastallari hazirlamadi. Batch Islemi penceresine bak.' }
@@ -326,7 +326,7 @@ function Isle($file) {
     if ($hazir.Count) { Log ("$base : OTOPASTAL'a gonderilmeyen (sadece Gerber'de) " + (($hazir | ForEach-Object { $_.ad }) -join ', ')) }
     if (-not $qo.Count) {
       $res.pastallar = $hazir; $res.asama = 'bitti'; Durum $base $res; Log "$base : bitti (OTOPASTAL'a gonderilecek pastal yok)"
-      Move-Item -Force $work (Join-Path $K "bitti\$($file.Name)"); $script:isBitti = Get-Date; return
+      Move-Item -Force $work (Join-Path $K "bitti\$($file.Name)"); $script:isBitti = Get-Date; IptalTemizle $base; return
     }
     $res.pastallar = $hazir
     # 3) OTOPASTAL kuyruguna yolla
@@ -342,8 +342,11 @@ function Isle($file) {
   } catch {
     $res.asama = 'hata'; $res.mesaj = $_.Exception.Message; Durum $base $res; Log "$base : HATA $($res.mesaj)"
   }
-  Move-Item -Force $work (Join-Path $K "bitti\$($file.Name)"); $script:isBitti = Get-Date
+  Move-Item -Force $work (Join-Path $K "bitti\$($file.Name)"); $script:isBitti = Get-Date; IptalTemizle $base
 }
+
+# isi bitince bu ise ait durdurma isaretlerini temizle
+function IptalTemizle($base) { Get-ChildItem -Path (Join-Path $K 'iptal') -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -eq $base -or $_.Name.StartsWith($base + '__') } | Remove-Item -Force -ErrorAction SilentlyContinue }
 
 # Batch'i is bitince kapat (sadece kopru actiysa; kullanici kendisi actiysa dokunma).
 # Batch'teki pastallar "TAMAMLANDI" olana kadar en fazla 15 sn bekler (Batch durumu dosyaya gec yazar).
@@ -368,6 +371,7 @@ Log ('Gerber koprusu calisiyor (' + $KOK + ')')
 # eski kayitlari temizle: gunlukler 30 gun, bitmis isler 14 gun
 try {
   Get-ChildItem (Join-Path $K 'log') -File -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-30) } | Remove-Item -Force -ErrorAction SilentlyContinue
+  Get-ChildItem (Join-Path $K 'iptal') -File -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-1) } | Remove-Item -Force -ErrorAction SilentlyContinue
   foreach ($d in 'bitti','sonuc','iptal') { Get-ChildItem (Join-Path $K $d) -File -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-14) } | Remove-Item -Force -ErrorAction SilentlyContinue }
 } catch {}
 try { Copy-Item -Force $QUEUE (Join-Path $K 'log\kuyruk_son.umq'); $E = ReadQueue; Log ("kuyruk okundu: {0} kayit" -f $E.Count) } catch { Log ('kuyruk okunamadi: ' + $_.Exception.Message) }
@@ -386,7 +390,7 @@ Get-ChildItem -Path (Join-Path $K 'isleniyor') -Filter *.txt -ErrorAction Silent
       $res.asama = 'hata'; $res.mesaj = 'Program bu is bitmeden kapatildi. Tekrar gonder (gerekirse "var olanin uzerine yaz" ile).'; Durum $base $res; Log "$base : yarim kalmisti, hata olarak isaretlendi"
     }
   } catch { Log ("$base surdurulemedi: " + $_.Exception.Message) }
-  Move-Item -Force $f.FullName (Join-Path $K "bitti\$($f.Name)")
+  Move-Item -Force $f.FullName (Join-Path $K "bitti\$($f.Name)"); IptalTemizle $base
 }
 
 $alanT = [datetime]::MinValue

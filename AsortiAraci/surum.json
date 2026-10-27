@@ -1,9 +1,9 @@
 {
- "surum": "1.1.6",
+ "surum": "1.1.7",
  "tarih": "2026-10-27",
  "notlar": [
-  "OTOPASTAL pastalları açamıyordu: OTOPASTAL'daki K: bağlantısı çalışmıyor. Uygulama artık bunu fark edip pastalı OTOPASTAL'ın Z: harfiyle gönderiyor ve çalışan harfi hatırlıyor",
-  "Bütün pastallar yerleşemezse 'Durduruldu' yerine sebebi yazılıyor",
-  "OTOPASTAL bir pastalı yerleştiremezse kendiliğinden bir kere daha gönderilir"
+  "Ana pastallarda Batch'ten sonraki 1 dakikalık bekleme kalktı: pastallar Gerber'e yazıldıktan 5 saniye sonra OTOPASTAL'a gider",
+  "Durdurulan işlerin işaretleri iş bitince temizlenir",
+  "Eski sürümler GitHub'da saklanıyor (Releases bölümünden indirilebilir)"
  ]
 }
