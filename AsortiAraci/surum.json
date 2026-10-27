@@ -1,10 +1,12 @@
 {
- "surum": "1.1.1",
+ "surum": "1.1.2",
  "tarih": "2026-10-27",
  "notlar": [
-  "Ek asorti tablolarına kendi 'Gerber'de pastalını oluştur' düğmesi geldi; ana asortiden ayrı, istediğin zaman gönderilir",
-  "Ana 'Gerber'e gönder' artık sadece ana kumaşı gönderir; hızar, astar, tela… ek tablodan gönderilir",
-  "Otomatik gece modu ve gece ışığı bulunduğun ile göre çalışır (konum kendiliğinden bulunur, istersen menüden il seçilir)",
-  "Sarı ton kaydırıcısına çift tıklayınca varsayılan tona döner"
+  "Ek asorti pastalı Gerber'de asorti asorti sıralanır (1. asortinin bedenleri, sonra 2. asortinin…)",
+  "Ek asorti pastalları Batch'te 'PASTAL BEKLİYOR'da kalmaz; elle yerleştirmek için boş pastal olarak oluşur",
+  "Ek asorti tablosunda 'Gerber'den boy ve verimi al': yerleştirip kaydettiğin pastalın boyu, BİRİM'i ve verimi tabloya yazılır",
+  "Ek asorti tablosunda yönlü / yönsüz seçimi (ana asortideki seçimle gelir; telada hep yönsüz)",
+  "Ek asorti tablosunda 'var olanın üzerine yaz' artık seçili gelmez",
+  "Gece ışığı kaydırıcısı ortadan başlar; çift tıklayınca ortaya döner"
  ]
 }

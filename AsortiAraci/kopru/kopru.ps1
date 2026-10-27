@@ -250,7 +250,9 @@ function Isle($file) {
     $res.asama = 'pastal'; Durum $base $res
     if (-not (Get-Process -Name batch -ErrorAction SilentlyContinue)) { Start-Process -FilePath (Join-Path $AM 'batch.exe') -WorkingDirectory $AM -WindowStyle Minimized; Start-Sleep 5; Log 'Batch programi acildi' }
     $tbl = BatchTable $area; $skip = EngineCount
-    foreach ($o in $orders) { $o4 = Yerel { & .\amsubmit.exe $tbl $o $o AUTO 0 0 4 0 $o 0 }; if ($o4 -match '(?i)usage|error|hata') { Log ("amsubmit $o : " + ($o4.Trim() -replace '\s+', ' ')) } }
+    # OTOPASTAL'a gidecekler AUTO; sadece Gerber'de olusacak ek pastallar MED (siparis islenir, pastal elle yerlestirilmek uzere bos olusur;
+    # AUTO ile Batch "PASTAL BEKLIYOR"da kalir ve arkasindaki isleri bekletir)
+    foreach ($o in $orders) { $yon = if ($nq -contains $o) { 'MED' } else { 'AUTO' }; $o4 = Yerel { & .\amsubmit.exe $tbl $o $o $yon 0 0 4 0 $o 0 }; if ($o4 -match '(?i)usage|error|hata') { Log ("amsubmit $o : " + ($o4.Trim() -replace '\s+', ' ')) } }
     $t0 = Get-Date
     while ($true) {
       $st = @($orders | ForEach-Object { EngineStatus $skip $_ })

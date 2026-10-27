@@ -65,6 +65,26 @@ function IpKonum {
   }
   return $null
 }
+# Gerber'deki bir pastalin boyu ve verimi: depolama alanindaki mark.ctl -> mark???.mar dosyasindan okunur
+# (pastal kaydi icinde: 258 = en, 274 = boy (inc, double), 308 = verim % (double))
+function OkuPaylasimli($yol) { $fs = New-Object IO.FileStream($yol, 'Open', 'Read', 'ReadWrite'); try { $ms = New-Object IO.MemoryStream; $fs.CopyTo($ms); return , $ms.ToArray() } finally { $fs.Close() } }
+function PastalBilgi([string]$alan, [string]$ad) {
+  $dd = Join-Path (Join-Path (Join-Path $A.userroot 'storage') $alan) 'data'
+  $ctl = Join-Path $dd 'mark.ctl'; if (-not (Test-Path $ctl)) { return @{ var = $false; mesaj = "$alan klasoru bulunamadi" } }
+  $c = OkuPaylasimli $ctl; $lat = [Text.Encoding]::GetEncoding(28591); $ad = $ad.ToUpperInvariant(); $kay = $null
+  for ($i = 0; $i + 64 -le $c.Length; $i += 64) {
+    if ($c[$i + 25] -ne 0) { continue }
+    $n = $lat.GetString($c, $i, 20).Split([char]0)[0].Trim()
+    if ($n.ToUpperInvariant() -eq $ad) { $kay = @{ ek = $lat.GetString($c, $i + 20, 3); slot = [int]$c[$i + 23] } }
+  }
+  if (-not $kay) { return @{ var = $false; mesaj = "$ad pastali $alan klasorunde yok" } }
+  $mf = Join-Path $dd ('mark' + $kay.ek + '.mar'); $m = OkuPaylasimli $mf
+  $o = [BitConverter]::ToUInt32($m, 16 + 64 * $kay.slot); $u = [BitConverter]::ToUInt32($m, 20 + 64 * $kay.slot)
+  if ($o + 316 -gt $m.Length -or $u -lt 316) { return @{ var = $false; mesaj = 'pastal kaydi okunamadi' } }
+  $en = [BitConverter]::ToDouble($m, $o + 258) * 2.54; $boy = [BitConverter]::ToDouble($m, $o + 274) * 2.54; $ver = [BitConverter]::ToDouble($m, $o + 308)
+  if ([double]::IsNaN($boy) -or $boy -lt 0 -or $boy -gt 100000 -or [double]::IsNaN($ver) -or $ver -lt 0 -or $ver -gt 100) { return @{ var = $false; mesaj = 'pastal kaydi tanınmadı' } }
+  return @{ var = $true; ad = $ad; en_cm = [math]::Round($en, 2); boy_cm = [math]::Round($boy, 2); verim = [math]::Round($ver, 2) }
+}
 function SurenIs { @(Get-ChildItem (Join-Path $Root 'kopru\gelen'), (Join-Path $Root 'kopru\isleniyor') -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq '.txt' }).Count -gt 0 }
 function Guncelle {
   Web
@@ -135,6 +155,11 @@ try {
       $m = $ctx.Request.HttpMethod
       if ($yol -eq 'kapaniyor') { $script:kapanis = (Get-Date).AddSeconds(6); Yanit $ctx 200 $null $null; continue }
       if ($yol -eq 'nabiz') { $son = Get-Date; $script:kapanis = $null; JsonYanit $ctx @{ kopru = [bool]($script:kopru -and -not $script:kopru.HasExited); gerber = [bool]$A.gerber }; continue }
+      if ($yol -eq 'pastal') {
+        $al = "$($ctx.Request.QueryString['alan'])"; $pa = "$($ctx.Request.QueryString['ad'])"
+        if ($al -notmatch '^[^\\/:*?"<>|]+$' -or $al -match '\.\.' -or $pa -notmatch '^[^\\/:*?"<>|]+$') { JsonYanit $ctx @{ var = $false; mesaj = 'gecersiz ad' }; continue }
+        try { JsonYanit $ctx (PastalBilgi $al $pa) } catch { JsonYanit $ctx @{ var = $false; mesaj = $_.Exception.Message } }; continue
+      }
       if ($yol -eq 'konum') { $k = IpKonum; if ($k) { JsonYanit $ctx $k } else { JsonYanit $ctx @{ hata = 'konum bulunamadi' } }; continue }
       if ($yol -eq 'surum') { $y = YerelSurum $Root; JsonYanit $ctx @{ surum = "$($y.surum)"; tarih = "$($y.tarih)"; gerber = [bool]$A.gerber; guncelleme = [bool]$A.guncelleme }; continue }
       if ($yol -eq 'guncelleme') {

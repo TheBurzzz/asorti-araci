@@ -86,7 +86,7 @@ select{flex:1;height:28px;border-radius:8px;border:1px solid var(--line);backgro
    <div class="satir kon"><span>Konum</span><select id="konSec" aria-label="Konum"></select></div><div class="not" id="konNot"></div></div>
   <h4>Gece ışığı · mavi ışık filtresi</h4>
   <div class="blok"><div class="seg" id="gcSeg"><button data-v="kapali">Kapalı</button><button data-v="acik">Açık</button><button data-v="oto">Akşamları</button></div>
-   <div class="satir"><span>Az</span><input type="range" id="sicak" min="10" max="100" step="1" aria-label="Sarı tonu" title="Çift tıklayınca varsayılan tona döner"><span>Çok sarı</span></div>
+   <div class="satir"><span>Az</span><input type="range" id="sicak" min="0" max="100" step="1" aria-label="Sarı tonu" title="Çift tıklayınca varsayılan tona döner"><span>Çok sarı</span></div>
    <div class="not" id="gcNot"></div></div>
   <div class="alt"><span id="surum"></span><button id="denetle" type="button">Güncellemeleri denetle</button></div>
  </div>
@@ -120,13 +120,13 @@ window.addEventListener('message',e=>{const d=e.data||{};if(d.t==='sayfa'&&S.lis
  if(d.t==='tema'){G0.tema=d.v==='dark'?'koyu':'acik';kaydet();uygula()}});
 
 /* ---------- görünüm: tema, otomatik gece modu, mavi ışık filtresi ---------- */
-let G0=Object.assign({tema:'acik',gece:'kapali',sicak:45,konum:null},(()=>{try{return JSON.parse(localStorage.getItem(LG)||'{}')}catch(e){return{}}})());
+let G0=Object.assign({tema:'acik',gece:'kapali',sicak:50,konum:null},(()=>{try{return JSON.parse(localStorage.getItem(LG)||'{}')}catch(e){return{}}})());
 try{const t=localStorage.getItem('asorti-tema');if(!localStorage.getItem(LG)&&t)G0.tema=t==='dark'?'koyu':'acik'}catch(e){}
 function kaydet(){try{localStorage.setItem(LG,JSON.stringify(G0))}catch(e){}}
 /* konum: gün doğumu / batımı bulunduğun ile göre hesaplanır.
    Önce bilgisayarın konumu (Windows konum hizmeti), olmazsa internet bağlantısının konumu; istersen menüden il seçilir. */
 const ILLER=[["Adana",36.986,35.325],["Adıyaman",37.76,38.277],["Afyonkarahisar",38.757,30.539],["Ağrı",39.719,43.05],["Amasya",40.65,35.833],["Ankara",39.921,32.854],["Antalya",36.887,30.703],["Artvin",41.183,41.829],["Aydın",37.848,27.844],["Balıkesir",39.647,27.888],["Bilecik",40.144,29.975],["Bingöl",38.886,40.497],["Bitlis",38.402,42.108],["Bolu",40.733,31.611],["Burdur",37.725,30.289],["Bursa",40.183,29.068],["Çanakkale",40.146,26.403],["Çankırı",40.597,33.621],["Çorum",40.55,34.954],["Denizli",37.783,29.097],["Diyarbakır",37.916,40.236],["Edirne",41.676,26.559],["Elazığ",38.675,39.223],["Erzincan",39.747,39.491],["Erzurum",39.906,41.273],["Eskişehir",39.774,30.519],["Gaziantep",37.063,37.379],["Giresun",40.917,38.385],["Gümüşhane",40.462,39.476],["Hakkari",37.577,43.738],["Hatay",36.203,36.16],["Isparta",37.764,30.555],["Mersin",36.798,34.63],["İstanbul",41.006,28.976],["İzmir",38.419,27.128],["Kars",40.607,43.095],["Kastamonu",41.377,33.777],["Kayseri",38.722,35.487],["Kırklareli",41.737,27.224],["Kırşehir",39.146,34.161],["Kocaeli",40.765,29.941],["Konya",37.873,32.492],["Kütahya",39.42,29.986],["Malatya",38.349,38.319],["Manisa",38.613,27.433],["Kahramanmaraş",37.581,36.928],["Mardin",37.313,40.735],["Muğla",37.215,28.364],["Muş",38.732,41.49],["Nevşehir",38.625,34.715],["Niğde",37.97,34.676],["Ordu",40.985,37.88],["Rize",41.025,40.52],["Sakarya",40.773,30.404],["Samsun",41.295,36.332],["Siirt",37.927,41.942],["Sinop",42.027,35.151],["Sivas",39.75,37.015],["Tekirdağ",40.978,27.511],["Tokat",40.323,36.552],["Trabzon",41.005,39.73],["Tunceli",39.106,39.548],["Şanlıurfa",37.16,38.792],["Uşak",38.674,29.406],["Van",38.501,43.395],["Yozgat",39.822,34.808],["Zonguldak",41.453,31.788],["Aksaray",38.371,34.027],["Bayburt",40.255,40.221],["Karaman",37.181,33.219],["Kırıkkale",39.841,33.506],["Batman",37.884,41.128],["Şırnak",37.522,42.457],["Bartın",41.635,32.337],["Ardahan",41.11,42.704],["Iğdır",39.922,44.047],["Yalova",40.658,29.27],["Karabük",41.196,32.623],["Kilis",36.717,37.115],["Osmaniye",37.073,36.251],["Düzce",40.839,31.16]];
-const SICAK0=45;
+const SICAK0=50;
 let KONUM={ad:'İstanbul',lat:41.006,lon:28.976};
 function enYakin(lat,lon){let b=null,bd=1e9;for(const [ad,a,o] of ILLER){const d=(a-lat)**2+((o-lon)*Math.cos(lat*Math.PI/180))**2;if(d<bd){bd=d;b={ad,lat:a,lon:o}}}return b}
 function konumAyarla(k,kaynak){if(!k)return;KONUM={ad:k.ad,lat:k.lat,lon:k.lon};G0.konum={ad:k.ad,lat:k.lat,lon:k.lon,kaynak,t:Date.now()};kaydet();uygula()}
