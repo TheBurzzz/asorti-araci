@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Asorti Aracı</title>
+<style>
+:root{--ink:#2b3440;--mut:#6b7684;--line:#d5d9df;--bg:#eef0f3;--bar:#ffffff;--tab:#e7eaee;--tabon:#ffffff;--acc:#2f7cf6}
+html[data-theme=dark]{--ink:#e6e9ee;--mut:#a3adba;--line:#4d5662;--bg:#2b3036;--bar:#353c45;--tab:#3d4550;--tabon:#2b3036;--acc:#5b9bff}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.4 "Segoe UI",Arial,sans-serif}
+#bar{display:flex;align-items:flex-end;gap:8px;padding:8px 12px 0;background:var(--bar);border-bottom:1px solid var(--line);height:52px}
+#ttl{font-weight:600;font-size:15px;padding:0 6px 12px 2px;white-space:nowrap}
+#tabs{display:flex;gap:4px;overflow-x:auto;flex:1;align-items:flex-end;scrollbar-width:thin}
+.tab{display:flex;align-items:center;gap:6px;padding:8px 10px 8px 14px;border:1px solid var(--line);border-bottom:0;border-radius:10px 10px 0 0;background:var(--tab);cursor:pointer;white-space:nowrap;max-width:220px;user-select:none}
+.tab.on{background:var(--tabon);font-weight:600;position:relative;top:1px}
+.tab .ad{overflow:hidden;text-overflow:ellipsis}
+.tab .x{border:0;background:transparent;color:var(--mut);cursor:pointer;font-size:15px;line-height:1;padding:0 2px;border-radius:6px}
+.tab .x:hover{color:#d33;background:rgba(220,60,60,.12)}
+.tab .dot{font-size:11px}
+#yeni{border:1px dashed var(--line);background:transparent;color:var(--ink);border-radius:10px;padding:7px 12px;cursor:pointer;margin-bottom:6px;white-space:nowrap}
+#yeni:hover{border-color:var(--acc);color:var(--acc)}
+#sag{display:flex;align-items:center;gap:10px;padding-bottom:10px}
+#durum{font-size:12px;color:var(--mut);white-space:nowrap}
+#th{width:46px;height:26px;border-radius:13px;border:0;background:rgba(120,120,128,.32);position:relative;cursor:pointer}
+#th i{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:#fff;color:#f5a623;font-style:normal;font-size:12px;line-height:22px;text-align:center;transition:left .2s}
+#th i::before{content:'☀'}
+html[data-theme=dark] #th{background:var(--acc)}
+html[data-theme=dark] #th i{left:22px;color:#4a5cff}
+html[data-theme=dark] #th i::before{content:'☾'}
+#sayfalar{position:absolute;top:52px;left:0;right:0;bottom:0}
+#sayfalar iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:var(--bg)}
+#sayfalar iframe.on{display:block}
+</style></head><body>
+<div id="bar"><div id="ttl">Asorti Aracı</div><div id="tabs"></div><button id="yeni" type="button" title="Yeni çalışma sayfası aç">+ Yeni sayfa</button>
+<div id="sag"><span id="durum">Gerber köprüsü…</span><button id="th" type="button" title="Gece / gündüz modu"><i></i></button></div></div>
+<div id="sayfalar"></div>
+<script>
+const $=i=>document.getElementById(i),LS='asorti-sayfalar';
+let S=(()=>{try{return JSON.parse(localStorage.getItem(LS)||'null')}catch(e){return null}})()||{list:[],on:''};
+const info={};
+function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
+function yeniId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5)}
+function frame(id){let f=document.querySelector('iframe[data-id="'+id+'"]');if(!f){f=document.createElement('iframe');f.dataset.id=id;f.src='asorti_araci.html?sayfa='+encodeURIComponent(id);$('sayfalar').appendChild(f)}return f}
+function ciz(){const T=$('tabs');T.innerHTML='';S.list.forEach((id,i)=>{const d=info[id]||{},b=document.createElement('div');b.className='tab'+(id===S.on?' on':'');
+  const ad=d.ad||'Sayfa '+(i+1),dot=d.busy?'⏳':(d.bitti&&id!==S.on?'✔':'');
+  b.innerHTML=(dot?'<span class="dot">'+dot+'</span>':'')+'<span class="ad"></span><button class="x" title="Sayfayı kapat">×</button>';b.querySelector('.ad').textContent=ad;b.title=ad;
+  b.onclick=e=>{if(e.target.classList.contains('x'))return kapat(id);ac(id)};T.appendChild(b)});
+ document.querySelectorAll('#sayfalar iframe').forEach(f=>f.classList.toggle('on',f.dataset.id===S.on))}
+function ac(id){S.on=id;save();frame(id);ciz()}
+function yeni(){const id=yeniId();S.list.push(id);ac(id)}
+function kapat(id){const d=info[id]||{};if(!confirm((d.ad?d.ad+' sayfası':'Bu sayfa')+' kapatılsın mı?'+(d.busy?'\n\nDikkat: bu sayfanın Gerber işi hâlâ sürüyor.':'')+'\nSayfadaki bilgiler silinir (Excel\'e kaydettiklerin durur).'))return;
+ const i=S.list.indexOf(id);S.list.splice(i,1);const f=document.querySelector('iframe[data-id="'+id+'"]');if(f)f.remove();delete info[id];
+ try{localStorage.removeItem('asorti-sayfa-'+id);localStorage.removeItem('asorti-gjob-'+id)}catch(e){}
+ if(!S.list.length)return yeni();if(S.on===id)S.on=S.list[Math.max(0,i-1)];save();frame(S.on);ciz()}
+$('yeni').onclick=yeni;
+window.addEventListener('message',e=>{const d=e.data||{};if(d.t==='sayfa'&&S.list.includes(d.id)){const o=info[d.id]||{};if(o.ad!==d.ad||o.busy!==d.busy||o.bitti!==d.bitti){info[d.id]={ad:d.ad,busy:d.busy,bitti:d.bitti};ciz()}}
+ if(d.t==='tema')tema(d.v,true)});
+function tema(t,fromFrame){document.documentElement.dataset.theme=t;try{localStorage.setItem('asorti-tema',t)}catch(e){}document.querySelectorAll('#sayfalar iframe').forEach(f=>{try{f.contentWindow.postMessage({t:'tema',v:t},'*')}catch(e){}})}
+try{const t=localStorage.getItem('asorti-tema');if(t)document.documentElement.dataset.theme=t}catch(e){}
+$('th').onclick=()=>tema(document.documentElement.dataset.theme==='dark'?'light':'dark');
+/* sunucuya "pencere açık" haberi: pencere kapanınca köprü ve Batch de kapanır */
+async function nabiz(){try{const r=await fetch('/nabiz',{cache:'no-store'});const j=await r.json();$('durum').textContent=j.kopru?'Gerber köprüsü çalışıyor':'Gerber köprüsü kapalı';$('durum').style.color=j.kopru?'':'#d33'}catch(e){$('durum').textContent='Bağlantı yok';$('durum').style.color='#d33'}}
+nabiz();setInterval(nabiz,5000);
+window.addEventListener('beforeunload',e=>{if(Object.values(info).some(d=>d.busy)){e.preventDefault();e.returnValue=''}});
+if(!S.list.length)yeni();else{S.list.forEach(frame);if(!S.list.includes(S.on))S.on=S.list[0];ac(S.on)}
+</script></body></html>
