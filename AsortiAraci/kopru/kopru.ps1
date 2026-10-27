@@ -153,6 +153,7 @@ function Alanlar {
 
 function Bekle($base, $res, $orders, $sub0, $ek = @()) {
     $t0 = Get-Date; $bitti = @{}; $yok = @{}; $lastLog = Get-Date; $inv = [Globalization.CultureInfo]::InvariantCulture
+    $subO = @{}; $tekrar = @{}; foreach ($o in $orders) { $subO[$o] = $sub0; $tekrar[$o] = 0 }
     while ($bitti.Count -lt $orders.Count) {
       Start-Sleep 5
       Get-ChildItem -Path (Join-Path $K 'gelen') -Filter *.txt -ErrorAction SilentlyContinue | ForEach-Object { $qb = [IO.Path]::GetFileNameWithoutExtension($_.Name); if (-not (Test-Path (Join-Path $K "sonuc\$qb.json"))) { Durum $qb @{ dosya = $_.Name; asama = 'sirada'; mesaj = ''; pastallar = @() } } }
@@ -170,13 +171,13 @@ function Bekle($base, $res, $orders, $sub0, $ek = @()) {
         # programda sadece bu pastal icin "x" basildiysa
         $pf = Join-Path $K "iptal\$($base)__$($o)"
         if (Test-Path $pf) {
-          $rq = @($E | Where-Object { $_.d['marker'] -eq $o.ToLowerInvariant() -and $_.d['submittime'] -and [double]::Parse($_.d['submittime'], $inv) -ge $sub0 -and -not $_.d['result'] } | ForEach-Object { $_.d['RequestNum'] } | Sort-Object -Unique)
+          $rq = @($E | Where-Object { $_.d['marker'] -eq $o.ToLowerInvariant() -and $_.d['submittime'] -and [double]::Parse($_.d['submittime'], $inv) -ge $subO[$o] -and -not $_.d['result'] } | ForEach-Object { $_.d['RequestNum'] } | Sort-Object -Unique)
           if ($rq.Count) { $o2 = $(try { & (Join-Path $K 'kuyruktan_sil.ps1') -Requests ($rq -join ',') -Queue $QUEUE 2>&1 | Out-String } catch { 'kuyruktan silinemedi: ' + $_.Exception.Message }); Log ("$o : " + $o2.Trim()) }
           $bitti[$o] = @{ ad = $o; tamam = $false; boy_cm = 0; verim = 0; adet = 0; sonuc = 'iptal' }; Remove-Item -Force $pf -ErrorAction SilentlyContinue
           Log "$o : programdan durduruldu"; $res.pastallar = @(@($ek) + @($bitti.Values)); Durum $base $res; continue
         }
         # OTOPASTAL'da elle silindiyse (hic kaydi kalmadiysa ya da sadece bekleyen Save Best kaldiysa) iptal say
-        $mineO = @($E | Where-Object { $_.d['marker'] -eq $o.ToLowerInvariant() -and $_.d['submittime'] -and [double]::Parse($_.d['submittime'], $inv) -ge $sub0 })
+        $mineO = @($E | Where-Object { $_.d['marker'] -eq $o.ToLowerInvariant() -and $_.d['submittime'] -and [double]::Parse($_.d['submittime'], $inv) -ge $subO[$o] })
         $frO = @($mineO | Where-Object { $_.d['type'] -eq 'fraun' }); $cmO = @($mineO | Where-Object { $_.d['type'] -eq 'commit' })
         if (-not $mineO.Count -or (-not $frO.Count -and $cmO.Count -and -not ($cmO | Where-Object { $_.d['result'] }))) {
           # kuyruk dosyasi baska bir program tarafindan yeniden yazilirken kayitlar kisa sure gorunmeyebilir; 3 dakika boyunca hic yoksa silinmis say
@@ -184,11 +185,11 @@ function Bekle($base, $res, $orders, $sub0, $ek = @()) {
           if (((Get-Date) - $yok[$o]).TotalSeconds -ge 180) { $bitti[$o] = @{ ad = $o; tamam = $false; boy_cm = 0; verim = 0; adet = 0; sonuc = 'iptal' }; Log "$o : kuyrukta yok (silinmis), atlandi"; $res.pastallar = @(@($ek) + @($bitti.Values)); Durum $base $res }
           continue
         } else { $yok.Remove($o) }
-        $c = $E | Where-Object { $_.d['marker'] -eq $o.ToLowerInvariant() -and $_.d['type'] -eq 'commit' -and $_.d['result'] -and $_.d['submittime'] -and [double]::Parse($_.d['submittime'], $inv) -ge $sub0 } | Select-Object -Last 1
+        $c = $E | Where-Object { $_.d['marker'] -eq $o.ToLowerInvariant() -and $_.d['type'] -eq 'commit' -and $_.d['result'] -and $_.d['submittime'] -and [double]::Parse($_.d['submittime'], $inv) -ge $subO[$o] } | Select-Object -Last 1
         $kay = $true
         if (-not $c) {
           # "Save Best" satiri yoksa (silinmis olabilir) yerlestirme satirinin sonucunu kullan
-          $fr = $E | Where-Object { $_.d['marker'] -eq $o.ToLowerInvariant() -and $_.d['type'] -eq 'fraun' -and $_.d['result'] -and $_.d['submittime'] -and [double]::Parse($_.d['submittime'], $inv) -ge $sub0 } | Select-Object -Last 1
+          $fr = $E | Where-Object { $_.d['marker'] -eq $o.ToLowerInvariant() -and $_.d['type'] -eq 'fraun' -and $_.d['result'] -and $_.d['submittime'] -and [double]::Parse($_.d['submittime'], $inv) -ge $subO[$o] } | Select-Object -Last 1
           if ($fr) {
             $rq = $fr.d['RequestNum']; $hasC = @($E | Where-Object { $_.d['type'] -eq 'commit' -and $_.d['RequestNum'] -eq $rq }).Count -gt 0
             if ($fr.d['result'] -eq '0') { $c = $fr; $kay = $false }
@@ -197,6 +198,12 @@ function Bekle($base, $res, $orders, $sub0, $ek = @()) {
         }
         if ($c) {
           $d = $c.d; $ok = ($d['result'] -eq 'committed') -or ($d['type'] -eq 'fraun' -and $d['result'] -eq '1')
+          # yerlesmediyse (OTOPASTAL pastali acamadiysa) bir kere daha gonder
+          if (-not $ok -and $tekrar[$o] -lt 1) {
+            $tekrar[$o]++; Start-Sleep 20; $subO[$o] = (Get-Date).AddSeconds(-5).ToOADate()
+            $o5 = $(try { & (Join-Path $K 'kuyruga_ekle.ps1') -Area $res.alan -Markers @($o) -Queue $QUEUE -Device $DEV 2>&1 | Out-String } catch { 'gonderilemedi: ' + $_.Exception.Message })
+            Log ("$o : yerlesmedi ($($d['result'])), tekrar gonderildi: " + ($o5.Trim() -replace '\s+', ' ')); continue
+          }
           $cm = if ($d['length']) { [double]::Parse($d['length'], $inv) / 10000 * 2.54 } else { 0 }
           $ef = if ($d['efficiency']) { [double]::Parse($d['efficiency'], $inv) / 10000 } else { 0 }
           $bitti[$o] = @{ ad = $o; tamam = $ok; kaydedildi = ($ok -and $kay); boy_cm = [math]::Round($cm, 2); verim = [math]::Round($ef, 2); adet = [int]('0' + $d['bundle_count']); sonuc = $(if ($d['result'] -eq '0') { 'yerlesmedi' } else { $d['result'] }) }
@@ -270,7 +277,9 @@ function Isle($file) {
       $st = @($orders | ForEach-Object { EngineStatus $skip $_ })
       if (-not ($st | Where-Object { $_ -ne 'ok' -and $_ -ne 'hata' })) { break }
       # Batch pastali yazinca kaydin zamani bu gonderimden sonrasini gosterir: beklemeden devam et
-      $zm = CtlZaman $area 'mark'; if (-not @($orders | Where-Object { -not $zm.ContainsKey($_) -or $zm[$_] -lt $u0 }).Count) { Start-Sleep 3; break }
+      # (OTOPASTAL'a gidecek AUTO pastallarda Batch pastali bir sure daha tutar; OTOPASTAL erken acarsa yerlestiremez: en az 60 sn bekle)
+      $zm = CtlZaman $area 'mark'; $hep = -not @($orders | Where-Object { -not $zm.ContainsKey($_) -or $zm[$_] -lt $u0 }).Count
+      if ($hep -and (-not @($orders | Where-Object { $nq -notcontains $_ }).Count -or ((Get-Date) - $t0).TotalSeconds -gt 60)) { Start-Sleep 3; break }
       $varM = CtlNames $area 'mark'
       if (((Get-Date) - $t0).TotalSeconds -gt 60 -and -not (@($orders | Where-Object { $varM -notcontains $_ }).Count)) { break }
       if (((Get-Date) - $t0).TotalMinutes -gt 10) { throw 'Batch 10 dakikada pastallari hazirlamadi. Batch Islemi penceresine bak.' }

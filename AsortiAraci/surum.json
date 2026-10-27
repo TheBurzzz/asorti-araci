@@ -1,9 +1,9 @@
 {
- "surum": "1.1.4",
+ "surum": "1.1.5",
  "tarih": "2026-10-27",
  "notlar": [
-  "Batch pastalı yazar yazmaz devam edilir (her gönderimde ~1 dakika bekleme kalktı)",
-  "Batch iş bitince birkaç saniye içinde kapanır",
-  "Batch sadece gerektiğinde açılır: Gerber'e gönderince açılır, pastallar hazırlanıp sonuçlar gelince kendiliğinden kapanır (Batch'i kendin açtıysan dokunulmaz)"
+  "Ana pastallar OTOPASTAL'da yerleşmiyordu (pastal Batch'ten çok erken alınıyordu), düzeltildi",
+  "OTOPASTAL bir pastalı yerleştiremezse uygulama onu kendiliğinden bir kere daha gönderir",
+  "Hızar, tela gibi ek pastallar yine birkaç saniyede hazırlanır"
  ]
 }
