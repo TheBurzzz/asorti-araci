@@ -1,11 +1,11 @@
 {
- "surum": "1.1.9",
+ "surum": "1.1.10",
  "tarih": "2026-10-27",
  "notlar": [
+  "Açık ↔ koyu görünüme geçiş yarım saniyede yumuşakça oluyor; ekran birden kararmıyor ya da aydınlanmıyor",
   "Excel kayıt klasörü: bir kere klasör seçersin, 'Excel dosyasını kaydet' dediğinde dosya sormadan oraya kaydedilir",
   "Klasörü ⚙ menüsünden ya da Excel düğmesinin altındaki 'değiştir'den istediğin zaman değiştirebilirsin; 'başka yere kaydet' ile bir seferliğine başka yer seçilir",
   "Aynı adlı dosya varsa 'Üzerine yaz / Yeni adla kaydet / Vazgeç' diye sorar; dosya Excel'de açıksa uyarır",
-  "Kaydettikten sonra 'Excel'de aç' ve 'Klasörde göster' düğmeleri",
-  "Kutularda tarayıcının kaydedilen bilgi önerileri kapalı (1.1.8)"
+  "Kaydettikten sonra 'Excel'de aç' ve 'Klasörde göster' düğmeleri"
  ]
 }

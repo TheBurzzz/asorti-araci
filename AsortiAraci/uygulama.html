@@ -74,6 +74,7 @@ select{flex:1;height:28px;border-radius:8px;border:1px solid var(--line);backgro
 #sayfalar iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:var(--bg)}
 #sayfalar iframe.on{display:block}
 /* mavi ışık filtresi: her şeyin üstünde, tıklamaları engellemez */
+::view-transition-old(root),::view-transition-new(root){animation-duration:.55s;animation-timing-function:cubic-bezier(.4,0,.2,1)}
 #gece{position:fixed;inset:0;pointer-events:none;z-index:50;background:#ff8a1c;mix-blend-mode:multiply;opacity:0;transition:opacity .6s}
 </style></head><body>
 <div id="bar">
@@ -163,9 +164,13 @@ const saat=d=>String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).pa
 function gecemi(){const g=gunes(new Date()),s=new Date();return s<g.dogus||s>=g.batis}
 let sonTema='';
 function temaYolla(f,t){try{f.contentWindow.postMessage({t:'tema',v:t},'*')}catch(e){}}
+/* açık ↔ koyu geçişi: ekran birden kararmasın / aydınlanmasın, yarım saniyede yumuşakça geçsin */
+function temaGec(t,yumusak){const yap=()=>{document.documentElement.dataset.theme=t;
+  document.querySelectorAll('#sayfalar iframe').forEach(f=>{try{f.contentDocument.documentElement.dataset.theme=t}catch(e){}temaYolla(f,t)})};
+ if(yumusak&&document.startViewTransition&&!document.hidden){try{document.startViewTransition(yap);return}catch(e){}}
+ yap()}
 function uygula(){const gn=gunes(new Date()),gc=gecemi(),t=G0.tema==='oto'?(gc?'dark':'light'):(G0.tema==='koyu'?'dark':'light');
- document.documentElement.dataset.theme=t;try{localStorage.setItem('asorti-tema',t)}catch(e){}
- if(t!==sonTema){sonTema=t;document.querySelectorAll('#sayfalar iframe').forEach(f=>temaYolla(f,t))}
+ if(t!==sonTema){const ilk=!sonTema;sonTema=t;try{localStorage.setItem('asorti-tema',t)}catch(e){}temaGec(t,!ilk)}
  const filtre=G0.gece==='acik'||(G0.gece==='oto'&&gc);$('gece').style.opacity=filtre?(G0.sicak/100*0.42).toFixed(3):'0';
  document.querySelectorAll('#tmSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===G0.tema));
  document.querySelectorAll('#gcSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===G0.gece));

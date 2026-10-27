@@ -1047,7 +1047,11 @@ exDraw();
 
 try{const t=localStorage.getItem('asorti-tema');if(t)document.documentElement.dataset.theme=t}catch(e){}
 if(SAYFA){document.documentElement.classList.add('gomulu');const cs=document.createElement('style');cs.textContent='.gomulu header{display:none}.gomulu main{padding-top:10px}';document.head.appendChild(cs)}
-$('th').onclick=()=>{const t=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=t;try{localStorage.setItem('asorti-tema',t)}catch(e){};if(SAYFA)try{parent.postMessage({t:'tema',v:t},'*')}catch(e){}};
+$('th').onclick=()=>{const t=document.documentElement.dataset.theme==='dark'?'light':'dark';
+ if(SAYFA){try{parent.postMessage({t:'tema',v:t},'*')}catch(e){};return}   /* uygulama penceresinde geçişi ana pencere yapar */
+ const yap=()=>{document.documentElement.dataset.theme=t};try{localStorage.setItem('asorti-tema',t)}catch(e){}
+ if(document.startViewTransition){try{document.startViewTransition(yap);return}catch(e){}}yap()};
+{const cs=document.createElement('style');cs.textContent='::view-transition-old(root),::view-transition-new(root){animation-duration:.55s;animation-timing-function:cubic-bezier(.4,0,.2,1)}';document.head.appendChild(cs)}
 window.addEventListener('message',e=>{const d=e.data||{};if(d.t==='tema'){document.documentElement.dataset.theme=d.v}if(d.t==='kaydet'&&window.sayfaKaydet)sayfaKaydet()});
 /* Gerber'siz kurulum (sadece asorti): Gerber / OTOPASTAL bölümünü gizle */
 if(KHTTP)fetch('/surum',{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j&&j.gerber===false)document.documentElement.classList.add('gerbersiz')}).catch(()=>{});
