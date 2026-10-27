@@ -21,6 +21,13 @@ $BPRM   = Join-Path $UR 'bprmtbl'
 $DRV    = Split-Path -Qualifier $UR                             # depolama alanlarinin surucusu (C:)
 $QUEUE  = $A.kuyruk
 $DEV    = $A.surucu
+# OTOPASTAL bu bilgisayarin C: diskini hangi harfle goruyor: once ayarlardaki (k:), olmazsa yedek (z:).
+# Calisan harf hatirlanir (kopru\surucu.txt); OTOPASTAL'da bir harfin baglantisi koparsa digeri denenir.
+$DEVS   = @(@($A.surucu, $A.surucu2) | Where-Object { $_ } | ForEach-Object { ("$_".TrimEnd(':', '\') + ':').ToLowerInvariant() } | Select-Object -Unique)
+$DEVF   = Join-Path $K 'surucu.txt'
+if (Test-Path $DEVF) { $t = ("" + (Get-Content $DEVF -Raw -ErrorAction SilentlyContinue)).Trim().ToLowerInvariant(); if ($DEVS -contains $t) { $DEV = $t } }
+function DigerSurucu($d) { $x = @($DEVS | Where-Object { $_ -ne $d }); if ($x.Count) { return $x[0] } else { return $d } }
+function SurucuTercih($d) { if ($script:DEV -ne $d) { $script:DEV = $d; try { Set-Content -Path $DEVF -Value $d -Encoding ASCII } catch {}; Log "OTOPASTAL artik $d harfiyle kullaniliyor" } }
 $enc    = [Text.Encoding]::GetEncoding(28591)
 $tr     = [Text.Encoding]::GetEncoding(1254)
 foreach ($d in 'gelen','isleniyor','bitti','sonuc','log','iptal') { New-Item -ItemType Directory -Force -Path (Join-Path $K $d) | Out-Null }
@@ -153,7 +160,7 @@ function Alanlar {
 
 function Bekle($base, $res, $orders, $sub0, $ek = @()) {
     $t0 = Get-Date; $bitti = @{}; $yok = @{}; $lastLog = Get-Date; $inv = [Globalization.CultureInfo]::InvariantCulture
-    $subO = @{}; $tekrar = @{}; foreach ($o in $orders) { $subO[$o] = $sub0; $tekrar[$o] = 0 }
+    $subO = @{}; $tekrar = @{}; $dv = @{}; foreach ($o in $orders) { $subO[$o] = $sub0; $tekrar[$o] = 0; $dv[$o] = $script:DEV }
     while ($bitti.Count -lt $orders.Count) {
       Start-Sleep 5
       Get-ChildItem -Path (Join-Path $K 'gelen') -Filter *.txt -ErrorAction SilentlyContinue | ForEach-Object { $qb = [IO.Path]::GetFileNameWithoutExtension($_.Name); if (-not (Test-Path (Join-Path $K "sonuc\$qb.json"))) { Durum $qb @{ dosya = $_.Name; asama = 'sirada'; mesaj = ''; pastallar = @() } } }
@@ -199,11 +206,30 @@ function Bekle($base, $res, $orders, $sub0, $ek = @()) {
         if ($c) {
           $d = $c.d; $ok = ($d['result'] -eq 'committed') -or ($d['type'] -eq 'fraun' -and $d['result'] -eq '1')
           # yerlesmediyse (OTOPASTAL pastali acamadiysa) bir kere daha gonder
+          # hic parca yuklenemediyse (adet 0) OTOPASTAL pastala bu harfle ulasamamistir: diger harfle tekrar gonder
+          $frD = $E | Where-Object { $_.d['marker'] -eq $o.ToLowerInvariant() -and $_.d['type'] -eq 'fraun' -and $_.d['result'] -and $_.d['submittime'] -and [double]::Parse($_.d['submittime'], $inv) -ge $subO[$o] } | Select-Object -Last 1
+          $bos = (-not $ok) -and $frD -and ('' + $frD.d['bundle_count']) -in @('', '0')
           if (-not $ok -and $tekrar[$o] -lt 1) {
-            $tekrar[$o]++; Start-Sleep 20; $subO[$o] = (Get-Date).AddSeconds(-5).ToOADate()
-            $o5 = $(try { & (Join-Path $K 'kuyruga_ekle.ps1') -Area $res.alan -Markers @($o) -Queue $QUEUE -Device $DEV 2>&1 | Out-String } catch { 'gonderilemedi: ' + $_.Exception.Message })
-            Log ("$o : yerlesmedi ($($d['result'])), tekrar gonderildi: " + ($o5.Trim() -replace '\s+', ' ')); continue
+            $eskiD = $dv[$o]; $yeniD = if ($bos) { DigerSurucu $eskiD } else { $eskiD }
+            # bu harf calismiyorsa: ayni harfle siraya konmus, henuz baslamamis diger pastallari da kuyruktan alip yeni harfle gonder
+            $tasi = @($o)
+            if ($bos -and $yeniD -ne $eskiD) {
+              foreach ($o2 in $orders) {
+                if ($o2 -eq $o -or $bitti.ContainsKey($o2) -or $dv[$o2] -ne $eskiD -or $tekrar[$o2] -ge 1) { continue }
+                $e2 = @($E | Where-Object { $_.d['marker'] -eq $o2.ToLowerInvariant() -and $_.d['submittime'] -and [double]::Parse($_.d['submittime'], $inv) -ge $subO[$o2] })
+                if ($e2.Count -and -not @($e2 | Where-Object { $_.st -ne 1 }).Count) {
+                  $rq2 = @($e2 | ForEach-Object { $_.d['RequestNum'] } | Sort-Object -Unique)
+                  $o6 = $(try { & (Join-Path $K 'kuyruktan_sil.ps1') -Requests ($rq2 -join ',') -Queue $QUEUE 2>&1 | Out-String } catch { 'silinemedi: ' + $_.Exception.Message })
+                  if ($o6 -match 'kuyruktan silindi') { $tasi += $o2 }
+                }
+              }
+            }
+            Start-Sleep 3; $yeniT = (Get-Date).AddSeconds(-5).ToOADate()
+            foreach ($o3 in $tasi) { $tekrar[$o3]++; $dv[$o3] = $yeniD; $subO[$o3] = $yeniT; $yok.Remove($o3) }
+            $o5 = $(try { & (Join-Path $K 'kuyruga_ekle.ps1') -Area $res.alan -Markers $tasi -Queue $QUEUE -Device $yeniD 2>&1 | Out-String } catch { 'gonderilemedi: ' + $_.Exception.Message })
+            Log ("$o : yerlesmedi ($($d['result'])$(if ($bos) { ', parca yuklenemedi' })); $yeniD ile tekrar gonderildi: " + ($tasi -join ', ') + ' | ' + ($o5.Trim() -replace '\s+', ' ')); continue
           }
+          if ($ok) { SurucuTercih $dv[$o] }
           $cm = if ($d['length']) { [double]::Parse($d['length'], $inv) / 10000 * 2.54 } else { 0 }
           $ef = if ($d['efficiency']) { [double]::Parse($d['efficiency'], $inv) / 10000 } else { 0 }
           $bitti[$o] = @{ ad = $o; tamam = $ok; kaydedildi = ($ok -and $kay); boy_cm = [math]::Round($cm, 2); verim = [math]::Round($ef, 2); adet = [int]('0' + $d['bundle_count']); sonuc = $(if ($d['result'] -eq '0') { 'yerlesmedi' } else { $d['result'] }) }
@@ -221,7 +247,14 @@ function Bekle($base, $res, $orders, $sub0, $ek = @()) {
     }
   $sonuclar = @($orders | ForEach-Object { $bitti[$_] })
   $res.pastallar = @(@($ek) + $sonuclar)
-  $res.asama = $(if (@($sonuclar | Where-Object { $_.tamam }).Count) { 'bitti' } else { 'iptal' }); Durum $base $res
+  $tamamS = @($sonuclar | Where-Object { $_.tamam }).Count; $iptalS = @($sonuclar | Where-Object { $_.sonuc -eq 'iptal' }).Count
+  if ($tamamS) { $res.asama = 'bitti' }
+  elseif ($iptalS -eq $sonuclar.Count) { $res.asama = 'iptal' }
+  else {
+    $res.asama = 'hata'
+    $res.mesaj = $(if (@($sonuclar | Where-Object { $_.adet -eq 0 -and $_.sonuc -ne 'iptal' }).Count) { "OTOPASTAL pastallari acamadi (hic parca yuklenemedi). OTOPASTAL bu bilgisayarin C: diskine ulasamiyor olabilir: OTOPASTAL'da Bilgisayarim'dan K: ve Z: suruculerini acip kontrol et." } else { 'OTOPASTAL pastallari yerlestiremedi.' })
+  }
+  Durum $base $res
 }
 
 function Isle($file) {

@@ -7,6 +7,7 @@ function Ayarlar([string]$Kok) {
     userroot = 'C:\userroot'
     kuyruk   = '\\192.168.2.203\Users\Public\Gerber Technology\Queue\ultramrk.umq'
     surucu   = 'k:'
+    surucu2  = 'z:'                    # OTOPASTAL'da ayni diskin ikinci harfi (birinci calismazsa denenir)
     tarayici = ''
     gerber   = $true                   # false: Gerber/OTOPASTAL yok, sadece asorti
     guncelleme = 'TheBurzzz/asorti-araci'   # GitHub deposu (yeni surumler buradan gelir)
