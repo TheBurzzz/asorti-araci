@@ -62,6 +62,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
 input[type=range]:disabled{opacity:.4}
 select{flex:1;height:28px;border-radius:8px;border:1px solid var(--line);background:var(--on);color:var(--ink);font:inherit;font-size:12.5px;padding:0 6px}
 .kon{margin-top:12px}
+.yol{font-size:12.5px;font-weight:600;word-break:break-all;line-height:1.35}
+.yol.bos{font-weight:400;color:var(--mut)}
+.dug{margin-top:8px}
+.dug button{flex:1;height:28px;border:0;border-radius:8px;background:var(--on);box-shadow:0 1px 2px rgba(0,0,0,.12);cursor:pointer;font-size:12.5px;color:var(--ink)}
+.dug button:hover{background:var(--accs);color:var(--acc)}
+.dug button:disabled{opacity:.5;cursor:default}
 .alt{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--mut);padding:0 2px}
 .alt button{border:0;background:transparent;color:var(--acc);cursor:pointer;padding:4px 2px}
 #sayfalar{position:absolute;top:54px;left:0;right:0;bottom:0}
@@ -77,9 +83,9 @@ select{flex:1;height:28px;border-radius:8px;border:1px solid var(--line);backgro
  <div id="sag">
   <div id="gun"><span id="gunYazi"></span><a id="gunNot" title="Bu sürümde neler var">neler yeni?</a><button id="gunBtn" type="button">Güncelle</button></div>
   <div id="durum" title="Gerber köprüsünün durumu"><i></i><span id="durumYazi">Bağlanıyor…</span></div>
-  <button id="ayar" type="button" title="Görünüm ayarları"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  <button id="ayar" type="button" title="Ayarlar: görünüm, gece ışığı, Excel kayıt klasörü, güncelleme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
  </div>
- <div id="menu" role="dialog" aria-label="Görünüm ayarları">
+ <div id="menu" role="dialog" aria-label="Ayarlar">
   <h4>Görünüm</h4>
   <div class="blok"><div class="seg" id="tmSeg"><button data-v="acik">☀ Açık</button><button data-v="koyu">☾ Koyu</button><button data-v="oto">Otomatik</button></div>
    <div class="not" id="tmNot"></div>
@@ -88,6 +94,10 @@ select{flex:1;height:28px;border-radius:8px;border:1px solid var(--line);backgro
   <div class="blok"><div class="seg" id="gcSeg"><button data-v="kapali">Kapalı</button><button data-v="acik">Açık</button><button data-v="oto">Akşamları</button></div>
    <div class="satir"><span>Az</span><input type="range" id="sicak" min="0" max="100" step="1" aria-label="Sarı tonu" title="Çift tıklayınca varsayılan tona döner"><span>Çok sarı</span></div>
    <div class="not" id="gcNot"></div></div>
+  <h4>Excel kayıt klasörü</h4>
+  <div class="blok"><div class="yol" id="exYol">Yükleniyor…</div>
+   <div class="satir dug"><button type="button" id="exSec">Klasör seç…</button><button type="button" id="exAc">Klasörü aç</button></div>
+   <div class="not">"Excel dosyasını kaydet" dediğinde dosya sormadan bu klasöre kaydedilir.</div></div>
   <div class="alt"><span id="surum"></span><button id="denetle" type="button">Güncellemeleri denetle</button></div>
  </div>
 </div>
@@ -116,7 +126,9 @@ function kapat(id){const d=info[id]||{};if(!confirm((d.ad?d.ad+' sayfası':'Bu s
 $('yeni').onclick=yeni;
 $('serit').addEventListener('dblclick',e=>{if(e.target===$('serit')||e.target===$('tabs'))yeni()});
 $('tabs').addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){$('tabs').scrollLeft+=e.deltaY;e.preventDefault()}},{passive:false});
-window.addEventListener('message',e=>{const d=e.data||{};if(d.t==='sayfa'&&S.list.includes(d.id)){const o=info[d.id]||{};if(o.ad!==d.ad||o.busy!==d.busy||o.bitti!==d.bitti){info[d.id]={ad:d.ad,busy:d.busy,bitti:d.bitti};ciz()}}
+window.addEventListener('message',e=>{const d=e.data||{};
+ if(d.t==='exKlasor'){document.querySelectorAll('#sayfalar iframe').forEach(f=>{if(f.contentWindow!==e.source)try{f.contentWindow.postMessage(d,'*')}catch(x){}});if($('menu').classList.contains('on'))exGoster()}
+ if(d.t==='sayfa'&&S.list.includes(d.id)){const o=info[d.id]||{};if(o.ad!==d.ad||o.busy!==d.busy||o.bitti!==d.bitti){info[d.id]={ad:d.ad,busy:d.busy,bitti:d.bitti};ciz()}}
  if(d.t==='tema'){G0.tema=d.v==='dark'?'koyu':'acik';kaydet();uygula()}});
 
 /* ---------- görünüm: tema, otomatik gece modu, mavi ışık filtresi ---------- */
@@ -170,7 +182,16 @@ document.addEventListener('load',e=>{if(e.target.tagName==='IFRAME')temaYolla(e.
 if(G0.konum)KONUM=G0.konum;
 uygula();setInterval(uygula,60000);
 if(G0.tema==='oto'||G0.gece==='oto')konumBul();
-function menu(on){$('menu').classList.toggle('on',on);$('ayar').classList.toggle('acik',on)}
+function menu(on){$('menu').classList.toggle('on',on);$('ayar').classList.toggle('acik',on);if(on)exGoster()}
+/* Excel kayıt klasörü (sunucu kullanici.json'da tutar; sayfalara da haber verilir) */
+function exYaz(j){const e=$('exYol');if(!j||!j.klasor){e.textContent='Seçilmedi (ilk kaydette sorulur)';e.className='yol bos';$('exAc').disabled=true;return}
+ e.textContent=j.klasor+(j.var?'':'  (klasör bulunamadı)');e.className='yol';e.title=j.klasor;$('exAc').disabled=!j.var}
+async function exGoster(){try{exYaz(await (await fetch('/excel/klasor',{cache:'no-store'})).json())}catch(e){$('exYol').textContent='Okunamadı'}}
+$('exSec').onclick=async e=>{e.stopPropagation();const b=$('exSec');b.disabled=true;b.textContent='Pencere açıldı…';
+ try{const j=await (await fetch('/excel/klasor-sec',{method:'POST',body:'{}',cache:'no-store'})).json();exYaz(j);
+  if(!j.iptal)document.querySelectorAll('#sayfalar iframe').forEach(f=>{try{f.contentWindow.postMessage({t:'exKlasor',klasor:j.klasor},'*')}catch(x){}})}catch(x){}
+ b.disabled=false;b.textContent='Klasör seç…'};
+$('exAc').onclick=async e=>{e.stopPropagation();try{await fetch('/excel/ac?ad=&nasil=klasor',{method:'POST',body:'{}'})}catch(x){}};
 $('ayar').onclick=e=>{e.stopPropagation();menu(!$('menu').classList.contains('on'))};
 document.addEventListener('click',e=>{if(!$('menu').contains(e.target))menu(false)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')menu(false)});

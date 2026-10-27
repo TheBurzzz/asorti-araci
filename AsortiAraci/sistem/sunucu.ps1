@@ -85,6 +85,67 @@ function PastalBilgi([string]$alan, [string]$ad) {
   if ([double]::IsNaN($boy) -or $boy -lt 0 -or $boy -gt 100000 -or [double]::IsNaN($ver) -or $ver -lt 0 -or $ver -gt 100) { return @{ var = $false; mesaj = 'pastal kaydi tanınmadı' } }
   return @{ var = $true; ad = $ad; en_cm = [math]::Round($en, 2); boy_cm = [math]::Round($boy, 2); verim = [math]::Round($ver, 2) }
 }
+# ---------- Excel kayit klasoru (kullanici ayari: kurulum klasorundeki kullanici.json; guncelleme ve kurulum dokunmaz) ----------
+$KF = Join-Path $Root 'kullanici.json'
+function KullaniciOku { $h = [ordered]@{}; try { if (Test-Path $KF) { $j = [IO.File]::ReadAllText($KF, [Text.Encoding]::UTF8) | ConvertFrom-Json; foreach ($p in $j.PSObject.Properties) { $h[$p.Name] = $p.Value } } } catch {}; return $h }
+function KullaniciYaz($ad, $deger) { $h = KullaniciOku; $h[$ad] = $deger; [IO.File]::WriteAllText($KF, ($h | ConvertTo-Json -Depth 5), (New-Object Text.UTF8Encoding($false))) }
+function ExcelKlasor { return "$((KullaniciOku)['excel_klasor'])" }
+function ExcelDurum { $k = ExcelKlasor; return @{ klasor = $k; var = [bool]($k -and (Test-Path -LiteralPath $k -PathType Container)) } }
+function KlasorSec($bas) {
+  $tmp = Join-Path ([IO.Path]::GetTempPath()) ('asorti_klasor_' + [guid]::NewGuid().ToString('N').Substring(0, 8) + '.txt')
+  [IO.File]::WriteAllText($tmp, "$bas", (New-Object Text.UTF8Encoding($false)))
+  try {
+    Start-Process -FilePath 'powershell.exe' -WindowStyle Hidden -Wait -ArgumentList @('-NoProfile', '-STA', '-ExecutionPolicy', 'Bypass', '-File', ('"' + (Join-Path $Root 'sistem\klasor_sec.ps1') + '"'), ('"' + $tmp + '"'))
+    return ([IO.File]::ReadAllText($tmp, [Text.Encoding]::UTF8)).Trim()
+  } finally { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue }
+}
+# adres satirindaki ?ad=... degerleri (Turkce harfler UTF-8 olarak)
+function Sorgu($ctx, $ad) {
+  $q = ''; $i = $ctx.Request.RawUrl.IndexOf('?'); if ($i -ge 0) { $q = $ctx.Request.RawUrl.Substring($i + 1) }
+  foreach ($p in $q.Split('&')) { $j = $p.IndexOf('='); if ($j -gt 0 -and [Uri]::UnescapeDataString($p.Substring(0, $j)) -eq $ad) { return [Uri]::UnescapeDataString($p.Substring($j + 1).Replace('+', ' ')) } }
+  return ''
+}
+function ExcelAdGecerli($n) { return ($n -and $n.Length -lt 200 -and $n -notmatch '[\\/:*?"<>|]' -and $n -match '(?i)\.xls[xm]$' -and $n -notmatch '^\.') }
+function ExcelKaydet($ctx) {
+  $ad = Sorgu $ctx 'ad'; $mod = Sorgu $ctx 'mod'; $k = ExcelKlasor
+  if (-not (ExcelAdGecerli $ad)) { return @{ hata = 'Dosya adı geçersiz.' } }
+  if (-not ($k -and (Test-Path -LiteralPath $k -PathType Container))) { return @{ klasoryok = $true } }
+  $ms = New-Object IO.MemoryStream; $ctx.Request.InputStream.CopyTo($ms); $veri = $ms.ToArray()
+  if ($veri.Length -lt 100) { return @{ hata = 'Dosya boş geldi.' } }
+  $hedef = Join-Path $k $ad
+  if (Test-Path -LiteralPath $hedef) {
+    if ($mod -eq 'yeni') {
+      $kok = [IO.Path]::GetFileNameWithoutExtension($ad); $uz = [IO.Path]::GetExtension($ad); $i = 2
+      while (Test-Path -LiteralPath (Join-Path $k ("$kok ($i)$uz"))) { $i++ }
+      $ad = "$kok ($i)$uz"; $hedef = Join-Path $k $ad
+    } elseif ($mod -ne 'ustune') { return @{ var = $true; ad = $ad; klasor = $k } }
+  }
+  $gecici = Join-Path $k ('~asorti_' + [guid]::NewGuid().ToString('N').Substring(0, 8) + '.tmp')
+  try {
+    [IO.File]::WriteAllBytes($gecici, $veri)
+    if (-not (Test-Path -LiteralPath $hedef)) { [IO.File]::Move($gecici, $hedef) }
+    else {
+      try { [IO.File]::Replace($gecici, $hedef, $null) }
+      catch { if ($_.Exception.Message -match '(?i)being used|kullan|another process|ba.ka bir i.lem') { throw }; [IO.File]::Copy($gecici, $hedef, $true); Remove-Item -LiteralPath $gecici -Force -ErrorAction SilentlyContinue }
+    }
+  } catch {
+    Remove-Item -LiteralPath $gecici -Force -ErrorAction SilentlyContinue
+    if ($_.Exception.Message -match '(?i)being used|kullan|another process|ba.ka bir i.lem|access|eri.im') { return @{ kilitli = $true; ad = $ad } }
+    return @{ hata = $_.Exception.Message }
+  }
+  Log "excel kaydedildi: $hedef"
+  return @{ ok = $true; ad = $ad; klasor = $k; yol = $hedef }
+}
+function ExcelAc($ctx) {
+  $ad = Sorgu $ctx 'ad'; $nasil = Sorgu $ctx 'nasil'; $k = ExcelKlasor
+  if (-not ($k -and (Test-Path -LiteralPath $k -PathType Container))) { return @{ hata = 'Kayıt klasörü yok.' } }
+  if ($nasil -eq 'klasor' -and -not $ad) { Start-Process -FilePath 'explorer.exe' -ArgumentList ('"' + $k + '"'); return @{ ok = $true } }
+  if (-not (ExcelAdGecerli $ad)) { return @{ hata = 'Dosya adı geçersiz.' } }
+  $yol = Join-Path $k $ad; if (-not (Test-Path -LiteralPath $yol)) { return @{ hata = 'Dosya bulunamadı.' } }
+  if ($nasil -eq 'klasor') { Start-Process -FilePath 'explorer.exe' -ArgumentList ('/select,"' + $yol + '"') } else { Start-Process -FilePath $yol }
+  return @{ ok = $true }
+}
+
 function SurenIs { @(Get-ChildItem (Join-Path $Root 'kopru\gelen'), (Join-Path $Root 'kopru\isleniyor') -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq '.txt' }).Count -gt 0 }
 function Guncelle {
   Web
@@ -155,6 +216,14 @@ try {
       $m = $ctx.Request.HttpMethod
       if ($yol -eq 'kapaniyor') { $script:kapanis = (Get-Date).AddSeconds(6); Yanit $ctx 200 $null $null; continue }
       if ($yol -eq 'nabiz') { $son = Get-Date; $script:kapanis = $null; JsonYanit $ctx @{ kopru = [bool]($script:kopru -and -not $script:kopru.HasExited); gerber = [bool]$A.gerber }; continue }
+      if ($yol -eq 'excel/klasor' -and $m -eq 'GET') { JsonYanit $ctx (ExcelDurum); continue }
+      if ($yol -eq 'excel/klasor-sec' -and $m -eq 'POST') {
+        $sec = ''; try { $sec = KlasorSec (ExcelKlasor) } catch { Log ('klasor secilemedi: ' + $_.Exception.Message) }
+        if ($sec -and (Test-Path -LiteralPath $sec -PathType Container)) { KullaniciYaz 'excel_klasor' $sec; Log "excel klasoru: $sec"; JsonYanit $ctx (ExcelDurum) } else { $d0 = ExcelDurum; $d0.iptal = $true; JsonYanit $ctx $d0 }
+        continue
+      }
+      if ($yol -eq 'excel/kaydet' -and $m -eq 'POST') { JsonYanit $ctx (ExcelKaydet $ctx); continue }
+      if ($yol -eq 'excel/ac' -and $m -eq 'POST') { JsonYanit $ctx (ExcelAc $ctx); continue }
       if ($yol -eq 'pastal') {
         $al = "$($ctx.Request.QueryString['alan'])"; $pa = "$($ctx.Request.QueryString['ad'])"
         if ($al -notmatch '^[^\\/:*?"<>|]+$' -or $al -match '\.\.' -or $pa -notmatch '^[^\\/:*?"<>|]+$') { JsonYanit $ctx @{ var = $false; mesaj = 'gecersiz ad' }; continue }
