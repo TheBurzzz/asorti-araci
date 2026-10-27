@@ -11,5 +11,5 @@ $aday = @($A.tarayici, "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msed
   "$env:ProgramFiles\Google\Chrome\Application\chrome.exe", "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe", "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe")
 $tarayici = $aday | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
 $profil = Join-Path $Root 'profil'
-if ($tarayici) { Start-Process -FilePath $tarayici -ArgumentList @("--app=$Url", "--user-data-dir=`"$profil`"", '--no-first-run', '--no-default-browser-check', '--start-maximized') }
+if ($tarayici) { Start-Process -FilePath $tarayici -ArgumentList @("--app=$Url", "--user-data-dir=`"$profil`"", '--no-first-run', '--no-default-browser-check', '--start-maximized', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows') }
 else { Start-Process $Url }

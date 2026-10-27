@@ -66,8 +66,10 @@ $('th').onclick=()=>tema(document.documentElement.dataset.theme==='dark'?'light'
 /* sunucuya "pencere açık" haberi: pencere kapanınca köprü ve Batch de kapanır */
 async function nabiz(){try{const r=await fetch('/nabiz',{cache:'no-store'});const j=await r.json();
   if(j.gerber===false){$('durum').textContent='Sadece asorti (Gerber yok)';$('durum').style.color=''}
-  else{$('durum').textContent=j.kopru?'Gerber köprüsü çalışıyor':'Gerber köprüsü kapalı';$('durum').style.color=j.kopru?'':'#d33'}}catch(e){$('durum').textContent='Bağlantı yok';$('durum').style.color='#d33'}}
+  else{$('durum').textContent=j.kopru?'Gerber köprüsü çalışıyor':'Gerber köprüsü kapalı';$('durum').style.color=j.kopru?'':'#d33'}}catch(e){$('durum').textContent='Bağlantı koptu: pencereyi kapatıp yeniden aç';$('durum').style.color='#d33'}}
 nabiz();setInterval(nabiz,5000);
+/* pencere kapanırken sunucuya haber ver (yenilemede yeni sayfa hemen nabız gönderir, kapanış iptal olur) */
+window.addEventListener('pagehide',()=>{try{navigator.sendBeacon('/kapaniyor','x')}catch(e){}});
 /* güncelleme: GitHub'da yeni sürüm varsa üstte "Güncelle" çıkar */
 let G=null;
 async function surumYaz(){try{const j=await (await fetch('/surum',{cache:'no-store'})).json();$('surum').textContent=j.surum?'v'+j.surum:'';return j}catch(e){return null}}

@@ -19,8 +19,14 @@ function KopruBaslat {
   $script:kopru = Start-Process -FilePath 'powershell.exe' -WindowStyle Hidden -PassThru -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $Root 'kopru\kopru.ps1'))
   Log ('kopru baslatildi, pid ' + $script:kopru.Id)
 }
-function Kapat {
-  Log 'pencere kapandi: kopru ve Batch kapatiliyor'
+# uygulama penceresi (bu kurulumun profil klasoruyle acilan Edge/Chrome) hala acik mi?
+$script:profilDesen = [regex]::Escape((Join-Path $Root 'profil'))
+function PencereAcik {
+  try { return (@(Get-CimInstance Win32_Process -Filter "Name='msedge.exe' OR Name='chrome.exe'" -ErrorAction Stop | Where-Object { $_.CommandLine -match $script:profilDesen }).Count -gt 0) }
+  catch { return $null }   # bilinmiyor
+}
+function Kapat([string]$neden = 'pencere kapandi') {
+  Log "${neden}: kopru ve Batch kapatiliyor"
   try { if ($script:kopru -and -not $script:kopru.HasExited) { Stop-Process -Id $script:kopru.Id -Force } } catch {}
   foreach ($p in KopruSurecleri) { try { Stop-Process -Id $p.ProcessId -Force } catch {} }
   foreach ($b in @(Get-Process -Name batch -ErrorAction SilentlyContinue)) { try { [void]$b.CloseMainWindow() } catch {} }
@@ -81,7 +87,7 @@ $L = New-Object Net.HttpListener
 $L.Prefixes.Add("http://localhost:$Port/")
 $L.Start(); Log "sunucu acildi: http://localhost:$Port/"
 $tipler = @{ '.html' = 'text/html; charset=utf-8'; '.js' = 'text/javascript; charset=utf-8'; '.json' = 'application/json; charset=utf-8'; '.txt' = 'text/plain; charset=windows-1254'; '.png' = 'image/png'; '.ico' = 'image/x-icon'; '.css' = 'text/css; charset=utf-8' }
-$son = $null; $basla = Get-Date
+$son = $null; $basla = Get-Date; $script:sonBak = [datetime]::MinValue; $script:kapanis = $null
 function JsonYanit($ctx, $obj) { Yanit $ctx 200 ($utf8.GetBytes(($obj | ConvertTo-Json -Depth 5 -Compress))) 'application/json; charset=utf-8' }
 function Yanit($ctx, [int]$kod, [byte[]]$veri, [string]$tip) {
   $r = $ctx.Response; $r.StatusCode = $kod; $r.Headers['Cache-Control'] = 'no-store'
@@ -94,15 +100,24 @@ try {
   while ($true) {
     $t = $L.GetContextAsync()
     while (-not $t.Wait(1000)) {
-      if ($son -and ((Get-Date) - $son).TotalSeconds -gt 30) { Kapat; $L.Stop(); exit }
-      if (-not $son -and ((Get-Date) - $basla).TotalSeconds -gt 180) { Log 'pencere hic acilmadi'; Kapat; $L.Stop(); exit }
+      $simdi = Get-Date
+      # pencere "kapaniyorum" dediyse birkac saniye sonra (yenileme degilse) kapat
+      if ($script:kapanis -and $simdi -gt $script:kapanis) { $script:kapanis = $null; if ((PencereAcik) -ne $true) { Kapat; $L.Stop(); exit } }
+      # pencere simge durumunda / arka planda iken nabiz gecikebilir: kapatmadan once pencerenin gercekten kapandigina bak
+      $sessiz = if ($son) { ($simdi - $son).TotalSeconds } else { ($simdi - $basla).TotalSeconds }
+      if ($sessiz -gt 45 -and ($simdi - $script:sonBak).TotalSeconds -ge 15) {
+        $script:sonBak = $simdi; $acik = PencereAcik
+        if ($acik -eq $false -and ($son -or $sessiz -gt 180)) { Kapat $(if ($son) { 'pencere kapandi' } else { 'pencere hic acilmadi' }); $L.Stop(); exit }
+        if ($null -eq $acik -and $sessiz -gt 900) { Kapat 'pencereden 15 dakikadir haber yok'; $L.Stop(); exit }
+      }
       if ($A.gerber -and $script:kopru.HasExited -and ((Get-Date) - $script:kBas).TotalSeconds -gt 30) { Log 'kopru durmustu, yeniden baslatiliyor'; KopruBaslat }
     }
     $ctx = $t.Result
     try {
       $yol = [Uri]::UnescapeDataString($ctx.Request.Url.AbsolutePath).TrimStart('/')
       $m = $ctx.Request.HttpMethod
-      if ($yol -eq 'nabiz') { $son = Get-Date; JsonYanit $ctx @{ kopru = [bool]($script:kopru -and -not $script:kopru.HasExited); gerber = [bool]$A.gerber }; continue }
+      if ($yol -eq 'kapaniyor') { $script:kapanis = (Get-Date).AddSeconds(6); Yanit $ctx 200 $null $null; continue }
+      if ($yol -eq 'nabiz') { $son = Get-Date; $script:kapanis = $null; JsonYanit $ctx @{ kopru = [bool]($script:kopru -and -not $script:kopru.HasExited); gerber = [bool]$A.gerber }; continue }
       if ($yol -eq 'surum') { $y = YerelSurum $Root; JsonYanit $ctx @{ surum = "$($y.surum)"; tarih = "$($y.tarih)"; gerber = [bool]$A.gerber; guncelleme = [bool]$A.guncelleme }; continue }
       if ($yol -eq 'guncelleme') {
         $y = YerelSurum $Root
