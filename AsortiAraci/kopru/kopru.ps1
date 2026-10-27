@@ -39,6 +39,17 @@ function CtlNames($area, $kind) {
   return $r
 }
 
+# ctl kayitlarinin olusma / degisme zamani (Unix sn): 26. bayt olusturma, 30. bayt son degisiklik
+function CtlZaman($area, $kind) {
+  $f = Join-Path $STOR "$area\data\$kind.ctl"; $z = @{}; if (-not (Test-Path $f)) { return $z }
+  $b = ReadShared $f; if ($null -eq $b) { return $z }
+  for ($i = 0; $i + 64 -le $b.Length; $i += 64) {
+    if ($b[$i + 25] -ne 0) { continue }; $n = $enc.GetString($b, $i, 20).Split([char]0)[0].Trim().ToUpperInvariant(); if (-not $n) { continue }
+    $t = [math]::Max([BitConverter]::ToUInt32($b, $i + 26), [BitConverter]::ToUInt32($b, $i + 30)); if (-not $z.ContainsKey($n) -or $z[$n] -lt $t) { $z[$n] = $t }
+  }
+  return $z
+}
+
 # kuyruk dosyasini oku: @{state;entries=@(@{job;st;d})}
 function ReadQueue {
   $b = ReadShared $QUEUE; if ($null -eq $b) { throw 'kuyruk dosyasi su an okunamiyor' }; $cnt = [BitConverter]::ToUInt32($b, 4); $p = 8; $list = New-Object System.Collections.ArrayList
@@ -254,10 +265,12 @@ function Isle($file) {
     # OTOPASTAL'a gidecekler AUTO; sadece Gerber'de olusacak ek pastallar MED (siparis islenir, pastal elle yerlestirilmek uzere bos olusur;
     # AUTO ile Batch "PASTAL BEKLIYOR"da kalir ve arkasindaki isleri bekletir)
     foreach ($o in $orders) { $yon = if ($nq -contains $o) { 'MED' } else { 'AUTO' }; $o4 = Yerel { & .\amsubmit.exe $tbl $o $o $yon 0 0 4 0 $o 0 }; if ($o4 -match '(?i)usage|error|hata') { Log ("amsubmit $o : " + ($o4.Trim() -replace '\s+', ' ')) } }
-    $t0 = Get-Date
+    $t0 = Get-Date; $u0 = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - 5
     while ($true) {
       $st = @($orders | ForEach-Object { EngineStatus $skip $_ })
       if (-not ($st | Where-Object { $_ -ne 'ok' -and $_ -ne 'hata' })) { break }
+      # Batch pastali yazinca kaydin zamani bu gonderimden sonrasini gosterir: beklemeden devam et
+      $zm = CtlZaman $area 'mark'; if (-not @($orders | Where-Object { -not $zm.ContainsKey($_) -or $zm[$_] -lt $u0 }).Count) { Start-Sleep 3; break }
       $varM = CtlNames $area 'mark'
       if (((Get-Date) - $t0).TotalSeconds -gt 60 -and -not (@($orders | Where-Object { $varM -notcontains $_ }).Count)) { break }
       if (((Get-Date) - $t0).TotalMinutes -gt 10) { throw 'Batch 10 dakikada pastallari hazirlamadi. Batch Islemi penceresine bak.' }
@@ -291,20 +304,20 @@ function Isle($file) {
 }
 
 # Batch'i is bitince kapat (sadece kopru actiysa; kullanici kendisi actiysa dokunma).
-# Batch'teki pastallar "TAMAMLANDI" olana kadar en fazla 90 sn bekler.
+# Batch'teki pastallar "TAMAMLANDI" olana kadar en fazla 15 sn bekler (Batch durumu dosyaya gec yazar).
 $script:batchBizde = $false; $script:batchIs = @(); $script:batchSkip = 0; $script:isBitti = [datetime]::MinValue
 function BatchKapatGerekirse {
   if (-not $script:batchBizde) { return }
   if (@(Get-ChildItem -Path (Join-Path $K 'gelen') -Filter *.txt -ErrorAction SilentlyContinue).Count) { return }
   if (@(Get-ChildItem -Path (Join-Path $K 'isleniyor') -Filter *.txt -ErrorAction SilentlyContinue).Count) { return }
   $bek = @($script:batchIs | Where-Object { (EngineStatus $script:batchSkip $_) -notin @('ok', 'hata', '') })
-  if ($bek.Count -and ((Get-Date) - $script:isBitti).TotalSeconds -lt 90) { return }
+  if ($bek.Count -and ((Get-Date) - $script:isBitti).TotalSeconds -lt 15) { return }
   $b = @(Get-Process -Name batch -ErrorAction SilentlyContinue)
   if ($b.Count) {
     foreach ($p in $b) { try { [void]$p.CloseMainWindow() } catch {} }
     for ($i = 0; $i -lt 10 -and @(Get-Process -Name batch -ErrorAction SilentlyContinue).Count; $i++) { Start-Sleep 1 }
     foreach ($p in @(Get-Process -Name batch -ErrorAction SilentlyContinue)) { try { Stop-Process -Id $p.Id -Force } catch {} }
-    Log ('Batch kapatildi (is bitti)' + $(if ($bek.Count) { '; Batch''te bekleyen: ' + ($bek -join ', ') } else { '' }))
+    Log 'Batch kapatildi (is bitti)'
   }
   $script:batchBizde = $false
 }
