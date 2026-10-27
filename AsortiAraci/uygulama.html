@@ -60,6 +60,8 @@ button{font:inherit;color:inherit}
 input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:linear-gradient(90deg,#ffe9b8,#ff9f2e);outline:none}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.35);cursor:pointer}
 input[type=range]:disabled{opacity:.4}
+select{flex:1;height:28px;border-radius:8px;border:1px solid var(--line);background:var(--on);color:var(--ink);font:inherit;font-size:12.5px;padding:0 6px}
+.kon{margin-top:12px}
 .alt{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--mut);padding:0 2px}
 .alt button{border:0;background:transparent;color:var(--acc);cursor:pointer;padding:4px 2px}
 #sayfalar{position:absolute;top:54px;left:0;right:0;bottom:0}
@@ -80,10 +82,11 @@ input[type=range]:disabled{opacity:.4}
  <div id="menu" role="dialog" aria-label="Görünüm ayarları">
   <h4>Görünüm</h4>
   <div class="blok"><div class="seg" id="tmSeg"><button data-v="acik">☀ Açık</button><button data-v="koyu">☾ Koyu</button><button data-v="oto">Otomatik</button></div>
-   <div class="not" id="tmNot"></div></div>
+   <div class="not" id="tmNot"></div>
+   <div class="satir kon"><span>Konum</span><select id="konSec" aria-label="Konum"></select></div><div class="not" id="konNot"></div></div>
   <h4>Gece ışığı · mavi ışık filtresi</h4>
   <div class="blok"><div class="seg" id="gcSeg"><button data-v="kapali">Kapalı</button><button data-v="acik">Açık</button><button data-v="oto">Akşamları</button></div>
-   <div class="satir"><span>Az</span><input type="range" id="sicak" min="10" max="100" step="1" aria-label="Sarı tonu"><span>Çok sarı</span></div>
+   <div class="satir"><span>Az</span><input type="range" id="sicak" min="10" max="100" step="1" aria-label="Sarı tonu" title="Çift tıklayınca varsayılan tona döner"><span>Çok sarı</span></div>
    <div class="not" id="gcNot"></div></div>
   <div class="alt"><span id="surum"></span><button id="denetle" type="button">Güncellemeleri denetle</button></div>
  </div>
@@ -117,11 +120,28 @@ window.addEventListener('message',e=>{const d=e.data||{};if(d.t==='sayfa'&&S.lis
  if(d.t==='tema'){G0.tema=d.v==='dark'?'koyu':'acik';kaydet();uygula()}});
 
 /* ---------- görünüm: tema, otomatik gece modu, mavi ışık filtresi ---------- */
-let G0=Object.assign({tema:'acik',gece:'kapali',sicak:45},(()=>{try{return JSON.parse(localStorage.getItem(LG)||'{}')}catch(e){return{}}})());
+let G0=Object.assign({tema:'acik',gece:'kapali',sicak:45,konum:null},(()=>{try{return JSON.parse(localStorage.getItem(LG)||'{}')}catch(e){return{}}})());
 try{const t=localStorage.getItem('asorti-tema');if(!localStorage.getItem(LG)&&t)G0.tema=t==='dark'?'koyu':'acik'}catch(e){}
 function kaydet(){try{localStorage.setItem(LG,JSON.stringify(G0))}catch(e){}}
-/* gün doğumu / batımı (İstanbul'a göre; Türkiye içinde birkaç dakikalık fark yapar) */
-const KONUM={lat:41.01,lon:28.98};
+/* konum: gün doğumu / batımı bulunduğun ile göre hesaplanır.
+   Önce bilgisayarın konumu (Windows konum hizmeti), olmazsa internet bağlantısının konumu; istersen menüden il seçilir. */
+const ILLER=[["Adana",36.986,35.325],["Adıyaman",37.76,38.277],["Afyonkarahisar",38.757,30.539],["Ağrı",39.719,43.05],["Amasya",40.65,35.833],["Ankara",39.921,32.854],["Antalya",36.887,30.703],["Artvin",41.183,41.829],["Aydın",37.848,27.844],["Balıkesir",39.647,27.888],["Bilecik",40.144,29.975],["Bingöl",38.886,40.497],["Bitlis",38.402,42.108],["Bolu",40.733,31.611],["Burdur",37.725,30.289],["Bursa",40.183,29.068],["Çanakkale",40.146,26.403],["Çankırı",40.597,33.621],["Çorum",40.55,34.954],["Denizli",37.783,29.097],["Diyarbakır",37.916,40.236],["Edirne",41.676,26.559],["Elazığ",38.675,39.223],["Erzincan",39.747,39.491],["Erzurum",39.906,41.273],["Eskişehir",39.774,30.519],["Gaziantep",37.063,37.379],["Giresun",40.917,38.385],["Gümüşhane",40.462,39.476],["Hakkari",37.577,43.738],["Hatay",36.203,36.16],["Isparta",37.764,30.555],["Mersin",36.798,34.63],["İstanbul",41.006,28.976],["İzmir",38.419,27.128],["Kars",40.607,43.095],["Kastamonu",41.377,33.777],["Kayseri",38.722,35.487],["Kırklareli",41.737,27.224],["Kırşehir",39.146,34.161],["Kocaeli",40.765,29.941],["Konya",37.873,32.492],["Kütahya",39.42,29.986],["Malatya",38.349,38.319],["Manisa",38.613,27.433],["Kahramanmaraş",37.581,36.928],["Mardin",37.313,40.735],["Muğla",37.215,28.364],["Muş",38.732,41.49],["Nevşehir",38.625,34.715],["Niğde",37.97,34.676],["Ordu",40.985,37.88],["Rize",41.025,40.52],["Sakarya",40.773,30.404],["Samsun",41.295,36.332],["Siirt",37.927,41.942],["Sinop",42.027,35.151],["Sivas",39.75,37.015],["Tekirdağ",40.978,27.511],["Tokat",40.323,36.552],["Trabzon",41.005,39.73],["Tunceli",39.106,39.548],["Şanlıurfa",37.16,38.792],["Uşak",38.674,29.406],["Van",38.501,43.395],["Yozgat",39.822,34.808],["Zonguldak",41.453,31.788],["Aksaray",38.371,34.027],["Bayburt",40.255,40.221],["Karaman",37.181,33.219],["Kırıkkale",39.841,33.506],["Batman",37.884,41.128],["Şırnak",37.522,42.457],["Bartın",41.635,32.337],["Ardahan",41.11,42.704],["Iğdır",39.922,44.047],["Yalova",40.658,29.27],["Karabük",41.196,32.623],["Kilis",36.717,37.115],["Osmaniye",37.073,36.251],["Düzce",40.839,31.16]];
+const SICAK0=45;
+let KONUM={ad:'İstanbul',lat:41.006,lon:28.976};
+function enYakin(lat,lon){let b=null,bd=1e9;for(const [ad,a,o] of ILLER){const d=(a-lat)**2+((o-lon)*Math.cos(lat*Math.PI/180))**2;if(d<bd){bd=d;b={ad,lat:a,lon:o}}}return b}
+function konumAyarla(k,kaynak){if(!k)return;KONUM={ad:k.ad,lat:k.lat,lon:k.lon};G0.konum={ad:k.ad,lat:k.lat,lon:k.lon,kaynak,t:Date.now()};kaydet();uygula()}
+let konumAraniyor=false;
+async function konumBul(zorla){const k=G0.konum;if(k&&k.kaynak==='elle'&&!zorla){KONUM=k;return}
+ if(k&&!zorla&&Date.now()-k.t<7*864e5){KONUM=k;return}
+ if(konumAraniyor)return;konumAraniyor=true;$('konNot').textContent='Konum bulunuyor…';
+ const gps=await new Promise(res=>{if(!navigator.geolocation)return res(null);navigator.geolocation.getCurrentPosition(p=>res(p.coords),()=>res(null),{timeout:9000,maximumAge:864e5})});
+ if(gps){const e=enYakin(gps.latitude,gps.longitude);konumAyarla({ad:e.ad,lat:gps.latitude,lon:gps.longitude},'gps')}
+ else{try{const j=await (await fetch('/konum',{cache:'no-store'})).json();if(j&&isFinite(j.lat)&&isFinite(j.lon)){const e=enYakin(+j.lat,+j.lon);konumAyarla({ad:e.ad,lat:+j.lat,lon:+j.lon},'ip')}else throw 0}
+  catch(e){if(k)KONUM=k;$('konNot').textContent='Konum bulunamadı; listeden ilini seçebilirsin.'}}
+ konumAraniyor=false;uygula()}
+function konumListesi(){const s=$('konSec');s.innerHTML='<option value="">📍 Otomatik bul</option>'+ILLER.map(([ad])=>'<option>'+ad+'</option>').join('')}
+konumListesi();
+$('konSec').onchange=e=>{const v=e.target.value;if(!v){G0.konum=null;kaydet();konumBul(true);return}const i=ILLER.find(x=>x[0]===v);if(i)konumAyarla({ad:i[0],lat:i[1],lon:i[2]},'elle')};
 function gunes(t){const r=Math.PI/180,jd=t.getTime()/864e5+2440587.5,n=Math.round(jd-2451545.0009-KONUM.lon/360),J=n+KONUM.lon/-360,
   M=(357.5291+0.98560028*J)%360,C=1.9148*Math.sin(M*r)+0.02*Math.sin(2*M*r)+0.0003*Math.sin(3*M*r),L=(M+C+282.9372)%360,
   Jt=2451545.0009+J+0.0053*Math.sin(M*r)-0.0069*Math.sin(2*L*r),d=Math.asin(Math.sin(L*r)*Math.sin(23.4397*r)),
@@ -139,12 +159,17 @@ function uygula(){const gn=gunes(new Date()),gc=gecemi(),t=G0.tema==='oto'?(gc?'
  document.querySelectorAll('#gcSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===G0.gece));
  $('sicak').value=G0.sicak;$('sicak').disabled=G0.gece==='kapali';
  $('tmNot').textContent=G0.tema==='oto'?'Gün doğumunda açık, gün batımında koyu olur. Bugün ☀ '+saat(gn.dogus)+' · ☾ '+saat(gn.batis):G0.tema==='koyu'?'Koyu görünüm hep açık.':'Açık görünüm hep açık.';
+ const k=G0.konum;$('konSec').value=k&&k.kaynak==='elle'?k.ad:'';
+ if(!konumAraniyor)$('konNot').textContent=k?(k.kaynak==='elle'?k.ad+' (elle seçildi)':k.ad+' · otomatik bulundu'+(k.kaynak==='ip'?' (internet bağlantısından)':'')):'Konum henüz bulunmadı: İstanbul saatleri kullanılıyor.';
  $('gcNot').textContent=G0.gece==='oto'?'Gün batımından ('+saat(gn.batis)+') gün doğumuna kadar ekran sarı tona döner.':G0.gece==='acik'?'Ekran sarı tonda; akşamları gözü daha az yorar.':'Ekran renkleri olduğu gibi.'}
-document.querySelectorAll('#tmSeg button').forEach(b=>b.onclick=()=>{G0.tema=b.dataset.v;kaydet();uygula()});
-document.querySelectorAll('#gcSeg button').forEach(b=>b.onclick=()=>{G0.gece=b.dataset.v;kaydet();uygula()});
+document.querySelectorAll('#tmSeg button').forEach(b=>b.onclick=()=>{G0.tema=b.dataset.v;kaydet();uygula();if(G0.tema==='oto')konumBul()});
+document.querySelectorAll('#gcSeg button').forEach(b=>b.onclick=()=>{G0.gece=b.dataset.v;kaydet();uygula();if(G0.gece==='oto')konumBul()});
 $('sicak').oninput=e=>{G0.sicak=+e.target.value;kaydet();uygula()};
+$('sicak').ondblclick=()=>{G0.sicak=SICAK0;kaydet();uygula()};
 document.addEventListener('load',e=>{if(e.target.tagName==='IFRAME')temaYolla(e.target,document.documentElement.dataset.theme)},true);
+if(G0.konum)KONUM=G0.konum;
 uygula();setInterval(uygula,60000);
+if(G0.tema==='oto'||G0.gece==='oto')konumBul();
 function menu(on){$('menu').classList.toggle('on',on);$('ayar').classList.toggle('acik',on)}
 $('ayar').onclick=e=>{e.stopPropagation();menu(!$('menu').classList.contains('on'))};
 document.addEventListener('click',e=>{if(!$('menu').contains(e.target))menu(false)});

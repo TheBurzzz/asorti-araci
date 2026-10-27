@@ -1,12 +1,10 @@
 {
- "surum": "1.1.0",
+ "surum": "1.1.1",
  "tarih": "2026-10-27",
  "notlar": [
-  "Yeni üst çubuk: açık olan sayfa mavi çerçeveyle belirgin, Yeni sayfa düğmesi sekmelerin hemen yanında (boş yere çift tıklayınca da açılır)",
-  "Ayarlar menüsü (⚙): açık / koyu / otomatik görünüm (gün doğumunda açık, gün batımında koyu)",
-  "Gece ışığı: mavi ışık filtresi, sarı tonu ayarlanabilir; istersen sadece akşamları açılır",
-  "Ek asorti tablolarına kumaş eni yazılıyor",
-  "Ek asorti tablolarında 'Ana asortinin katı': ana asortinin aynısı, 2 katı, 3 katı…; kat sayıları kendiliğinden düşer",
-  "Ek asorti pastalları Gerber'de tek pastal olarak oluşur (örn. MODEL-URT-H), OTOPASTAL'a gönderilmez"
+  "Ek asorti tablolarına kendi 'Gerber'de pastalını oluştur' düğmesi geldi; ana asortiden ayrı, istediğin zaman gönderilir",
+  "Ana 'Gerber'e gönder' artık sadece ana kumaşı gönderir; hızar, astar, tela… ek tablodan gönderilir",
+  "Otomatik gece modu ve gece ışığı bulunduğun ile göre çalışır (konum kendiliğinden bulunur, istersen menüden il seçilir)",
+  "Sarı ton kaydırıcısına çift tıklayınca varsayılan tona döner"
  ]
 }

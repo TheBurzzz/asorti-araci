@@ -48,6 +48,23 @@ function UzakSurum([bool]$taze) {
   $script:uzak = $metin | ConvertFrom-Json; $script:uzakZaman = Get-Date
   return $script:uzak
 }
+# internet baglantisinin konumu (gun dogumu / batimi icin); bilgisayarin konum hizmeti kapaliysa kullanilir
+$script:konum = $null
+function IpKonum {
+  if ($script:konum) { return $script:konum }
+  Web
+  foreach ($u in 'https://ipwho.is/', 'https://ipapi.co/json/', 'https://freeipapi.com/api/json') {
+    try {
+      $j = Invoke-RestMethod -UseBasicParsing -TimeoutSec 6 -Uri $u
+      $lat = $j.latitude; $lon = $j.longitude
+      if ($null -ne $lat -and $null -ne $lon -and "$lat" -ne '' -and "$lon" -ne '') {
+        $sehir = if ($j.city) { "$($j.city)" } elseif ($j.cityName) { "$($j.cityName)" } else { '' }
+        $script:konum = @{ lat = [double]$lat; lon = [double]$lon; sehir = $sehir; kaynak = $u }; return $script:konum
+      }
+    } catch {}
+  }
+  return $null
+}
 function SurenIs { @(Get-ChildItem (Join-Path $Root 'kopru\gelen'), (Join-Path $Root 'kopru\isleniyor') -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq '.txt' }).Count -gt 0 }
 function Guncelle {
   Web
@@ -118,6 +135,7 @@ try {
       $m = $ctx.Request.HttpMethod
       if ($yol -eq 'kapaniyor') { $script:kapanis = (Get-Date).AddSeconds(6); Yanit $ctx 200 $null $null; continue }
       if ($yol -eq 'nabiz') { $son = Get-Date; $script:kapanis = $null; JsonYanit $ctx @{ kopru = [bool]($script:kopru -and -not $script:kopru.HasExited); gerber = [bool]$A.gerber }; continue }
+      if ($yol -eq 'konum') { $k = IpKonum; if ($k) { JsonYanit $ctx $k } else { JsonYanit $ctx @{ hata = 'konum bulunamadi' } }; continue }
       if ($yol -eq 'surum') { $y = YerelSurum $Root; JsonYanit $ctx @{ surum = "$($y.surum)"; tarih = "$($y.tarih)"; gerber = [bool]$A.gerber; guncelleme = [bool]$A.guncelleme }; continue }
       if ($yol -eq 'guncelleme') {
         $y = YerelSurum $Root
