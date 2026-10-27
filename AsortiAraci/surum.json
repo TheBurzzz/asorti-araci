@@ -1,8 +1,8 @@
 {
- "surum": "1.0.1",
+ "surum": "1.0.2",
  "tarih": "2026-10-27",
  "notlar": [
-  "Uygulama bir süre açık kalınca (simge durumunda ya da arkada iken) \"localhost bağlanmayı reddetti\" hatası veriyordu, düzeltildi",
-  "Pencere kapanınca arka plandaki programlar daha hızlı kapanır"
+  "Görev çubuğunda ve pencere başlığında uygulamanın kendi simgesi görünür",
+  "Uygulama simge durumunda ya da arkadayken kapanma sorunu düzeltildi (1.0.1)"
  ]
 }
