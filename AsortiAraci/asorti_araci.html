@@ -75,6 +75,39 @@ html[data-theme=dark] .prev .chip{background:rgba(10,132,255,.22);color:#7cbcff}
 html[data-theme=dark] .seg>button{color:rgba(235,235,245,.7)}
 html[data-theme=dark] .seg>button:not(.on):hover{color:#fff}
 html[data-theme=dark] .seg>button.on{background:#6a6f7e;color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.14)}
+/* Excel kayıt yeri: tek parça kapsül (klasör + düğmeler) */
+.exyer{display:inline-flex;align-items:center;flex-wrap:wrap;gap:2px;margin:12px 0 2px;padding:3px;border-radius:13px;background:rgba(110,120,150,.10);border:1px solid rgba(60,60,67,.08);font-size:13px;max-width:100%}
+html[data-theme=dark] .exyer{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.08)}
+.exad{display:inline-flex;align-items:center;gap:7px;padding:4px 10px 4px 8px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exad b{font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis}
+.m0{color:var(--mut)}
+.exik{display:inline-flex;width:18px;height:18px;flex:none}.exik svg{width:18px;height:18px;fill:#4aa3f5}
+.exik.bos svg{fill:var(--mut);opacity:.6}
+.exyer.yok .exik svg{fill:var(--red)}.exuy{color:var(--red);font-weight:600}
+.exay{width:1px;align-self:stretch;margin:5px 4px;background:rgba(60,60,67,.14)}
+html[data-theme=dark] .exay{background:rgba(255,255,255,.14)}
+button.exb{margin:0;padding:5px 11px;border:0;border-radius:10px;background:transparent;box-shadow:none;color:var(--acc);font-size:12.5px;font-weight:500;transform:none}
+button.exb:hover:not(:disabled){background:var(--hov);transform:none}
+html[data-theme=dark] button.exb:hover:not(:disabled){background:rgba(255,255,255,.1)}
+.ipucu{display:block;margin:8px 2px 0!important}
+/* bildirim şeridi (kaydedildi / soru / hata) */
+.bildir{display:flex;align-items:center;flex-wrap:wrap;gap:10px 14px;padding:11px 12px 11px 14px;border-radius:16px;font-weight:400;border:1px solid transparent;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.bildir.ok{background:rgba(52,199,89,.11);border-color:rgba(52,199,89,.28)}
+.bildir.soru{background:rgba(255,159,10,.11);border-color:rgba(255,159,10,.32)}
+.bildir.hata{background:rgba(255,69,58,.09);border-color:rgba(255,69,58,.3)}
+html[data-theme=dark] .bildir.ok{background:rgba(48,209,88,.13);border-color:rgba(48,209,88,.3)}
+html[data-theme=dark] .bildir.soru{background:rgba(255,159,10,.13);border-color:rgba(255,159,10,.32)}
+html[data-theme=dark] .bildir.hata{background:rgba(255,69,58,.13);border-color:rgba(255,69,58,.32)}
+.bik{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;flex:none;color:#fff}
+.bik svg{width:16px;height:16px}
+.bildir.ok .bik{background:#34c759}.bildir.soru .bik{background:#ff9f0a}.bildir.hata .bik{background:#ff453a}
+.bmt{flex:1 1 260px;min-width:0;color:var(--ink);font-size:13.5px;line-height:1.4}
+.bmt b{font-weight:600}
+.balt{color:var(--mut);font-size:12.5px;margin-top:1px}
+.bdg{display:flex;flex-wrap:wrap;gap:6px}
+button.bb{margin:0;padding:6px 14px;font-size:13px;font-weight:500}
+.bekle{color:var(--mut);padding:6px 2px}
+.buy{margin:8px 4px 0;font-size:13px;font-weight:500}
 .tg:hover span{background:var(--hov)}
 .tg input:checked+span{background:var(--card);color:var(--red);text-decoration:line-through;font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.18)}
 html[data-theme=dark] .tg input:checked+span{background:#4a3a3d}
@@ -291,30 +324,46 @@ function solveX(n,O,P,TOL,cap,strict,tmax,one,kmin){const KM=kmin>0?kmin+1:0;
 
 
 
-function actBtn(){return '<div class="card"><button title="Çıktıyı yatay A4 olarak yazdırır" onclick="printSheet()">Yazdır</button><button class="pri" onclick="exportX()">'+(fh?'Excel dosyasına kaydet':'Excel dosyasını kaydet')+'</button>'+(fh?'<button title="Açtığın dosyaya dokunmadan yeni bir kopya indirir" onclick="exportX(1)">Kopya olarak indir</button>':'')+(KHTTP&&!fh?'<div class="m" id="exYer" style="margin-top:6px">'+exYerHtml()+'</div>':'')+'<div class="m" style="margin-top:6px">Asorti kutularını elle değiştirdiysen önce "Katları yeniden hesapla"ya bas, sonra kaydet.</div></div>'}
+function actBtn(){return '<div class="card"><button title="Çıktıyı yatay A4 olarak yazdırır" onclick="printSheet()">Yazdır</button><button class="pri" onclick="exportX()">'+(fh?'Excel dosyasına kaydet':'Excel dosyasını kaydet')+'</button>'+(fh?'<button title="Açtığın dosyaya dokunmadan yeni bir kopya indirir" onclick="exportX(1)">Kopya olarak indir</button>':'')+(KHTTP&&!fh?'<div id="exYer">'+exYerHtml()+'</div>':'')+'<div class="m ipucu">Asorti kutularını elle değiştirdiysen önce "Katları yeniden hesapla"ya bas, sonra kaydet.</div></div>'}
 /* ---- Excel kayıt klasörü: seçilen klasöre sormadan kaydeder (uygulama penceresinde) ---- */
 let exKl=null,exSon='',exBek=null;
-const exKisa=k=>{const p=String(k||'').split(/[\\/]/).filter(Boolean);return p.length>3?p[0]+'\\…\\'+p.slice(-2).join('\\'):String(k||'')};
-function exYerHtml(){if(!exKl)return'Kayıt yeri yükleniyor…';if(!exKl.klasor)return'📁 Excel kayıt klasörü seçilmedi. <a href="#" onclick="exSec();return false">Klasör seç</a> (ilk kaydette de sorulur)';
- return '📁 Kayıt yeri: <b title="'+esc(exKl.klasor)+'">'+esc(exKisa(exKl.klasor))+'</b>'+(exKl.var?'':' <span class="e">(klasör bulunamadı)</span>')+' · <a href="#" onclick="exSec();return false">değiştir</a> · <a href="#" onclick="exAc(\'\',\'klasor\');return false">klasörü aç</a> · <a href="#" onclick="exportX(2);return false" title="Bu seferlik başka bir yere kaydet">başka yere kaydet</a>'}
+const IK={klasor:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.2A2.2 2.2 0 0 1 5.2 5h3.9c.55 0 1.08.22 1.47.6L12 7h6.8A2.2 2.2 0 0 1 21 9.2v8.6a2.2 2.2 0 0 1-2.2 2.2H5.2A2.2 2.2 0 0 1 3 17.8z"/></svg>',
+ ok:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ soru:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="17" r="1.4" fill="currentColor"/></svg>',
+ hata:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>'};
+const TRK={Desktop:'Masaüstü',Documents:'Belgeler',Downloads:'İndirilenler',Pictures:'Resimler',OneDrive:'OneDrive'};
+const exParca=k=>String(k||'').split(/[\\/]/).filter(Boolean);
+const exKisa=k=>{const p=exParca(k);return p.length>3?p[0]+'\\…\\'+p.slice(-2).join('\\'):String(k||'')};
+function exYerHtml(){
+ if(!exKl)return '<div class="exyer"><span class="exad m">Kayıt yeri yükleniyor…</span></div>';
+ if(!exKl.klasor)return '<div class="exyer"><span class="exad"><span class="exik bos">'+IK.klasor+'</span><span class="m0">Kayıt klasörü seçilmedi · ilk kaydette sorulur</span></span><span class="exay"></span><button type="button" class="exb" onclick="exSec()">Klasör seç…</button></div>';
+ const p=exParca(exKl.klasor),ad=p[p.length-1]||exKl.klasor,ust=p.length>1?(TRK[p[p.length-2]]||p[p.length-2]):'';
+ return '<div class="exyer'+(exKl.var?'':' yok')+'" title="'+esc(exKl.klasor)+'"><span class="exad"><span class="exik">'+IK.klasor+'</span>'+(ust?'<span class="m0">'+esc(ust)+' ›</span>':'')+'<b>'+esc(ad)+'</b>'+(exKl.var?'':'<span class="exuy">bulunamadı</span>')+'</span><span class="exay"></span>'+
+  '<button type="button" class="exb" onclick="exSec()" title="Excel dosyalarının kaydedileceği klasörü değiştir">Değiştir</button>'+(exKl.var?'<button type="button" class="exb" onclick="exAc(\'\',\'klasor\')" title="Klasörü Dosya Gezgini\'nde aç">Klasörü aç</button>':'')+
+  '<button type="button" class="exb" onclick="exportX(2)" title="Sadece bu seferlik başka bir yere kaydet">Başka yere…</button></div>'}
 function exYerCiz(){const e=$('exYer');if(e)e.innerHTML=exYerHtml()}
 async function exYukle(){if(!KHTTP)return;try{exKl=await (await fetch('/excel/klasor',{cache:'no-store'})).json()}catch(e){exKl={klasor:'',var:false}}exYerCiz()}
-async function exSec(){if(!KHTTP)return false;const e=$('exYer');if(e)e.innerHTML='📁 Klasör seçme penceresi açıldı…';
+async function exSec(){if(!KHTTP)return false;const e=$('exYer');if(e)e.innerHTML='<div class="exyer"><span class="exad m">Klasör seçme penceresi açıldı…</span></div>';
  try{const j=await (await fetch('/excel/klasor-sec',{method:'POST',body:'{}',cache:'no-store'})).json();exKl={klasor:j.klasor||'',var:!!j.var};exYerCiz();
   if(!j.iptal)try{parent.postMessage({t:'exKlasor',klasor:exKl.klasor},'*')}catch(x){}return !j.iptal&&exKl.var}catch(x){exYerCiz();return false}}
 async function exAc(ad,nasil){try{const j=await (await fetch('/excel/ac?ad='+encodeURIComponent(ad||'')+'&nasil='+(nasil||''),{method:'POST',body:'{}'})).json();if(j.hata)alert(j.hata)}catch(e){alert('Açılamadı: '+e.message)}}
+/* bildirim: renkli, yuvarlak köşeli şerit; düğmeler uygulamanın düğme tasarımında */
+function bildir(tur,metin,alt,dug){const d=(dug||[]).map(([t,f,pri])=>'<button type="button" class="bb'+(pri?' pri':'')+'" onclick="'+f+'">'+t+'</button>').join('');
+ return '<div class="bildir '+tur+'"><span class="bik">'+IK[tur]+'</span><div class="bmt">'+metin+(alt?'<div class="balt">'+alt+'</div>':'')+'</div>'+(d?'<div class="bdg">'+d+'</div>':'')+'</div>'}
+const qs=x=>JSON.stringify(String(x)).replace(/"/g,'&quot;');
+const uyarH=u=>u?'<div class="buy">'+String(u).replace(/^(<br>)+/,'')+'</div>':'';
 async function exKaydet(blob,ad,mod,uyar){const m=$('msg');
  if(!exKl)await exYukle();
- if(!exKl||!exKl.klasor||!exKl.var){m.innerHTML='Excel dosyalarının kaydedileceği klasörü seç…';if(!await exSec()){m.innerHTML='<span class="e">Kayıt klasörü seçilmediği için kaydedilmedi.</span>';return}}
- m.textContent='Kaydediliyor…';let j;
- try{j=await (await fetch('/excel/kaydet?ad='+encodeURIComponent(ad)+(mod?'&mod='+mod:''),{method:'POST',body:blob,cache:'no-store'})).json()}catch(e){m.innerHTML='<span class="e">Kaydedilemedi: '+esc(e.message)+'</span>';return}
- if(j.klasoryok){exKl={klasor:exKl.klasor,var:false};exYerCiz();m.innerHTML='<span class="e">Kayıt klasörü bulunamadı.</span> <button class="sm" style="display:inline-block;width:auto" onclick="exSec().then(o=>{if(o)exportX()})">Klasör seç</button>';return}
+ if(!exKl||!exKl.klasor||!exKl.var){m.innerHTML='<div class="bekle">Excel dosyalarının kaydedileceği klasörü seç…</div>';if(!await exSec()){m.innerHTML=bildir('soru','Kayıt klasörü seçilmediği için kaydedilmedi.','',[['Klasör seç…','exSec().then(o=>{if(o)exportX()})',1]]);return}}
+ m.innerHTML='<div class="bekle">Kaydediliyor…</div>';let j;
+ try{j=await (await fetch('/excel/kaydet?ad='+encodeURIComponent(ad)+(mod?'&mod='+mod:''),{method:'POST',body:blob,cache:'no-store'})).json()}catch(e){m.innerHTML=bildir('hata','Kaydedilemedi',esc(e.message));return}
+ if(j.klasoryok){exKl={klasor:exKl.klasor,var:false};exYerCiz();m.innerHTML=bildir('soru','Kayıt klasörü bulunamadı','Klasör silinmiş ya da taşınmış olabilir.',[['Klasör seç…','exSec().then(o=>{if(o)exportX()})',1]]);return}
  if(j.var){if(ad===exSon)return exKaydet(blob,ad,'ustune',uyar);exBek={blob,ad,uyar};
-  m.innerHTML='<span class="e">“'+esc(ad)+'” bu klasörde zaten var.</span> <button class="sm" style="display:inline-block;width:auto" onclick="exBekle(\'ustune\')">Üzerine yaz</button><button class="sm" style="display:inline-block;width:auto" onclick="exBekle(\'yeni\')">Yeni adla kaydet</button><button class="sm" style="display:inline-block;width:auto" onclick="exBek=null;$(\'msg\').textContent=\'\'">Vazgeç</button>';return}
- if(j.kilitli){exBek={blob,ad,uyar};m.innerHTML='<span class="e">“'+esc(j.ad||ad)+'” şu an Excel\'de açık olduğu için üzerine yazılamadı. Excel\'de kapatıp tekrar kaydet ya da yeni adla kaydet.</span> <button class="sm" style="display:inline-block;width:auto" onclick="exBekle(\'ustune\')">Tekrar dene</button><button class="sm" style="display:inline-block;width:auto" onclick="exBekle(\'yeni\')">Yeni adla kaydet</button>';return}
- if(!j.ok){m.innerHTML='<span class="e">Kaydedilemedi: '+esc(j.hata||'bilinmeyen hata')+'</span>';return}
- exSon=j.ad;exBek=null;const q=JSON.stringify(j.ad).replace(/"/g,'&quot;');
- m.innerHTML='<span style="color:#18794e">✔ Kaydedildi: <b>'+esc(j.ad)+'</b></span> <span class="m">('+esc(exKisa(j.klasor))+')</span> <button class="sm" style="display:inline-block;width:auto" onclick="exAc('+q+',\'dosya\')">Excel\'de aç</button><button class="sm" style="display:inline-block;width:auto" onclick="exAc('+q+',\'klasor\')">Klasörde göster</button>'+(uyar||'')}
+  m.innerHTML=bildir('soru','<b>'+esc(ad)+'</b> bu klasörde zaten var','Üzerine yazarsan eski dosya değişir.',[['Üzerine yaz','exBekle(\'ustune\')',1],['Yeni adla kaydet','exBekle(\'yeni\')'],['Vazgeç','exBek=null;$(\'msg\').innerHTML=\'\'']]);return}
+ if(j.kilitli){exBek={blob,ad,uyar};m.innerHTML=bildir('soru','<b>'+esc(j.ad||ad)+'</b> şu an Excel\'de açık','Excel\'de kapatıp tekrar dene ya da yeni adla kaydet.',[['Tekrar dene','exBekle(\'ustune\')',1],['Yeni adla kaydet','exBekle(\'yeni\')']]);return}
+ if(!j.ok){m.innerHTML=bildir('hata','Kaydedilemedi',esc(j.hata||'bilinmeyen hata'));return}
+ exSon=j.ad;exBek=null;
+ m.innerHTML=bildir('ok','Kaydedildi: <b>'+esc(j.ad)+'</b>',esc(exKisa(j.klasor)),[['Excel\'de aç','exAc('+qs(j.ad)+',\'dosya\')',1],['Klasörde göster','exAc('+qs(j.ad)+',\'klasor\')']])+uyarH(uyar)}
 function exBekle(mod){if(exBek)exKaydet(exBek.blob,exBek.ad,mod,exBek.uyar)}
 window.addEventListener('message',e=>{const d=e.data||{};if(d.t==='exKlasor'){exKl={klasor:d.klasor||'',var:!!d.klasor};exYerCiz()}});
 if(KHTTP)setTimeout(exYukle,300);
@@ -966,9 +1015,9 @@ async function exportX(dl){try{$('msg').textContent='Hazırlanıyor…';const{n,
  if(dl===2)dl=0;
  if(!fh&&!dl&&window.showSaveFilePicker){try{fh=await showSaveFilePicker({suggestedName:((art||'ASORTİ')+' - '+total+' ADET.xlsm').replace(/[\\\/:*?"<>|]/g,''),id:'kesim-raporlari',startIn:'desktop',types:[{description:'Excel (makrolu)',accept:{'application/vnd.ms-excel.sheet.macroEnabled.12':['.xlsm']}}]})}catch(x){if(x&&x.name==='AbortError'){$('msg').textContent='';return}}}
  if(fh&&!dl){try{if(fh.requestPermission&&await fh.requestPermission({mode:'readwrite'})!=='granted')throw new Error('yazma izni verilmedi');const w=await fh.createWritable();await w.write(blob);await w.close();
-   $('msg').innerHTML='<span style="color:#18794e">✔ Dosyanın üstüne kaydedildi: '+esc(fh.name)+'</span> <span class="m">(Excel\'de açıksa kapatıp yeniden aç)</span>'+xWarn()+wn.map(x=>'<br><span class="e">⚠ '+esc(x)+'</span>').join('');return}
-  catch(x){$('msg').innerHTML='<span class="e">Dosyaya yazılamadı ('+esc(x.message)+'). Excel\'de açıksa kapatıp tekrar dene ya da "Kopya olarak indir"i kullan.</span>';return}}
- const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=((art||'ASORTİ')+' - '+total+' ADET.xlsm').replace(/[\\\/:*?"<>|]/g,'');a.click();$('msg').innerHTML='<span style="color:#18794e">✔ Dosya indirildi</span>'+xWarn()+wn.map(x=>'<br><span class="e">⚠ '+esc(x)+'</span>').join('')}
+   $('msg').innerHTML=bildir('ok','Dosyanın üstüne kaydedildi: <b>'+esc(fh.name)+'</b>','Excel\'de açıksa kapatıp yeniden aç.')+uyarH(uyar);return}
+  catch(x){$('msg').innerHTML=bildir('hata','Dosyaya yazılamadı','Excel\'de açıksa kapatıp tekrar dene ya da "Kopya olarak indir"i kullan. ('+esc(x.message)+')');return}}
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=((art||'ASORTİ')+' - '+total+' ADET.xlsm').replace(/[\\\/:*?"<>|]/g,'');a.click();$('msg').innerHTML=bildir('ok','Dosya indirildi: <b>'+esc(a.download)+'</b>','İndirilenler klasörüne bakabilirsin.')+uyarH(uyar)}
  catch(x){alert('Dosya oluşturulamadı: '+x.message)}}
 
 const PRE={'Standart (XS–5XL)':['XS','S','M','L','XL','XXL','3XL','4XL','5XL'],'Rakamlı (34–50)':['34','36','38','40','42','44','46','48','50'],'Çocuk/UK (8–20)':['8','10','12','14','16','18','20']};
