@@ -38,6 +38,7 @@ button{font:inherit;color:inherit}
 #durum i{width:7px;height:7px;border-radius:50%;background:var(--mut)}
 #durum.ok i{background:var(--ok);box-shadow:0 0 0 3px rgba(31,157,85,.18)}
 #durum.bad{color:var(--bad)}#durum.bad i{background:var(--bad)}
+#durum.bekle i{background:#ff9f0a;animation:nb 1.2s ease-in-out infinite}
 #gun{display:none;align-items:center;gap:8px;height:30px;padding:0 4px 0 12px;border-radius:15px;background:var(--accs);color:var(--acc);font-size:12.5px}
 #gun.on{display:flex}
 #gun a{cursor:pointer;text-decoration:underline;opacity:.8}
@@ -208,13 +209,31 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')menu(false)});
 window.addEventListener('blur',()=>menu(false));
 
 /* ---------- sunucuya "pencere açık" haberi: pencere kapanınca köprü ve Batch de kapanır ---------- */
-async function nabiz(){const d=$('durum'),y=$('durumYazi');try{const r=await fetch('/nabiz',{cache:'no-store'});const j=await r.json();
-  if(j.gerber===false){d.className='';y.textContent='Sadece asorti'}
-  else{d.className=j.kopru?'ok':'bad';y.textContent=j.kopru?'Gerber bağlı':'Gerber köprüsü kapalı'}}
- catch(e){d.className='bad';y.textContent='Bağlantı koptu: pencereyi kapatıp yeniden aç'}}
+/* Arka plandaki program yeniden başlarsa (güncelleme vb.) sayfa bunu kimliğinden anlar ve kendini tazeler.
+   Kısa kopmalarda kırmızı uyarı çıkmaz; sadece uzun süre hiç cevap gelmezse çıkar. */
+let guncelleniyor=false,yenileniyor=false,sunucuId=null,kopukBas=0,hizliT=null,yaziKilit=0;
+const bekle=ms=>new Promise(r=>setTimeout(r,ms));
+function durumYaz(c,t,ipucu){const d=$('durum');d.className=c;$('durumYazi').textContent=t;d.title=ipucu||'Gerber köprüsünün durumu'}
+function sayfalarKaydetsin(){document.querySelectorAll('#sayfalar iframe').forEach(f=>{try{f.contentWindow.postMessage({t:'kaydet'},'*')}catch(e){}})}
+function tazele(){if(yenileniyor)return;yenileniyor=true;durumYaz('bekle','Yenileniyor…');sayfalarKaydetsin();setTimeout(()=>location.reload(),300)}
+async function nabiz(){if(yenileniyor)return;
+ try{const r=await fetch('/nabiz',{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();
+  kopukBas=0;clearTimeout(hizliT);
+  if(j.id&&sunucuId&&j.id!==sunucuId&&!guncelleniyor){tazele();return}   // program yeniden başlamış: sayfayı kendiliğinden tazele
+  if(j.id)sunucuId=j.id;
+  if(guncelleniyor||Date.now()<yaziKilit)return;
+  if(j.gerber===false)durumYaz('','Sadece asorti');
+  else durumYaz(j.kopru?'ok':'bad',j.kopru?'Gerber bağlı':'Gerber köprüsü kapalı')}
+ catch(e){if(!kopukBas)kopukBas=Date.now();
+  if(guncelleniyor)durumYaz('bekle','Güncelleniyor…');
+  else if(Date.now()-kopukBas<25000)durumYaz('bekle','Yeniden bağlanıyor…','Arka plandaki programa ulaşılamadı, tekrar deneniyor. Gelince sayfa kendiliğinden yenilenir.');
+  else durumYaz('bad','Bağlantı kurulamadı: pencereyi kapatıp yeniden aç','Arka plandaki program 25 saniyedir cevap vermiyor. Pencereyi kapatıp masaüstündeki Asorti Aracı simgesinden aç. Çalışma sayfaların kayıtlı.');
+  clearTimeout(hizliT);hizliT=setTimeout(nabiz,1000)}}
+/* güncellemeden sonra sayfa açılınca kısa bir "güncellendi" yazısı */
+try{const g=sessionStorage.getItem('asorti-guncellendi');if(g){sessionStorage.removeItem('asorti-guncellendi');yaziKilit=Date.now()+6000;durumYaz('ok','v'+g+' sürümüne güncellendi');setTimeout(nabiz,6100)}}catch(e){}
 nabiz();setInterval(nabiz,5000);
 window.addEventListener('pagehide',()=>{try{navigator.sendBeacon('/kapaniyor','x')}catch(e){}});
-window.addEventListener('beforeunload',e=>{if(Object.values(info).some(d=>d.busy)){e.preventDefault();e.returnValue=''}});
+window.addEventListener('beforeunload',e=>{if(yenileniyor)return;if(Object.values(info).some(d=>d.busy)){e.preventDefault();e.returnValue=''}});
 
 /* ---------- güncelleme: GitHub'da yeni sürüm varsa üstte "Güncelle" çıkar ---------- */
 let G=null;
@@ -225,14 +244,27 @@ $('denetle').onclick=async()=>{const b=$('denetle');b.textContent='Denetleniyor�
 $('gunNot').onclick=()=>{if(G)alert('v'+G.yeni+(G.tarih?' · '+G.tarih:'')+'\n\n'+((G.notlar||[]).map(x=>'• '+x).join('\n')||'Not yazılmamış.'))};
 $('gunBtn').onclick=async()=>{if(!G)return;
   if(Object.values(info).some(d=>d.busy)){alert('Gerber\'e gönderilen pastallar var. Onlar bitince güncelle.');return}
-  if(!confirm('Asorti Aracı v'+G.yeni+' sürümüne güncellensin mi?\n\nÇalışma sayfaların ve ayarların korunur. Pencere birkaç saniye içinde yeniden yüklenir.'))return;
-  const b=$('gunBtn');b.disabled=true;b.textContent='Güncelleniyor…';
-  document.querySelectorAll('#sayfalar iframe').forEach(f=>{try{f.contentWindow.postMessage({t:'kaydet'},'*')}catch(e){}});
-  try{const j=await (await fetch('/guncelle',{method:'POST',body:'{}',cache:'no-store'})).json();if(!j.ok)throw new Error(j.hata||'bilinmeyen hata')}
-  catch(e){alert('Güncellenemedi: '+e.message);b.disabled=false;b.textContent='Güncelle';return}
-  await new Promise(r=>setTimeout(r,2500));
-  for(let i=0;i<40;i++){try{const r=await fetch('/surum',{cache:'no-store'});if(r.ok){const j=await r.json();if(j.surum===G.yeni)break}}catch(e){}await new Promise(r=>setTimeout(r,750))}
-  location.reload()};
+  if(!confirm('Asorti Aracı v'+G.yeni+' sürümüne güncellensin mi?\n\nÇalışma sayfaların ve ayarların korunur. Pencere birkaç saniye içinde kendiliğinden yenilenir, kapatıp açman gerekmez.'))return;
+  const b=$('gunBtn'),hedef=G.yeni,eskiId=sunucuId;
+  const birak=m=>{guncelleniyor=false;b.disabled=false;b.textContent='Güncelle';nabiz();if(m)alert(m)};
+  b.disabled=true;b.textContent='Güncelleniyor…';guncelleniyor=true;durumYaz('bekle','Güncelleniyor…');
+  sayfalarKaydetsin();
+  let hata=null;
+  try{const j=await (await fetch('/guncelle',{method:'POST',body:'{}',cache:'no-store'})).json();if(!j.ok)hata=j.hata||'bilinmeyen hata'}
+  catch(e){/* cevap yolda kaybolduysa güncelleme yine de olmuş olabilir: aşağıda yeni programın açılmasına bakılır */}
+  if(hata){birak(/^Güncellenemedi/.test(hata)?hata:'Güncellenemedi: '+hata);return}
+  /* Yeni sürümün programı açılana kadar bekle. Sayfa ancak yeni program cevap verince yenilenir;
+     boşlukta yenilenirse tarayıcının "bağlanılamadı" sayfası açılırdı. */
+  await bekle(800);const t0=Date.now();let yeniAcik=false,surum=null;
+  while(Date.now()-t0<90000){
+    try{const r=await fetch('/nabiz',{cache:'no-store'});if(r.ok){const j=await r.json();
+      if(eskiId?(j.id&&j.id!==eskiId):true){const v=await (await fetch('/surum',{cache:'no-store'})).json();surum=v.surum;
+        if(eskiId||surum===hedef){yeniAcik=true;break}}}}catch(e){}
+    if(!eskiId&&Date.now()-t0>20000&&surum)break;
+    await bekle(400)}
+  if(!yeniAcik){if(surum)birak('Güncelleme tamamlanamadı. Birazdan tekrar dene.');else birak();return}   // program hiç açılmadıysa nabız durumu gösterir; açılınca sayfa kendini tazeler
+  try{if(surum===hedef)sessionStorage.setItem('asorti-guncellendi',hedef)}catch(e){}
+  yenileniyor=true;sayfalarKaydetsin();setTimeout(()=>location.reload(),200)};
 surumYaz().then(j=>{if(j&&j.guncelleme){gunKontrol(false);setInterval(()=>gunKontrol(false),2*3600*1000)}});
 
 if(!S.list.length)yeni();else{S.list.forEach(frame);if(!S.list.includes(S.on))S.on=S.list[0];ac(S.on)}

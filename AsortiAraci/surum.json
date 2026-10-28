@@ -1,10 +1,11 @@
 {
- "surum": "1.1.13",
+ "surum": "1.1.14",
  "tarih": "2026-10-28",
  "notlar": [
-  "Sıfırla bazen çalışmıyordu: sayfa yeniden yüklenirken otomatik kayıt eski bilgileri geri yazıyordu, düzeltildi",
-  "Çalışma sayfası artık sadece bir şey değişince kaydediliyor (önceden 2,5 saniyede bir)",
-  "Excel kayıt yeri tek parça, sade bir kapsül olarak görünüyor (klasör adı + Değiştir / Klasörü aç / Başka yere…)",
-  "Kaydetme mesajları renkli şeritler hâlinde: kaydedildi (yeşil), soru (turuncu), hata (kırmızı); düğmeler uygulamanın düğme tasarımında"
+  "Güncellemede artık “Bağlantı koptu: pencereyi kapatıp yeniden aç” yazısı çıkmıyor; üstte “Güncelleniyor…” yazar, pencere kendiliğinden yenilenir",
+  "Sayfa, yeni sürümün programı gerçekten açılana kadar bekleyip ondan sonra yenileniyor (tarayıcının “bağlanılamadı” sayfası açılmaz)",
+  "Arka plandaki program herhangi bir sebeple yeniden başlarsa sayfa bunu fark edip kendiliğinden yenileniyor; çalışma sayfaları önce kaydediliyor",
+  "Kısa kopmalarda turuncu “Yeniden bağlanıyor…” yazar; kırmızı uyarı sadece 25 saniye hiç cevap gelmezse çıkar",
+  "Güncellemeden sonra üstte kısa bir “v… sürümüne güncellendi” yazısı görünür"
  ]
 }

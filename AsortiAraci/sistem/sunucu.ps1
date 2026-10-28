@@ -185,6 +185,7 @@ $L = New-Object Net.HttpListener
 $L.Prefixes.Add("http://localhost:$Port/")
 $L.Start(); Log "sunucu acildi: http://localhost:$Port/"
 $tipler = @{ '.html' = 'text/html; charset=utf-8'; '.js' = 'text/javascript; charset=utf-8'; '.json' = 'application/json; charset=utf-8'; '.txt' = 'text/plain; charset=windows-1254'; '.png' = 'image/png'; '.ico' = 'image/x-icon'; '.css' = 'text/css; charset=utf-8' }
+$script:sunucuId = "$PID-" + (Get-Date).Ticks   # sayfa, sunucu yeniden basladiginda (guncelleme) bunu degismis gorup kendini tazeler
 $son = $null; $basla = Get-Date; $script:sonBak = [datetime]::MinValue; $script:kapanis = $null
 function JsonYanit($ctx, $obj) { Yanit $ctx 200 ($utf8.GetBytes(($obj | ConvertTo-Json -Depth 5 -Compress))) 'application/json; charset=utf-8' }
 function Yanit($ctx, [int]$kod, [byte[]]$veri, [string]$tip) {
@@ -215,7 +216,7 @@ try {
       $yol = [Uri]::UnescapeDataString($ctx.Request.Url.AbsolutePath).TrimStart('/')
       $m = $ctx.Request.HttpMethod
       if ($yol -eq 'kapaniyor') { $script:kapanis = (Get-Date).AddSeconds(6); Yanit $ctx 200 $null $null; continue }
-      if ($yol -eq 'nabiz') { $son = Get-Date; $script:kapanis = $null; JsonYanit $ctx @{ kopru = [bool]($script:kopru -and -not $script:kopru.HasExited); gerber = [bool]$A.gerber }; continue }
+      if ($yol -eq 'nabiz') { $son = Get-Date; $script:kapanis = $null; JsonYanit $ctx @{ kopru = [bool]($script:kopru -and -not $script:kopru.HasExited); gerber = [bool]$A.gerber; id = $script:sunucuId }; continue }
       if ($yol -eq 'excel/klasor' -and $m -eq 'GET') { JsonYanit $ctx (ExcelDurum); continue }
       if ($yol -eq 'excel/klasor-sec' -and $m -eq 'POST') {
         $sec = ''; try { $sec = KlasorSec (ExcelKlasor) } catch { Log ('klasor secilemedi: ' + $_.Exception.Message) }
