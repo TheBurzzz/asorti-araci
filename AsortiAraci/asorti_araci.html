@@ -893,7 +893,11 @@ async function parse(){try{
  exRead(sh);
  infoHtml();
  $('go').disabled=false;lock=[];ban=[];meas={};document.querySelectorAll('.pc').forEach(x=>x.checked=false);$('res').innerHTML='';$('act').innerHTML='';$('st3').style.display='none'}catch(x){$('info').innerHTML='<span class="e">Dosya okunamadı: '+x.message+'</span>'}}
-$('rst').onclick=()=>{if(confirm('Sayfa ilk açıldığı haline dönecek, girdiğin bilgiler silinecek. Emin misin?')){try{if(SAYFA)localStorage.removeItem('asorti-sayfa-'+SAYFA);localStorage.removeItem(JK)}catch(e){}location.reload()}};
+$('rst').onclick=()=>{if(!confirm('Sayfa ilk açıldığı haline dönecek, girdiğin bilgiler silinecek. Emin misin?'))return;
+ /* önce otomatik kaydı durdur: yoksa sayfa yeniden yüklenirken eski bilgiler tekrar kaydedilip geri gelir */
+ window.sifirlaniyor=true;try{clearTimeout(gTimer);gJob=null;Object.values(xTim).forEach(clearTimeout)}catch(e){}
+ try{if(SAYFA)localStorage.removeItem('asorti-sayfa-'+SAYFA);localStorage.removeItem(JK)}catch(e){}
+ document.body.style.transition='opacity .2s';document.body.style.opacity='.45';document.body.style.pointerEvents='none';location.reload()};
 $('go').onclick=()=>{const tkE=setTk();if(tkE){$('act').innerHTML='';$('res').innerHTML='<div class="box e">'+esc(tkE)+'</div>';return}if(!(+$('P').value>=2)&&!fixMode){$('st').textContent=' Önce asorti sayısını yaz (örn. 4)';$('P').focus();return}$('st').textContent=' hesaplanıyor…';$('go').disabled=true;W&&W.terminate();
  const fin=r=>{$('go').disabled=false;$('st').textContent='';
   if(!r.list.length&&lastFix&&sols[cur]){show();$('res').insertAdjacentHTML('afterbegin','<div class="box e" style="margin-bottom:10px">⚠ Bu asortilerle, ayarlardaki sınırlar içinde kat sayısı bulunamadı. Tablo olduğu gibi duruyor; aşağıdaki uyarılara bakıp asorti kutularını düzelt ve tekrar <b>Katları yeniden hesapla</b>ya bas ya da <b>Baştan hesapla</b>. İstersen max + değerini artırabilir ya da en az kat sınırını düşürebilirsin.</div>');return}
@@ -1109,9 +1113,12 @@ if(KHTTP)fetch('/surum',{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j&&j.g
 {const cs=document.createElement('style');cs.textContent='html.gerbersiz .gpb{display:none!important}';document.head.appendChild(cs)}
 /* uygulama penceresindeki çalışma sayfası: kendini kaydeder, açılınca kaldığı yerden devam eder */
 if(SAYFA){const SK='asorti-sayfa-'+SAYFA;let lastS='';
- window.sayfaKaydet=()=>{try{if(info&&info.snap){const t=JSON.stringify(getState());if(t!==lastS){localStorage.setItem(SK,t);lastS=t}}}catch(e){}};
- setTimeout(async()=>{try{const t=localStorage.getItem(SK);if(t){const st=JSON.parse(t);lastS=t;if(await applyState(st))ldMsg('✔ Çalışma sayfası kaldığın yerden açıldı')}}catch(e){}},0);
- setInterval(()=>{try{if(info&&info.snap){const t=JSON.stringify(getState());if(t!==lastS){localStorage.setItem(SK,t);lastS=t}}
+ /* sadece bilgiler değişince kaydet (kayıt zamanı karşılaştırmaya girmez); sıfırlanırken hiç kaydetme */
+ const ozet=st=>JSON.stringify(Object.assign({},st,{date:''}));
+ const kaydet=()=>{if(window.sifirlaniyor||!info||!info.snap)return;const st=getState(),k=ozet(st);if(k!==lastS){localStorage.setItem(SK,JSON.stringify(st));lastS=k}};
+ window.sayfaKaydet=()=>{try{kaydet()}catch(e){}};
+ setTimeout(async()=>{try{const t=localStorage.getItem(SK);if(t){const st=JSON.parse(t);lastS=ozet(st);if(await applyState(st))ldMsg('✔ Çalışma sayfası kaldığın yerden açıldı')}}catch(e){}},0);
+ setInterval(()=>{if(window.sifirlaniyor)return;try{kaydet()}catch(e){}try{
   const a=(gJob&&gJob.st||{}).asama,busy=(!!gJob&&!['bitti','hata','iptal'].includes(a))||xt.some(x=>x.job&&!xBitti((x.job.st||{}).asama));parent.postMessage({t:'sayfa',id:SAYFA,ad:(info&&info.art)||'',busy,bitti:a==='bitti'},'*')}catch(e){}},2500)}
 function setArt(v){v=String(v||'').toLocaleUpperCase('tr').trim();if(!info)return;if(info.art!==v){info.art=v;ord.art=v;fh=null}
  const i=$('art2');if(i&&i.value!==v&&document.activeElement!==i)i.value=v;
