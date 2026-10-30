@@ -213,11 +213,15 @@ function TaramaBitti {
     # bulunanları elle değiştirme sayfasına da yaz
     $tAM.Text = "$($r.oneri.accumark)"; $tKuyruk.Text = "$($r.oneri.kuyruk)"
     $h = "$($r.oneri.surucu)".TrimEnd(':').ToUpperInvariant(); if ($cHarf.Items.Contains($h)) { $cHarf.SelectedItem = $h }
-    if (-not $r.oneri.gerber) { $script:sessiz = $true; $cSadece.Checked = $true; $script:sessiz = $false }
   } else {
     $lTara.Text = 'İnceleme tamamlanamadı' + $(if ($r -and $r.hata) { ': ' + $r.hata } else { '' }) + '. Ayarları elle girebilirsin.'
-    if ($eskiAyar) { $tAM.Text = "$($eskiAyar.accumark)"; $tKuyruk.Text = "$($eskiAyar.kuyruk)" }
   }
+  # tarama bulamadıysa ama eski kurulumdaki yer hâlâ çalışıyorsa onu koru (çalışan bir ayar boş bir bulguyla değişmesin)
+  if ($eskiAyar) {
+    if (-not $tAM.Text -and "$($eskiAyar.accumark)" -and (Test-Path -LiteralPath (Join-Path "$($eskiAyar.accumark)" 'csvimprt.exe'))) { $tAM.Text = "$($eskiAyar.accumark)" }
+    if (-not $tKuyruk.Text -and "$($eskiAyar.kuyruk)") { $ok = $false; try { $ok = Test-Path -LiteralPath "$($eskiAyar.kuyruk)" } catch {}; if ($ok) { $tKuyruk.Text = "$($eskiAyar.kuyruk)" } }
+  }
+  if (-not $tAM.Text.Trim()) { $script:sessiz = $true; $cSadece.Checked = $true; $script:sessiz = $false }
   if ($eskiAyar -and $eskiAyar.port) { $tPort.Text = "$($eskiAyar.port)" }
   Ozet
   $bTekrar.Enabled = $true; $bElle.Enabled = $true

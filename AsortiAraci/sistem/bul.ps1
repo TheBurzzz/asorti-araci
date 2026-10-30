@@ -7,7 +7,7 @@ $script:BulNotlar = $null
 function BulNot([string]$s) { if ($null -ne $script:BulNotlar) { [void]$script:BulNotlar.Add($s) } }
 function BulPc { ("" + $env:COMPUTERNAME).ToUpperInvariant() }
 # iki parçayı birleştirir (Join-Path olmayan sürücülerde hata yazar; bu yazmaz)
-function Yol([string]$a, [string]$b) { return $a.TrimEnd('') + '' + $b.TrimStart('') }
+function Yol([string]$a, [string]$b) { $t = [char]92; return $a.TrimEnd($t) + $t + $b.TrimStart($t) }
 
 # ---------- sürücüler ----------
 # her sürücü: harf, tip (2 çıkarılabilir, 3 yerel disk, 4 ağ), ağ yolu (\\bilgisayar\paylaşım), kopuk (bağlantısı düşmüş ağ sürücüsü)
@@ -167,7 +167,7 @@ function UserrootBul([string]$EskiSistem = '', [string]$EskiDepo = '') {
     if ($s.tip -eq 4) {
       if ($s.kopuk) { continue }                       # bağlantısı kopuk ağ sürücüsünde beklemeyelim
       if (KendiYolu $s.ag) { continue }                 # bu bilgisayarın kendi diski (K: -> \\KALIP1\C gibi): aynı klasörler
-      if ($s.ag -match '^\\\\([^\\]+)\\' -and -not (Acik445 @($matches[1]) 600).Count) { continue }   # kapalı bilgisayar: atla
+      if ($s.ag -match '^\\\\([^\\]+)\\' -and -not (HostAcik $matches[1])) { continue }   # kapalı bilgisayar: atla
     }
     $st = "$($s.harf):\userroot\storage"
     $ok = $false; try { $ok = Test-Path -LiteralPath $st } catch {}
@@ -201,6 +201,38 @@ function Acik445([string[]]$adresler, [int]$ms = 700) {
   $acik = @($is | Where-Object { $_.t.Status -eq 'RanToCompletion' -and $_.c.Connected } | ForEach-Object { $_.a })
   foreach ($x in $is) { try { $x.c.Close() } catch {} }
   return $acik
+}
+# tek bilgisayar için (sonuç saklanır; aynı bilgisayara tekrar tekrar bakılmaz)
+function HostAcik([string]$h) {
+  if (-not $h) { return $false }
+  if (-not $script:BulHostOnbellek) { $script:BulHostOnbellek = @{} }
+  $k = $h.ToUpperInvariant()
+  if (-not $script:BulHostOnbellek.ContainsKey($k)) { $script:BulHostOnbellek[$k] = [bool](@(Acik445 @($h) 700).Count) }
+  return $script:BulHostOnbellek[$k]
+}
+# verilen köklerde (\\bilgisayar ya da \\bilgisayar\paylaşım) kuyruk dosyasını aynı anda arar.
+# Hepsi birlikte en fazla $ms bekler: cevap vermeyen bir bilgisayar (yazıcı, NAS, kapanmakta olan PC) taramayı uzatmaz.
+function KuyrukAgdaAra([string[]]$kokler, [string[]]$alt, [int]$ms = 8000) {
+  $bulunan = New-Object System.Collections.ArrayList
+  $kokler = @($kokler | Where-Object { $_ } | Select-Object -Unique)
+  if (-not $kokler.Count) { return @() }
+  try {
+    $havuz = [RunspaceFactory]::CreateRunspacePool(1, [Math]::Min(32, $kokler.Count)); $havuz.Open()
+    $kod = 'param($k, $alt) $t = [char]92; foreach ($a in $alt) { $p = $k.TrimEnd($t) + $t + $a; try { if ([IO.File]::Exists($p)) { return $p } } catch {} }; return ""'
+    $isler = @()
+    foreach ($k in $kokler) {
+      $ps = [PowerShell]::Create(); $ps.RunspacePool = $havuz
+      [void]$ps.AddScript($kod).AddArgument($k).AddArgument([string[]]$alt)
+      $isler += [pscustomobject]@{ k = $k; ps = $ps; a = $ps.BeginInvoke() }
+    }
+    $bitis = (Get-Date).AddMilliseconds($ms)
+    foreach ($i in $isler) {
+      $kalan = [int][Math]::Max(0, ($bitis - (Get-Date)).TotalMilliseconds)
+      if ($i.a.AsyncWaitHandle.WaitOne($kalan)) { try { $p = "" + (@($i.ps.EndInvoke($i.a)) | Select-Object -First 1); if ($p) { [void]$bulunan.Add($p) } } catch {} }
+      else { BulNot "$($i.k) zamanında cevap vermedi, atlandı." }
+    }
+  } catch { BulNot ('Ağda aranamadı: ' + $_.Exception.Message) }
+  return @($bulunan)
 }
 # OTOPASTAL olabilecek bilgisayarlar: ağ sürücülerinin bağlı olduğu bilgisayarlar, son konuşulanlar (ARP), aynı ağdaki bütün adresler
 function AgBilgisayarlari([switch]$Tara) {
@@ -254,6 +286,7 @@ function KuyrukOku([string]$yol) {
 function KuyrukSunucusu([string]$yol) { if ($yol -match '^\\\\([^\\]+)\\') { return $matches[1] }; return '' }
 function KuyrukDegerlendir([string]$yol, [string]$kaynak, $alanlar) {
   $o = [ordered]@{ yol = $yol; kaynak = $kaynak; erisim = $false; sunucu = (KuyrukSunucusu $yol); son = ''; kayit = 0; bizden = 0; alanimiz = 0; puan = 0 }
+  if ($o.sunucu -and -not (KendiYolu $yol) -and -not (HostAcik $o.sunucu)) { return [pscustomobject]$o }   # kapalı bilgisayarda beklenmez
   $f = $null; try { $f = Get-Item -LiteralPath $yol -ErrorAction Stop } catch {}
   if (-not $f) { return [pscustomobject]$o }
   $o.erisim = $true; $o.son = $f.LastWriteTime.ToString('s')
@@ -288,32 +321,36 @@ function KuyrukBul([string]$Eski = '', $alanlar = $null, [switch]$AgTara, [switc
     if (-not $k -or $k -match '^\\') { continue }
     foreach ($f in (DosyaAra $k '*.umq' 2)) { Ekle $f.FullName 'bu bilgisayar' }
   }
-  # 3) ağ sürücüleri ve ağdaki bilgisayarlar
+  # 3) ağ sürücülerinin bağlı olduğu paylaşımlar (cevap vermeyen bilgisayar beklenmez)
   $alt = @('Users\Public\Gerber Technology\Queue\ultramrk.umq', 'Users\Public\Gerber Technology\ultramrk.umq', 'Public\Gerber Technology\Queue\ultramrk.umq', 'Public\Gerber Technology\ultramrk.umq',
            'Gerber Technology\Queue\ultramrk.umq', 'Gerber Technology\ultramrk.umq', 'Queue\ultramrk.umq', 'ultramrk\ultramrk.umq',
            'C\Users\Public\Gerber Technology\Queue\ultramrk.umq', 'C\ProgramData\Gerber Technology\ultramrk.umq', 'C\ProgramData\Gerber Technology\Queue\ultramrk.umq', 'ProgramData\Gerber Technology\ultramrk.umq')
+  $payAlt = @('ultramrk.umq', 'Queue\ultramrk.umq', 'Gerber Technology\Queue\ultramrk.umq', 'Gerber Technology\ultramrk.umq', 'Public\Gerber Technology\Queue\ultramrk.umq')
+  $payKok = @()
   foreach ($s in (SurucuListesi)) {
     if ($s.tip -ne 4 -or $s.kopuk -or -not $s.ag -or (KendiYolu $s.ag)) { continue }
-    if ($s.ag -match '^\\\\([^\\]+)\\' -and -not (Acik445 @($matches[1]) 600).Count) { continue }
-    foreach ($a in 'ultramrk.umq', 'Queue\ultramrk.umq', 'Gerber Technology\Queue\ultramrk.umq', 'Gerber Technology\ultramrk.umq', 'Public\Gerber Technology\Queue\ultramrk.umq') {
-      $p = "$($s.harf):\$a"; $ok = $false; try { $ok = Test-Path -LiteralPath $p } catch {}
-      if ($ok) { Ekle ($s.ag.TrimEnd('\') + '\' + $a) 'ağ sürücüsü' }
-    }
+    if ($s.ag -match '^\\\\([^\\]+)\\' -and (HostAcik $matches[1])) { $payKok += $s.ag }
   }
+  foreach ($p in (KuyrukAgdaAra $payKok $payAlt 5000)) { Ekle $p 'ağ sürücüsü' }
   # bulunanlardan biri bu bilgisayarın işlerini ya da klasörlerini içeriyorsa ağa bakmaya gerek yok (Tam istenmediyse)
   $guclu = $false
   if (-not $Tam) { foreach ($a in $aday) { $d = KuyrukDegerlendir $a.yol $a.kaynak $alanlar; if ($d.erisim -and ($d.bizden -or $d.alanimiz)) { $guclu = $true; break } } }
-  $ag = $(if ($guclu) { [pscustomobject]@{ once = @(); hepsi = @() } } else { AgBilgisayarlari -Tara:$AgTara })
-  $acik = @(Acik445 $ag.hepsi 900)
-  # önce ağ sürücülerinin bilgisayarları, sonra diğerleri
-  $sira = @($ag.once | Where-Object { $acik -contains $_ }) + @($acik | Where-Object { $ag.once -notcontains $_ })
-  $bakildi = 0
-  foreach ($h in $sira) {
-    if (((Get-Date) - $t0).TotalSeconds -gt $Butce) { BulNot "Ağ taraması süre sınırında durdu ($bakildi bilgisayara bakıldı)."; break }
-    $bakildi++
-    foreach ($a in $alt) {
-      $p = "\\$h\$a"; $ok = $false; try { $ok = Test-Path -LiteralPath $p } catch {}
-      if ($ok) { Ekle $p 'ağ'; break }
+  $bakildi = 0; $acikSay = 0
+  if (-not $guclu) {
+    # 4) önce ağ sürücülerinin bilgisayarları ve son konuşulan bilgisayarlar; hepsine aynı anda, her biri en fazla birkaç saniye
+    $ag = AgBilgisayarlari
+    $acik = @(Acik445 $ag.hepsi 900)
+    $sira = @($ag.once | Where-Object { $acik -contains $_ }) + @($acik | Where-Object { $ag.once -notcontains $_ })
+    foreach ($p in (KuyrukAgdaAra @($sira | ForEach-Object { '\\' + $_ }) $alt 8000)) { Ekle $p 'ağ' }
+    $bakildi = $sira.Count; $acikSay = $acik.Count
+    # 5) hâlâ bulunamadıysa (ya da tam tarama istendiyse) aynı ağdaki bütün adresler
+    $erisilebilir = @($aday | Where-Object { $_.kaynak -ne 'ayar' -or (KuyrukDegerlendir $_.yol $_.kaynak $alanlar).erisim })
+    if ($AgTara -and ($Tam -or -not $erisilebilir.Count)) {
+      $ag2 = AgBilgisayarlari -Tara
+      $yeni = @($ag2.hepsi | Where-Object { $sira -notcontains $_ })
+      $acik2 = @(Acik445 $yeni 900)
+      foreach ($p in (KuyrukAgdaAra @($acik2 | ForEach-Object { '\\' + $_ }) $alt 8000)) { Ekle $p 'ağ' }
+      $bakildi += $acik2.Count; $acikSay += $acik2.Count
     }
   }
   # değerlendir: aynı dosya farklı yazılmış olabilir (ad / IP); en yüksek puanlı seçilir
@@ -327,7 +364,7 @@ function KuyrukBul([string]$Eski = '', $alanlar = $null, [switch]$AgTara, [switc
   return [pscustomobject]@{
     yol = $(if ($sec) { $sec.yol } else { '' }); yer = $(if (-not $sec) { '' } elseif ($sec.yol -match '^\\\\') { $(if (KendiYolu $sec.yol) { 'yerel' } else { 'ag' }) } else { 'yerel' })
     sunucu = $(if ($sec) { $sec.sunucu } else { '' }); kaynak = $(if ($sec) { $sec.kaynak } else { '' })
-    adaylar = $deg; bakilan_bilgisayar = $bakildi; acik_bilgisayar = $acik.Count
+    adaylar = $deg; bakilan_bilgisayar = $bakildi; acik_bilgisayar = $acikSay; sure_ms = [int]((Get-Date) - $t0).TotalMilliseconds
   }
 }
 
@@ -391,7 +428,7 @@ function KuyrukProgramiBul {
 function GerberBul($Eski = $null, [switch]$AgTara, [switch]$Tam, [int]$Butce = 25) {
   $t0 = Get-Date
   $script:BulNotlar = New-Object System.Collections.ArrayList
-  $script:BulSurucuOnbellek = $null; $script:BulKayitOnbellek = $null; $script:BulIpOnbellek = $null; $script:BulKuyrukOnbellek = @{}
+  $script:BulSurucuOnbellek = $null; $script:BulKayitOnbellek = $null; $script:BulIpOnbellek = $null; $script:BulKuyrukOnbellek = @{}; $script:BulHostOnbellek = @{}
   $e = @{}
   if ($Eski) {
     foreach ($k in 'accumark', 'userroot', 'depo', 'kuyruk', 'surucu', 'surucu2', 'otopastal', 'gerber') {

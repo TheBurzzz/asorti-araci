@@ -36,20 +36,40 @@ function Kapat([string]$neden = 'pencere kapandi') {
 if ($A.gerber) { KopruBaslat } else { Log 'Gerber kapali (sadece asorti): kopru baslatilmadi' }
 
 # ---------- Gerber / OTOPASTAL'i otomatik bulma (ayarlar menusundeki "Otomatik bul") ----------
-$script:taramaP = $null
+$script:taramaP = $null; $script:taramaIlkP = $null
 $TARAMA = Join-Path $Root 'kopru\log\tarama.json'
 $TARAMA_ILK = Join-Path $Root 'kopru\log\tarama_ilk.json'
+# "Otomatik bul" (tarama.json) ve acilistaki bilgi taramasi (tarama_ilk.json) ayri sureclerde: biri digerini bekletmez
 function TaramaBaslat([string]$cikti, [switch]$Taze) {
-  if ($script:taramaP -and -not $script:taramaP.HasExited) { return $false }
+  $p = $(if ($Taze) { $script:taramaIlkP } else { $script:taramaP })
+  if ($p -and -not $p.HasExited) { return $false }
+  if (-not $Taze) { Remove-Item -Force $cikti -ErrorAction SilentlyContinue }   # eski sonuc yeni sanilmasin
   $arg = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', ('"' + (Join-Path $Root 'sistem\tara.ps1') + '"'), '-Cikti', ('"' + $cikti + '"'))
   if ($Taze) { $arg += '-Taze' }
-  $script:taramaP = Start-Process -FilePath 'powershell.exe' -WindowStyle Hidden -PassThru -ArgumentList $arg
+  $p = Start-Process -FilePath 'powershell.exe' -WindowStyle Hidden -PassThru -ArgumentList $arg
+  if ($Taze) { $script:taramaIlkP = $p } else { $script:taramaP = $p; $script:taramaBas = Get-Date }
   return $true
 }
 function TaramaOku([string]$f) { if (Test-Path $f) { try { return (Get-Content $f -Raw -Encoding UTF8 | ConvertFrom-Json) } catch {} }; return $null }
 function GerberAyar { [ordered]@{ gerber = [bool]$A.gerber; accumark = "$($A.accumark)"; userroot = "$($A.userroot)"; depo = "$($A.depo)"; kuyruk = "$($A.kuyruk)"; otopastal = "$($A.otopastal)"; surucu = "$($A.surucu)"; surucu2 = "$($A.surucu2)" } }
-# bu kurulumda bir kere: ilk kurulum gibi tarar ve sonucu saklar (bir sey degistirmez; ileride sorun cikarsa neye bakilacagini gosterir)
-if (-not (Test-Path $TARAMA_ILK)) { try { if (TaramaBaslat $TARAMA_ILK -Taze) { Log 'bilgisayar taramasi baslatildi (sadece bilgi icin, ayarlara dokunmaz)' } } catch {} }
+# taramanin onerisi su anki ayarlarla birlesir: calisan bir ayar bos ya da eksik bir bulguyla asla degismez
+function TaramaOneri($r) {
+  if (-not $r -or -not $r.oneri) { return $null }
+  $o = $r.oneri; $s = [ordered]@{}
+  $amSimdi = "$($A.accumark)"; $amOk = $false; if ($amSimdi) { $amOk = Test-Path -LiteralPath (Join-Path $amSimdi 'csvimprt.exe') }
+  $s.accumark = $(if ("$($o.accumark)") { "$($o.accumark)" } elseif ($amOk) { $amSimdi } else { '' })
+  $s.gerber = [bool]$s.accumark
+  $s.userroot = $(if ("$($o.userroot)") { "$($o.userroot)" } else { "$($A.userroot)" })
+  $s.depo = $(if ("$($o.depo)" -and $r.userroot -and [int]$r.userroot.alan -gt 0) { "$($o.depo)" } else { "$($A.depo)" })
+  $kuSimdi = "$($A.kuyruk)"; $kuOk = $false; if ($kuSimdi) { try { $kuOk = Test-Path -LiteralPath $kuSimdi } catch {} }
+  if ("$($o.kuyruk)") { $s.kuyruk = "$($o.kuyruk)"; $s.otopastal = "$($o.otopastal)"; $s.surucu = "$($o.surucu)"; $s.surucu2 = "$($o.surucu2)" }
+  elseif ($kuOk) { $s.kuyruk = $kuSimdi; $s.otopastal = "$($A.otopastal)"; $s.surucu = "$($A.surucu)"; $s.surucu2 = "$($A.surucu2)" }
+  else { $s.kuyruk = ''; $s.otopastal = 'yok'; $s.surucu = "$($A.surucu)"; $s.surucu2 = "$($A.surucu2)" }
+  return $s
+}
+# bilgi taramasi: bu surumun tarama kodu ilk kez calisiyorsa bir kere (bir sey degistirmez; ileride sorun cikarsa neye bakilacagini gosterir)
+$script:ilkEski = TaramaOku $TARAMA_ILK
+if (-not $script:ilkEski -or -not $script:ilkEski.surum -or ([version]("$($script:ilkEski.surum)") -lt [version]'1.1.17')) { try { if (TaramaBaslat $TARAMA_ILK -Taze) { Log 'bilgisayar taramasi baslatildi (sadece bilgi icin, ayarlara dokunmaz)' } } catch {} }
 
 # ---------- guncelleme ----------
 $script:uzak = $null; $script:uzakZaman = [datetime]::MinValue
@@ -249,13 +269,13 @@ try {
       if ($yol -eq 'gerber/tara') {
         if ($m -eq 'POST') { $b0 = $false; try { $b0 = TaramaBaslat $TARAMA } catch { Log ('tarama baslatilamadi: ' + $_.Exception.Message) }; JsonYanit $ctx @{ basladi = [bool]$b0 }; continue }
         $kb = Join-Path $Root 'kurulum_paketi\Kurulum.bat'
-        JsonYanit $ctx @{ calisiyor = [bool]($script:taramaP -and -not $script:taramaP.HasExited); rapor = (TaramaOku $TARAMA); ayar = (GerberAyar); kurulum = $(if (Test-Path $kb) { $kb } else { '' }) }; continue
+        $calis = [bool]($script:taramaP -and -not $script:taramaP.HasExited); $r0 = $(if ($calis) { $null } else { TaramaOku $TARAMA })
+        JsonYanit $ctx @{ calisiyor = $calis; sure = $(if ($calis -and $script:taramaBas) { [int]((Get-Date) - $script:taramaBas).TotalSeconds } else { 0 }); rapor = $r0; oneri = (TaramaOneri $r0); ayar = (GerberAyar); kurulum = $(if (Test-Path $kb) { $kb } else { '' }) }; continue
       }
       if ($yol -eq 'gerber/uygula' -and $m -eq 'POST') {
-        $r0 = TaramaOku $TARAMA
-        if (-not $r0 -or -not $r0.oneri) { JsonYanit $ctx @{ hata = 'Önce "Otomatik bul" ile ara.' }; continue }
+        $r0 = TaramaOku $TARAMA; $deg = TaramaOneri $r0
+        if (-not $deg) { JsonYanit $ctx @{ hata = 'Önce "Otomatik bul" ile ara.' }; continue }
         if (SurenIs) { JsonYanit $ctx @{ hata = 'Gerber''de süren bir iş var. Pastallar bitince dene.' }; continue }
-        $deg = [ordered]@{}; foreach ($k in 'gerber', 'accumark', 'userroot', 'depo', 'kuyruk', 'otopastal', 'surucu', 'surucu2') { if ($null -ne $r0.oneri.$k) { $deg[$k] = $r0.oneri.$k } }
         try { AyarYaz $Root $deg } catch { JsonYanit $ctx @{ hata = 'Ayarlar yazılamadı: ' + $_.Exception.Message }; continue }
         $A = Ayarlar $Root
         Remove-Item -Force (Join-Path $Root 'kopru\surucu.txt') -ErrorAction SilentlyContinue

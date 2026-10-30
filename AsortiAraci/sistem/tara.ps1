@@ -24,3 +24,5 @@ if ($Cikti) {
   [IO.File]::WriteAllText($tmp, $json, (New-Object Text.UTF8Encoding($false)))
   Move-Item -Force -LiteralPath $tmp -Destination $Cikti
 } else { $json }
+# ağda cevap vermeyen bir bilgisayarı bekleyen arka plan aramaları kalmışsa süreci beklemeden kapat
+[Environment]::Exit(0)

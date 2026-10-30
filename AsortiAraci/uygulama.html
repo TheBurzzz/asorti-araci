@@ -223,12 +223,12 @@ function gbOzetYaz(a){const o=$('gbOzet'),al=$('gbAlt');
 async function gbGoster(){try{const j=await (await fetch('/gerber/tara',{cache:'no-store'})).json();gbOzetYaz(j.ayar);return j}catch(e){gbOzetYaz(null);return null}}
 function gbSatir(c,ik,t){return '<li class="'+c+'"><span class="i">'+ik+'</span><span>'+t+'</span></li>'}
 const gbEsc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function gbSonuc(j){const r=j.rapor||{},a=j.ayar||{},o=r.oneri||{},n=$('gbNot'),L=[];
+function gbSonuc(j){const r=j.rapor||{},a=j.ayar||{},o=j.oneri||r.oneri||{},n=$('gbNot'),L=[];
  if(r.hata){n.innerHTML='<ul class="gbl">'+gbSatir('no','✖','Tarama hata verdi: '+gbEsc(r.hata))+'</ul>';return}
- const am=r.accumark||{},ur=r.userroot||{},ku=r.kuyruk||{},ci=r.cihaz||{},pa=r.paylasim||{},kur=j.kurulum?' <span class="m">(kurulum bunu kendisi yapar: '+gbEsc(j.kurulum)+')</span>':'';
- L.push(am.yol?gbSatir('ok','✔','<span title="'+gbEsc(am.yol)+'">AccuMark '+gbEsc(am.surum||'')+'</span>'):gbSatir('no','✖','AccuMark bulunamadı'));
- if(am.yol)L.push(ur.alan?gbSatir('ok','✔','<b>'+ur.alan+'</b> müşteri klasörü <span class="m">'+gbEsc(ur.depo)+'\\storage</span>'):gbSatir('uy','!','Müşteri klasörü bulunamadı'));
- if(am.yol){const pc=r.otopastal_bilgisayari||gbHost(ku.yol);
+ const am=r.accumark||{},ur=r.userroot||{},ku=r.kuyruk||{},ci=r.cihaz||{},pa=r.paylasim||{},kur=j.kurulum?' <span class="m">(kurulum bunu kendisi yapar: '+gbEsc(j.kurulum)+')</span>':'',gv=!!(am.yol||o.accumark);
+ L.push(am.yol?gbSatir('ok','✔','<span title="'+gbEsc(am.yol)+'">AccuMark '+gbEsc(am.surum||'')+'</span>'):o.accumark?gbSatir('ok','✔','<span title="'+gbEsc(o.accumark)+'">AccuMark</span> <span class="m">(ayarlardaki yerinde)</span>'):gbSatir('no','✖','AccuMark bulunamadı'));
+ if(gv)L.push(ur.alan?gbSatir('ok','✔','<b>'+ur.alan+'</b> müşteri klasörü <span class="m">'+gbEsc(ur.depo)+'\\storage</span>'):gbSatir('uy','!','Müşteri klasörü bulunamadı'));
+ if(gv){const pc=r.otopastal_bilgisayari||gbHost(ku.yol);
   if(r.otopastal==='ayri')L.push(gbSatir('ok','✔','OTOPASTAL: <b>'+gbEsc(pc)+'</b> bilgisayarında, kuyruğa ulaşılıyor'));
   else if(r.otopastal==='ayni')L.push(gbSatir('ok','✔','OTOPASTAL bu bilgisayarda'));
   else L.push(gbSatir('uy','!','OTOPASTAL bulunamadı: pastallar Gerber\'de oluşur, yerleştirmeyi elle yaparsın'));
@@ -243,10 +243,12 @@ function gbSonuc(j){const r=j.rapor||{},a=j.ayar||{},o=r.oneri||{},n=$('gbNot'),
  L.push(fark.length?gbSatir('uy','↻','Şu anki ayarlardan farklı: '+fark.map(k=>({gerber:'Gerber',accumark:'AccuMark yeri',depo:'müşteri klasörleri',kuyruk:'OTOPASTAL kuyruğu',otopastal:'OTOPASTAL',surucu:'sürücü harfi'})[k]).join(', ')):gbSatir('ok','✔','Şu anki ayarlar bulunanlarla aynı'));
  n.innerHTML='<ul class="gbl">'+L.join('')+'</ul>';$('gbUy').style.display=fark.length?'':'none'}
 $('gbBul').onclick=async e=>{e.stopPropagation();const b=$('gbBul'),n=$('gbNot');b.disabled=true;b.textContent='Aranıyor…';$('gbUy').style.display='none';
- n.innerHTML='<div class="not">Bu bilgisayar ve ağdaki bilgisayarlar taranıyor… (genelde 10-30 sn)</div>';
- try{await fetch('/gerber/tara',{method:'POST',body:'{}',cache:'no-store'})}catch(x){}
- let j=null;for(let i=0;i<120;i++){await bekle(1000);try{j=await (await fetch('/gerber/tara',{cache:'no-store'})).json();if(!j.calisiyor)break}catch(x){}}
- b.disabled=false;b.textContent='Otomatik bul';if(!j||!j.rapor){n.innerHTML='<div class="not">Sonuç alınamadı, tekrar dene.</div>';return}
+ const yaz=s=>{n.innerHTML='<div class="not">Bu bilgisayar ve ağdaki bilgisayarlar taranıyor…'+(s?' '+s+' sn':'')+'</div>'};yaz(0);
+ let bas=false;try{bas=(await (await fetch('/gerber/tara',{method:'POST',body:'{}',cache:'no-store'})).json()).basladi}catch(x){}
+ let j=null;const t0=Date.now();
+ for(let i=0;i<240;i++){await bekle(1000);try{j=await (await fetch('/gerber/tara',{cache:'no-store'})).json();if(!j.calisiyor&&(j.rapor||Date.now()-t0>4000))break;yaz(Math.round((Date.now()-t0)/1000))}catch(x){}}
+ b.disabled=false;b.textContent='Otomatik bul';
+ if(!j||!j.rapor){n.innerHTML='<div class="not">'+(bas?'Tarama sonuç vermedi.':'Tarama başlatılamadı.')+' Tekrar dene.</div>';return}
  gbOzetYaz(j.ayar);gbSonuc(j)};
 $('gbUy').onclick=async e=>{e.stopPropagation();const b=$('gbUy');b.disabled=true;
  try{const j=await (await fetch('/gerber/uygula',{method:'POST',body:'{}',cache:'no-store'})).json();
