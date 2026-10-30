@@ -1,11 +1,12 @@
 ' Asorti Araci - hizli acilis (baslat.vbs calistirir). Basariyla biterse 10 doner; donmezse baslat.vbs eski yoldan acar.
-' Tiklar tiklamaz acilis ekrani (acilis.hta) gorunur; arka plandaki program ve uygulama penceresi ayni anda baslar,
-' pencere hazir olunca acilis ekrani yumusakca kaybolur. Uygulama zaten aciksa yeni pencere acmaz, acik olani one getirir
-' (simge durumundaysa eski boyutuna dondurur); acilmaktaysa ikinci kez acmaz.
+' Tiklar tiklamaz acilis ekrani (AsortiAcilis.exe) uygulama penceresinin acilacagi yeri ayni gorunumle kaplar; arka plandaki
+' program ve uygulama penceresi onun arkasinda acilir, ilk sayfa ekrana cizilince acilis ekrani yumusakca solar.
+' Uygulama zaten aciksa yeni pencere acmaz, acik olani one getirir (simge durumundaysa eski boyutuna dondurur);
+' acilmaktaysa ikinci kez acmaz.
 Option Explicit
 On Error Resume Next
 Const TAMAM = 10
-Dim sh, fso, d, kok, ayar, port, tarayici, profil, tema, kilit, k, edge, adaylar, a, url, hazir, acik, mesgul, x, y, t0, st, rt, yas, ad
+Dim sh, fso, d, kok, ayar, port, tarayici, profil, tema, kilit, k, edge, adaylar, a, url, hazir, acik, mesgul, x, y, t0, st, rt, yas, ad, ekran, i
 Set sh = CreateObject("WScript.Shell")
 Set fso = CreateObject("Scripting.FileSystemObject")
 d = fso.GetParentFolderName(WScript.ScriptFullName)
@@ -52,15 +53,18 @@ Function Etkin(baslik)
   Etkin = (r = True)
 End Function
 
-' acilis ekrani: hemen gorunur, uygulama penceresi hazir olunca kendiliginden kapanir
-Sub Acilis()
+' acilis ekrani (bu bilgisayarda derlenmis AsortiAcilis.exe): hemen gorunur, uygulama hazir olunca kendiliginden solar
+Function Acilis()
   On Error Resume Next
-  Dim m
-  m = sh.ExpandEnvironmentStrings("%SystemRoot%") & "\System32\mshta.exe"
-  If Not fso.FileExists(m) Then m = "mshta.exe"
-  If fso.FileExists(d & "\acilis.hta") Then sh.Run """" & m & """ """ & d & "\acilis.hta"" p=" & port & " t=" & tema, 1, False
+  Dim e
+  Acilis = False
+  e = d & "\AsortiAcilis.exe"
+  If Not fso.FileExists(e) Then Exit Function
   Err.Clear
-End Sub
+  sh.Run """" & e & """ p=" & port & " t=" & tema, 1, False
+  If Err.Number = 0 Then Acilis = True
+  Err.Clear
+End Function
 
 ayar = Oku(kok & "\ayarlar.json")
 port = Al(ayar, "port")
@@ -118,10 +122,19 @@ End If
 Err.Clear
 
 ' 4) acilis ekrani
-Acilis
+ekran = Acilis()
 
 ' 5) arka plandaki program (zaten calisiyorsa yenisi kendiliginden kapanir)
 If Not hazir Then sh.Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File """ & d & "\sunucu.ps1""", 0, False
+Err.Clear
+
+' acilis ekrani gorunene kadar bekle (en cok ~0.8 sn) ki uygulama penceresi onun arkasinda acilsin
+If ekran Then
+  For i = 1 To 20
+    If InStr(1, Oku(kilit), "gorundu", 1) > 0 Then Exit For
+    WScript.Sleep 40
+  Next
+End If
 Err.Clear
 
 ' 6) uygulama penceresi: program hazirsa dogrudan uygulama, degilse ayni gorunumdeki bekleme sayfasi (program hazir olunca kendiliginden gecer)

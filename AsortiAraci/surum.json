@@ -1,9 +1,9 @@
 {
- "surum": "1.1.21",
+ "surum": "1.1.22",
  "tarih": "2026-10-30",
  "notlar": [
-  "Masaüstündeki simgeye tıklar tıklamaz uygulamanın açılış ekranı geliyor; uygulama hazır olunca yumuşakça kayboluyor",
-  "Açılırken tekrar tıklansa da ikinci pencere açılmıyor; uygulama zaten açıksa (simge durumunda olsa bile) öne geliyor",
-  "Açılış uzarsa ekranda “Hâlâ açılıyor” yazıyor; bir sorun olursa ne yapılacağını söylüyor"
+  "Yeni açılış ekranı: masaüstündeki simgeye tıklar tıklamaz uygulamanın açılacağı yeri uygulamanın kendi görünümüyle kaplıyor",
+  "Uygulama ilk sayfasıyla ekrana çizilince açılış ekranı yumuşakça solup uygulamaya geçiyor; küçük pencere çıkmıyor",
+  "Açılırken tekrar tıklansa da ikinci pencere açılmıyor; uygulama zaten açıksa öne geliyor"
  ]
 }

@@ -42,6 +42,37 @@ function PencereHazirla {
   if ($script:u32Ps -or ('AsortiPencere.P' -as [type])) { return }
   try { $script:u32Ps = [PowerShell]::Create(); [void]$script:u32Ps.AddScript('param($t) Add-Type -Namespace AsortiPencere -Name P -MemberDefinition $t').AddArgument($script:u32Tanim); $script:u32Is = $script:u32Ps.BeginInvoke() } catch { $script:u32Ps = 1 }
 }
+# acilis ekrani (sistem\acilis.cs): bu bilgisayarda .NET Framework'un kendi derleyicisiyle derlenir -> sistem\AsortiAcilis.exe
+# Program acildiktan birkac saniye sonra arka planda (ayri is parcaciginda) yapilir; kaynak degismediyse yeniden derlenmez.
+function AcilisDerle([string]$csc = (Join-Path ([Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory()) 'csc.exe')) {
+  $script:derleBakildi = $true
+  $cs = Join-Path $PSScriptRoot 'acilis.cs'; if (-not (Test-Path -LiteralPath $cs)) { return }
+  $exe = Join-Path $PSScriptRoot 'AsortiAcilis.exe'; $damga = Join-Path $PSScriptRoot 'AsortiAcilis.surum'
+  $md5 = (Get-FileHash -Algorithm MD5 -LiteralPath $cs).Hash
+  $eski = ''; if (Test-Path -LiteralPath $damga) { $eski = "$(Get-Content -LiteralPath $damga -Raw)".Trim() }
+  if ($eski -eq $md5 -and (Test-Path -LiteralPath $exe)) { return }
+  if ($eski -eq "HATA $md5" -and ((Get-Date) - (Get-Item -LiteralPath $damga).LastWriteTime).TotalHours -lt 12) { return }   # ayni kaynak az once derlenemedi
+  if (-not (Test-Path -LiteralPath $csc)) { Log 'acilis ekrani derlenemedi: csc.exe bulunamadi'; return }
+  try {
+    $script:derlePs = [PowerShell]::Create()
+    [void]$script:derlePs.AddScript({
+      param($csc, $cs, $exe, $ico, $damga, $md5, $kayit)
+      $yeni = $exe -replace '\.exe$', '_yeni.exe'; $ertele = $false
+      Remove-Item -LiteralPath $yeni -Force -ErrorAction SilentlyContinue
+      $cikti = (& $csc /nologo /target:winexe /optimize+ "/out:$yeni" "/win32icon:$ico" /r:System.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll $cs 2>&1 | Out-String)
+      $ok = ($LASTEXITCODE -eq 0) -and (Test-Path -LiteralPath $yeni)
+      if ($ok) {
+        try { Move-Item -LiteralPath $yeni -Destination $exe -Force -ErrorAction Stop }
+        catch { $ok = $false; $ertele = $true; $cikti += "`r`nyerine konamadi (o an acik olabilir), sonra yeniden denenecek: " + $_.Exception.Message }
+      }
+      if ($ok) { Set-Content -LiteralPath $damga -Value $md5 -Encoding ASCII }
+      elseif (-not $ertele) { Set-Content -LiteralPath $damga -Value "HATA $md5" -Encoding ASCII }
+      Set-Content -LiteralPath $kayit -Value ((Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + $(if ($ok) { ' acilis ekrani derlendi' } elseif ($ertele) { ' acilis ekrani derlendi, yerine konamadi' } else { ' ACILIS EKRANI DERLENEMEDI' }) + "`r`n" + $cikti) -Encoding UTF8
+    }).AddArgument($csc).AddArgument($cs).AddArgument($exe).AddArgument((Join-Path $PSScriptRoot 'asorti.ico')).AddArgument($damga).AddArgument($md5).AddArgument((Join-Path $Root 'kopru\log\acilis_derleme.txt'))
+    $script:derleIs = $script:derlePs.BeginInvoke()
+    Log 'acilis ekrani derleniyor'
+  } catch { Log ('acilis ekrani derlenemedi: ' + $_.Exception.Message) }
+}
 function Kapat([string]$neden = 'pencere kapandi') {
   Log "${neden}: kopru ve Batch kapatiliyor"
   try { if ($script:kopru -and -not $script:kopru.HasExited) { Stop-Process -Id $script:kopru.Id -Force } } catch {}
@@ -289,6 +320,7 @@ $L.Start(); Log "sunucu acildi: http://localhost:$Port/"
 $tipler = @{ '.html' = 'text/html; charset=utf-8'; '.js' = 'text/javascript; charset=utf-8'; '.json' = 'application/json; charset=utf-8'; '.txt' = 'text/plain; charset=windows-1254'; '.png' = 'image/png'; '.ico' = 'image/x-icon'; '.css' = 'text/css; charset=utf-8'; '.woff2' = 'font/woff2' }
 $script:sunucuId = "$PID-" + (Get-Date).Ticks   # sayfa, sunucu yeniden basladiginda (guncelleme) bunu degismis gorup kendini tazeler
 $son = $null; $basla = Get-Date; $script:sonBak = [datetime]::MinValue; $script:kapanis = $null
+foreach ($eskiDosya in 'acilis.hta', 'one_getir.ps1') { Remove-Item -LiteralPath (Join-Path $PSScriptRoot $eskiDosya) -Force -ErrorAction SilentlyContinue }   # artik kullanilmayan eski dosyalar
 function JsonYanit($ctx, $obj) { Yanit $ctx 200 ($utf8.GetBytes(($obj | ConvertTo-Json -Depth 5 -Compress))) 'application/json; charset=utf-8' }
 function Yanit($ctx, [int]$kod, [byte[]]$veri, [string]$tip, [string]$onbellek = 'no-store') {
   $r = $ctx.Response; $r.StatusCode = $kod; $r.Headers['Cache-Control'] = $onbellek
@@ -312,13 +344,15 @@ try {
         if ($null -eq $acik -and $sessiz -gt 900) { Kapat 'pencereden 15 dakikadir haber yok'; $L.Stop(); exit }
       }
       if ($script:acildiT -and -not $script:u32Ps -and ($simdi - $script:acildiT).TotalSeconds -gt 20) { PencereHazirla }
+      if (-not $script:derleBakildi -and ($simdi - $basla).TotalSeconds -gt 3) { AcilisDerle }   # guncellemeden sonra bir kez gerekir
       if ($A.gerber -and $script:kopru.HasExited -and ((Get-Date) - $script:kBas).TotalSeconds -gt 30) { Log 'kopru durmustu, yeniden baslatiliyor'; KopruBaslat }
     }
     $ctx = $t.Result
     try {
       $yol = [Uri]::UnescapeDataString($ctx.Request.Url.AbsolutePath).TrimStart('/')
       $m = $ctx.Request.HttpMethod
-      if ($yol -eq 'kapaniyor') { $script:kapanis = (Get-Date).AddSeconds(6); Yanit $ctx 200 $null $null; continue }
+      if ($yol -eq 'kapaniyor') { $script:kapanis = (Get-Date).AddSeconds(6); $script:hazirT = $null; Yanit $ctx 200 $null $null; continue }
+      if ($yol -eq 'hazir' -and $m -eq 'POST') { $script:hazirT = Get-Date; Yanit $ctx 200 $null $null; continue }   # ilk sayfa ekrana cizildi: acilis ekrani kaybolabilir
       if ($yol -eq 'nabiz') { $son = Get-Date; $script:kapanis = $null; if (-not $script:acildi) { $script:acildi = $true; $script:acildiT = Get-Date; Remove-Item -LiteralPath (Join-Path $Root 'kopru\log\acilis.txt') -Force -ErrorAction SilentlyContinue }   # pencere acildi: yeniden acma kilidi kalksin
         JsonYanit $ctx @{ kopru = [bool]($script:kopru -and -not $script:kopru.HasExited); gerber = [bool]$A.gerber; otopastal = "$($A.otopastal)"; id = $script:sunucuId }; continue }
       if ($yol -eq 'excel/klasor' -and $m -eq 'GET') { JsonYanit $ctx (ExcelDurum); continue }
@@ -357,7 +391,7 @@ try {
         $ac = [bool]($son -and -not $script:kapanis)
         if ($ac -and ((Get-Date) - $son).TotalSeconds -ge 9) { $ac = @(UygulamaPencereleri).Count -gt 0 }   # nabiz gecikmis olabilir (simge durumunda): pencere gercekten var mi
         if ($script:kapanis) { $script:kapanis = (Get-Date).AddSeconds(15) }   # pencere az once kapandi ama yeniden aciliyor: program kapanmasin
-        JsonYanit $ctx @{ acik = $ac }; continue
+        JsonYanit $ctx @{ acik = $ac; hazir = [bool]($ac -and $script:hazirT) }; continue
       }
       if ($yol -eq 'one-getir' -and $m -eq 'POST') { try { PencereOneGetir } catch { Log ('pencere one getirilemedi: ' + $_.Exception.Message) }; Yanit $ctx 200 $null $null; continue }
       if ($yol -eq 'tema' -and $m -eq 'POST') { $tv = "$($ctx.Request.QueryString['v'])"; if ($tv -in @('dark', 'light') -and (KullaniciOku)['tema'] -ne $tv) { try { KullaniciYaz 'tema' $tv } catch {} }; Yanit $ctx 200 $null $null; continue }

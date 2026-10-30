@@ -460,4 +460,12 @@ surumYaz().then(j=>{if(j&&j.guncelleme){setTimeout(()=>gunKontrol(false),6000);s
 if(!S.list.length)yeni();else{if(!S.list.includes(S.on))S.on=S.list[0];ac(S.on);
  const digerleri=()=>S.list.forEach(frame),f0=document.querySelector('#sayfalar iframe[data-id="'+S.on+'"]');
  if(f0&&!f0.dataset.hazir&&S.list.length>1){const t=setTimeout(digerleri,1500);f0.addEventListener('load',()=>{clearTimeout(t);setTimeout(digerleri,120)},{once:true})}else digerleri()}
+/* masaüstü simgesinden açılınca gelen açılış ekranı, görünen sayfa yüklenip ekrana çizilince yumuşakça kaybolur */
+(()=>{const f=document.querySelector('#sayfalar iframe[data-id="'+S.on+'"]');let gitti=false;
+ const gonder=()=>{if(gitti)return;gitti=true;fetch('/hazir',{method:'POST',body:'{}'}).catch(()=>{})},
+  bildir=()=>{requestAnimationFrame(()=>requestAnimationFrame(gonder));setTimeout(gonder,250)},
+  yazi=()=>{const p=[document.fonts.ready];try{p.push(f.contentDocument.fonts.ready)}catch(e){}return Promise.race([Promise.all(p),new Promise(r=>setTimeout(r,800))])},
+  sonra=()=>yazi().then(()=>setTimeout(bildir,40),bildir);
+ if(!f)return bildir();
+ if(f.dataset.hazir)sonra();else{const t=setTimeout(bildir,4000);f.addEventListener('load',()=>{clearTimeout(t);sonra()},{once:true})}})();
 </script></body></html>

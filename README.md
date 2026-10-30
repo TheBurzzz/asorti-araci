@@ -42,3 +42,9 @@ ZIP'i çıkar → **Kurulum.bat**. Kurulum ayarlara ve çalışma sayfalarına d
 ## Yazı tipi
 Uygulama [Inter](https://rsms.me/inter/) yazı tipini kullanır (programla birlikte gelir, internet gerekmez).
 Inter, SIL Open Font License 1.1 ile dağıtılır: `AsortiAraci/sistem/Inter-OFL.txt`.
+
+## Açılış ekranı
+Masaüstü simgesine tıklayınca gelen açılış ekranı (`AsortiAraci/sistem/acilis.cs`), bilgisayardaki .NET Framework'ün kendi derleyicisiyle
+(`csc.exe`) o bilgisayarda derlenir ve `sistem\AsortiAcilis.exe` olur. Bunu program kendisi yapar: kurulumdan ya da güncellemeden sonra ilk
+açılışta birkaç saniye içinde, arka planda. Derleme kaydı `kopru\log\acilis_derleme.txt` dosyasına yazılır. Açılış ekranı yoksa uygulama
+yine açılır, sadece bu ekran görünmez.
