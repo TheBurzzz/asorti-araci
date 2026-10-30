@@ -1,11 +1,9 @@
 {
- "surum": "1.1.14",
- "tarih": "2026-10-28",
+ "surum": "1.1.15",
+ "tarih": "2026-10-30",
  "notlar": [
-  "Güncellemede artık “Bağlantı koptu: pencereyi kapatıp yeniden aç” yazısı çıkmıyor; üstte “Güncelleniyor…” yazar, pencere kendiliğinden yenilenir",
-  "Sayfa, yeni sürümün programı gerçekten açılana kadar bekleyip ondan sonra yenileniyor (tarayıcının “bağlanılamadı” sayfası açılmaz)",
-  "Arka plandaki program herhangi bir sebeple yeniden başlarsa sayfa bunu fark edip kendiliğinden yenileniyor; çalışma sayfaları önce kaydediliyor",
-  "Kısa kopmalarda turuncu “Yeniden bağlanıyor…” yazar; kırmızı uyarı sadece 25 saniye hiç cevap gelmezse çıkar",
-  "Güncellemeden sonra üstte kısa bir “v… sürümüne güncellendi” yazısı görünür"
+  "İmza geri geldi: her çalışma sayfasının en altında sade bir “Created by Şamil Yeşil” yazısı var; kısa sayfada pencerenin dibinde, uzun sayfada Excel kaydet bölümünün altında durur",
+  "İmza yazdırılan sayfada çıkmaz",
+  "Boş sayfada gereksiz yere çıkan küçük kaydırma payı kalktı"
  ]
 }
