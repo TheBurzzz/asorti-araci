@@ -1,10 +1,9 @@
 {
- "surum": "1.1.17",
+ "surum": "1.1.18",
  "tarih": "2026-10-30",
  "notlar": [
-  "Otomatik bul düzeltildi: açılıştaki arka plan taraması bitmeden basınca \"sonuç alınamadı\" diyordu; artık ikisi birbirini beklemiyor",
-  "Tarama AccuMark'ı bulamıyordu (klasör yolu birleştirilirken ters bölü düşüyordu), düzeltildi",
-  "Ağ taraması hızlandı: ağdaki bilgisayarlara aynı anda bakılıyor, cevap vermeyen bilgisayar (yazıcı vb.) beklenmiyor; tarama dakikalar yerine saniyeler sürüyor",
-  "Güvenlik: tarama bir şeyi bulamazsa çalışan ayar korunuyor (örneğin AccuMark bulunamasa bile Gerber kapanmaz)"
+  "Gerber bağlantısı → Otomatik bul: sonuç listesi 5 saniye sonra yumuşakça kapanıyor (fare üstündeyken beklemede kalır)",
+  "Eksik bir şey varsa yerinde kısa bir satır kalıyor (\"Eksik: …\"); yanındaki okla liste kayarak açılıp kapanıyor",
+  "Bulunan ayarlar uygulanınca çıkan onay da 5 saniye sonra kendiliğinden kayboluyor"
  ]
 }
