@@ -9,7 +9,8 @@ Klasörler
   AsortiAraci\         uygulamanın kendisi (kurulum bunu C:\AsortiAraci'ye kopyalar)
     uygulama.html        sekmeli ana pencere
     asorti_araci.html    asorti hesabı (her sekme bir çalışma sayfası)
-    sistem\              başlatma, yerel sunucu, ayarlar, simge, Batch şablonu
+    sistem\              uygulamanın penceresi (kurulumda bu bilgisayarda derlenir: AsortiAraci.exe),
+                         yerel sunucu, ayarlar, simge, Batch şablonu
     kopru\               Gerber köprüsü (sipariş → Batch → OTOPASTAL → sonuç)
 
 Yeni bilgisayara kurarken
