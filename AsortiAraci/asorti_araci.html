@@ -1,7 +1,10 @@
 <!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Asorti Aracı</title>
 <style>
+/* yazı tipi: Inter (SIL Open Font License, sistem/Inter-OFL.txt) — programla birlikte gelir */
+@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:fallback;src:url(sistem/inter-latin.woff2?v=4) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:fallback;src:url(sistem/inter-latin-ext.woff2?v=4) format("woff2");unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
 :root{--ink:#2b3440;--mut:#6b7684;--line:#d5d9df;--bg:#eff0f2;--acc:#566474;--accd:#46535f;--gold:#111;--red:#b5382f;--card:#fff;--btn:#fff;--hov:#eceff2;--tb:#aeb6c0;--th:#e7eaee;--inbg:#fff;--h1:#f8f9fa;--h2:#e3e6ea}
-*{box-sizing:border-box}body{font:14px/1.45 "Segoe UI",Arial,sans-serif;margin:0;background:var(--bg);color:var(--ink)}
+*{box-sizing:border-box}body{font:14px/1.45 "Inter","Segoe UI",Arial,sans-serif;margin:0;background:var(--bg);color:var(--ink)}
 header{background:linear-gradient(180deg,var(--h1),var(--h2));color:var(--ink);padding:16px 28px;border-bottom:2px solid var(--gold);display:flex;justify-content:space-between;align-items:center;gap:16px}.rt{display:flex;align-items:center;gap:18px}.cr{font-size:12px;letter-spacing:.5px;color:var(--mut);white-space:nowrap}.cr b{font-weight:600;color:var(--ink)}.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--inbg)}.tg{position:relative;cursor:pointer}.tg input{position:absolute;opacity:0;pointer-events:none}.tg span{display:block;padding:7px 14px;border-right:1px solid var(--line);color:var(--ink)}.tg:last-child span{border-right:0}.tg:hover span{background:var(--hov)}.tg input:checked+span{background:#f4e3e0;color:var(--red);text-decoration:line-through;font-weight:600}.tg input:focus-visible+span{outline:2px solid #b9c3cf}header h1{margin:0;font-size:20px;font-weight:600;letter-spacing:.3px}header span{color:var(--mut);font-size:13px}
 main{max-width:1180px;margin:20px auto;padding:0 20px}
 .card,.box{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:0 0 16px;box-shadow:0 1px 2px rgba(16,24,40,.05)}
@@ -15,7 +18,7 @@ input[type=number]{width:72px}
 button{font:inherit;padding:9px 16px;border-radius:8px;border:1px solid var(--line);background:var(--btn);color:var(--ink);cursor:pointer;margin:4px 8px 4px 0}
 button:hover:not(:disabled){background:var(--hov)}button:disabled{opacity:.5;cursor:default}
 button.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}button.pri:hover:not(:disabled){background:var(--accd)}input:focus{outline:2px solid #b9c3cf;outline-offset:1px}
-table{border-collapse:collapse}td,th{border:1px solid var(--tb);padding:5px 8px;text-align:center}th{background:var(--th);font-weight:600}
+table{border-collapse:collapse}td,th{border:1px solid var(--tb);padding:5px 8px;text-align:center}td,th,input[type=number]{font-variant-numeric:tabular-nums}th{background:var(--th);font-weight:600}
 .red{color:var(--red);font-weight:700;text-align:left;white-space:nowrap}#res input[type=number]{width:42px;padding:4px 2px;text-align:center}.ib{width:84px}.il{width:104px}button.sm{display:block;width:100%;padding:3px 10px;font-size:12px;margin:2px 0}.m{color:var(--mut)}.e{color:var(--red)}#msg{margin:4px 0 20px;font-weight:600}
 #ng input.q{width:62px;text-align:center}#ng .tot{font-weight:600;background:var(--hov)}#ng input.nm{width:230px}
 .tgl{position:relative;width:54px;height:28px;border-radius:14px;border:1px solid var(--line);background:var(--inbg);padding:0;margin:0}
@@ -39,7 +42,7 @@ html[data-theme=dark] [style*="#f7f0dc"]{background:#5a5138!important}html[data-
 html[data-theme=dark]{--ink:#f5f5f7;--mut:#a1a1a6;--line:rgba(255,255,255,.15);--bg:#0a0c13;--acc:#0a84ff;--accd:#409cff;--red:#ff7a70;--card:#2a2f3d;--btn:rgba(255,255,255,.11);--hov:rgba(255,255,255,.2);--tb:rgba(255,255,255,.22);--th:rgba(255,255,255,.09);--inbg:rgba(255,255,255,.08);--h1:#000;--h2:#000;--gold:transparent;
  --glass:linear-gradient(145deg,rgba(60,66,92,.82),rgba(36,40,58,.78));--gb:rgba(255,255,255,.16);--hi:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(255,255,255,.04);--sh:0 8px 22px rgba(0,0,0,.4),0 1px 4px rgba(0,0,0,.3);--ring:rgba(10,132,255,.35);
  --bl1:#1c2f70;--bl2:#3b2266;--bl3:#173f52;--bl4:#4a2a3a}
-body{font:14px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Segoe UI Variable Text","Segoe UI",system-ui,Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased;background:var(--bg);min-height:100vh}
+body{font:14px/1.5 "Inter","Segoe UI Variable Text","Segoe UI",system-ui,Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased;background:var(--bg);min-height:100vh}
 body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;transform:translateZ(0);will-change:transform;background:radial-gradient(55vmax 48vmax at 10% 6%,var(--bl1),transparent 62%),radial-gradient(50vmax 44vmax at 92% 10%,var(--bl2),transparent 62%),radial-gradient(56vmax 50vmax at 78% 98%,var(--bl3),transparent 62%),radial-gradient(46vmax 42vmax at 6% 92%,var(--bl4),transparent 62%),var(--bg)}
 header,.card,.box{background:var(--glass);border:1px solid var(--gb);box-shadow:var(--hi),var(--sh)}
 header{position:sticky;top:12px;z-index:30;max-width:1180px;width:calc(100% - 40px);margin:14px auto 0;padding:14px 22px;border-radius:24px}
@@ -1139,6 +1142,13 @@ if(SAYFA){const SK='asorti-sayfa-'+SAYFA;let lastS='';
  const ozet=st=>JSON.stringify(Object.assign({},st,{date:''}));
  const kaydet=()=>{if(window.sifirlaniyor||!info||!info.snap)return;const st=getState(),k=ozet(st);if(k!==lastS){localStorage.setItem(SK,JSON.stringify(st));lastS=k}};
  window.sayfaKaydet=()=>{try{kaydet()}catch(e){}};
+ /* hiçbir şey yazılmamış / yapılmamış sayfa: uygulama bu sekmeyi sormadan kapatır */
+ window.sayfaBos=()=>{try{
+  if(info||gJob||xt.length||extras.some(e=>e&&(e.k||e.v)))return false;
+  if(localStorage.getItem(SK)||localStorage.getItem(JK))return false;
+  if(ord.art||ord.sizes.length||ord.rows.some(r=>r.name||(r.v||[]).some(x=>+x>0)))return false;
+  const nw=$('nw');if(nw&&[...nw.querySelectorAll('input')].some(i=>!/^(checkbox|radio|button|file|range|hidden)$/.test(i.type)&&String(i.value).trim()))return false;
+  return true}catch(e){return false}};
  setTimeout(async()=>{try{const t=localStorage.getItem(SK);if(t){const st=JSON.parse(t);lastS=ozet(st);if(await applyState(st))ldMsg('✔ Çalışma sayfası kaldığın yerden açıldı')}}catch(e){}},0);
  setInterval(()=>{if(window.sifirlaniyor)return;try{kaydet()}catch(e){}try{
   const a=(gJob&&gJob.st||{}).asama,busy=(!!gJob&&!['bitti','hata','iptal'].includes(a))||xt.some(x=>x.job&&!xBitti((x.job.st||{}).asama));parent.postMessage({t:'sayfa',id:SAYFA,ad:(info&&info.art)||'',busy,bitti:a==='bitti'},'*')}catch(e){}},2500)}

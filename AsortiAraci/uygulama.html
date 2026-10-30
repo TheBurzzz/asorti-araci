@@ -1,32 +1,43 @@
 <!doctype html>
 <html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Asorti Aracı</title>
-<link rel="icon" type="image/png" sizes="192x192" href="sistem/asorti.png"><link rel="icon" href="sistem/asorti.ico" sizes="16x16 32x32 48x48 256x256"><link rel="apple-touch-icon" href="sistem/asorti.png">
+<link rel="icon" type="image/png" sizes="192x192" href="sistem/asorti.png?v=2"><link rel="icon" href="sistem/asorti.ico?v=2" sizes="16x16 20x20 24x24 32x32 40x40 48x48 64x64 128x128 256x256"><link rel="apple-touch-icon" href="sistem/asorti.png?v=2">
 <style>
+/* yazı tipi: Inter (SIL Open Font License, sistem/Inter-OFL.txt) — programla birlikte gelir, internet gerekmez */
+@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:fallback;src:url(sistem/inter-latin.woff2?v=4) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:fallback;src:url(sistem/inter-latin-ext.woff2?v=4) format("woff2");unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
 :root{--ink:#1d1d1f;--mut:#6e6e73;--line:rgba(60,60,67,.14);--bg:#eef0f6;--bar:rgba(246,247,250,.86);--tabh:rgba(60,60,67,.07);--on:#fff;--acc:#0071e3;--accs:rgba(0,113,227,.12);--ok:#1f9d55;--bad:#d13b30;--pop:rgba(255,255,255,.9);--sh:0 1px 2px rgba(0,0,0,.08),0 3px 10px rgba(30,45,90,.10);--psh:0 18px 50px rgba(20,30,60,.22),0 2px 8px rgba(20,30,60,.10)}
 html[data-theme=dark]{--ink:#f5f5f7;--mut:#a1a1a6;--line:rgba(255,255,255,.12);--bg:#0a0c13;--bar:rgba(28,30,38,.88);--tabh:rgba(255,255,255,.07);--on:#3a3f4e;--acc:#0a84ff;--accs:rgba(10,132,255,.22);--ok:#32d17a;--bad:#ff6b61;--pop:rgba(40,43,54,.94);--sh:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.35);--psh:0 18px 50px rgba(0,0,0,.55),0 2px 8px rgba(0,0,0,.4)}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:13.5px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:13.5px/1.4 "Inter","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 button{font:inherit;color:inherit}
 #bar{position:relative;z-index:5;display:flex;align-items:center;gap:10px;height:54px;padding:0 12px 0 14px;background:var(--bar);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line);user-select:none}
-#logo{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;white-space:nowrap;padding-right:6px}
-#logo img{width:22px;height:22px;border-radius:6px}
+/* sol üst: simge + "Asorti Aracı"; ince bir çizgiyle sekmelerden ayrılır */
+#logo{position:relative;display:flex;align-items:center;gap:10px;flex:none;white-space:nowrap;padding-right:16px;margin-right:2px;font-size:15.5px;font-weight:420;letter-spacing:-.02em;color:var(--mut);cursor:default}
+#logo::after{content:'';position:absolute;right:0;top:50%;width:1px;height:22px;margin-top:-11px;background:var(--line)}
+#logo svg{flex:none;width:28px;height:28px;filter:drop-shadow(0 1px 1.5px rgba(0,58,150,.26)) drop-shadow(0 3px 6px rgba(0,58,150,.10))}
+html[data-theme=dark] #logo svg{filter:drop-shadow(0 1px 2px rgba(0,0,0,.55))}
+#logo b{font-weight:650;color:var(--ink)}
 #serit{flex:1;min-width:0;display:flex;align-items:center;gap:6px;align-self:stretch}
 #tabs{display:flex;align-items:center;gap:4px;overflow-x:auto;scrollbar-width:none;padding:6px 2px;min-width:0;scroll-behavior:smooth}
 #tabs::-webkit-scrollbar{display:none}
-.tab{position:relative;display:flex;align-items:center;gap:7px;height:34px;padding:0 8px 0 12px;border-radius:10px;cursor:pointer;white-space:nowrap;max-width:230px;min-width:96px;color:var(--mut);transition:background .18s,color .18s,box-shadow .18s}
+.tab{position:relative;display:flex;align-items:center;gap:7px;height:34px;padding:0 8px 0 12px;border-radius:10px;cursor:pointer;white-space:nowrap;max-width:230px;min-width:96px;color:var(--mut);font-weight:500;letter-spacing:-.005em;transition:background .22s,color .22s,box-shadow .22s}
+/* açılıp kapanırken (genişlik değişirken) yazı kırpılarak görünsün, "…" ile titremesin */
+.tab[data-anim]{overflow:hidden}.tab[data-anim] .ad{text-overflow:clip}.tab[data-kapaniyor]{pointer-events:none}
 .tab:hover{background:var(--tabh);color:var(--ink)}
 .tab+.tab:not(.on)::before{content:'';position:absolute;left:-3px;top:9px;bottom:9px;width:1px;background:var(--line)}
 .tab.on+.tab::before,.tab:hover::before,.tab:hover+.tab::before{display:none}
 .tab.on{background:var(--on);color:var(--ink);font-weight:600;box-shadow:var(--sh),inset 0 0 0 1.5px var(--acc)}
 .tab .ad{overflow:hidden;text-overflow:ellipsis;flex:1}
-.tab .ad.bos{font-style:italic;font-weight:400}
+/* seçilince yazı kalınlaşır: sekme genişliği baştan kalın yazıya göre ayrılır, sekmeler yerinden oynamaz */
+.tab .ad::after{content:attr(data-t);display:block;height:0;overflow:hidden;visibility:hidden;font-weight:600;pointer-events:none}
 .tab .ik{width:8px;height:8px;border-radius:50%;flex:none;background:var(--line)}
 .tab.on .ik{background:var(--acc)}
 .tab .ik.is{background:var(--acc);animation:nb 1.2s ease-in-out infinite}
 .tab .ik.ok{background:var(--ok)}
 @keyframes nb{50%{opacity:.25}}
-.tab .x{flex:none;width:20px;height:20px;border:0;border-radius:6px;background:transparent;color:var(--mut);cursor:pointer;font-size:14px;line-height:20px;padding:0;opacity:0;transition:opacity .15s,background .15s}
+.tab .x{flex:none;display:grid;place-items:center;width:20px;height:20px;border:0;border-radius:6px;background:transparent;color:var(--mut);cursor:pointer;padding:0;opacity:0;transition:opacity .15s,background .15s,color .15s}
+.tab .x svg{width:10px;height:10px;pointer-events:none}
 .tab:hover .x,.tab.on .x{opacity:1}
 .tab .x:hover{background:rgba(220,60,60,.14);color:var(--bad)}
 #yeni{flex:none;display:flex;align-items:center;gap:6px;height:32px;padding:0 13px 0 10px;border:0;border-radius:16px;background:var(--accs);color:var(--acc);font-weight:600;cursor:pointer;white-space:nowrap;transition:background .18s,color .18s,transform .12s}
@@ -96,14 +107,16 @@ html[data-theme=dark] .gbKisa .i{color:#ffb340}
 .alt button{border:0;background:transparent;color:var(--acc);cursor:pointer;padding:4px 2px}
 #sayfalar{position:absolute;top:54px;left:0;right:0;bottom:0}
 #sayfalar iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:var(--bg)}
-#sayfalar iframe.on{display:block}
+#sayfalar iframe.on{display:block;z-index:2}
+/* sayfa değişirken eski sayfa, yenisi üstünde belirene kadar altta durur (arada boşluk / titreme olmaz) */
+#sayfalar iframe.eski{display:block;z-index:1}
 /* mavi ışık filtresi: her şeyin üstünde, tıklamaları engellemez */
 ::view-transition-old(root),::view-transition-new(root){animation-duration:.55s;animation-timing-function:cubic-bezier(.4,0,.2,1)}
 #gece{position:fixed;inset:0;pointer-events:none;z-index:50;background:#ff8a1c;mix-blend-mode:multiply;opacity:0;transition:opacity .6s}
 </style></head><body>
 <div id="bar">
- <div id="logo"><img src="sistem/asorti.png" alt="">Asorti Aracı</div>
- <div id="serit"><div id="tabs"></div>
+ <div id="logo" title="Asorti Aracı"><svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lgA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5AACFF"/><stop offset="1" stop-color="#0068DA"/></linearGradient><radialGradient id="lgH" cx=".5" cy="0" r=".95"><stop offset="0" stop-color="#fff" stop-opacity=".26"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></radialGradient><path id="lgS" d="M64 32L64 35.15L64 38.36L63.98 41.7L63.92 45.22L63.73 48.96L63.21 52.85L62.04 56.65L59.86 59.86L56.65 62.04L52.85 63.21L48.96 63.73L45.22 63.92L41.7 63.98L38.36 64L35.15 64L32 64L28.85 64L25.64 64L22.3 63.98L18.78 63.92L15.04 63.73L11.15 63.21L7.35 62.04L4.14 59.86L1.96 56.65L0.79 52.85L0.27 48.96L0.08 45.22L0.02 41.7L0 38.36L0 35.15L0 32L0 28.85L0 25.64L0.02 22.3L0.08 18.78L0.27 15.04L0.79 11.15L1.96 7.35L4.14 4.14L7.35 1.96L11.15 0.79L15.04 0.27L18.78 0.08L22.3 0.02L25.64 0L28.85 0L32 0L35.15 0L38.36 0L41.7 0.02L45.22 0.08L48.96 0.27L52.85 0.79L56.65 1.96L59.86 4.14L62.04 7.35L63.21 11.15L63.73 15.04L63.92 18.78L63.98 22.3L64 25.64L64 28.85Z"/></defs><use href="#lgS" fill="url(#lgA)"/><use href="#lgS" fill="url(#lgH)"/><g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"><path d="M13.75 24.75L32 14.75L50.25 24.75L32 34.75Z" fill="#fff" stroke-width="2.5"/><path d="M13.75 31.75L32 41.75L50.25 31.75" stroke-opacity=".82" stroke-width="3.62"/><path d="M13.75 38.75L32 48.75L50.25 38.75" stroke-opacity=".6" stroke-width="3.62"/></g></svg><span><b>Asorti</b> Aracı</span></div>
+ <div id="serit"><div id="tabs" role="tablist"></div>
   <button id="yeni" type="button" title="Yeni çalışma sayfası aç (sekme çubuğunda boş yere çift tıklayarak da açılır)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>Yeni sayfa</button></div>
  <div id="sag">
   <div id="gun"><span id="gunYazi"></span><a id="gunNot" title="Bu sürümde neler var">neler yeni?</a><button id="gunBtn" type="button">Güncelle</button></div>
@@ -138,20 +151,70 @@ let S=(()=>{try{return JSON.parse(localStorage.getItem(LS)||'null')}catch(e){ret
 const info={};
 function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
 function yeniId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5)}
-function frame(id){let f=document.querySelector('iframe[data-id="'+id+'"]');if(!f){f=document.createElement('iframe');f.dataset.id=id;f.src='asorti_araci.html?sayfa='+encodeURIComponent(id);$('sayfalar').appendChild(f)}return f}
-function ciz(){const T=$('tabs');T.innerHTML='';S.list.forEach((id,i)=>{const d=info[id]||{},b=document.createElement('div');b.className='tab'+(id===S.on?' on':'');
-  const ad=d.ad||'Sayfa '+(i+1),ik=d.busy?'is':(d.bitti?'ok':'');
-  b.innerHTML='<span class="ik '+ik+'"></span><span class="ad'+(d.ad?'':' bos')+'"></span><button class="x" title="Sayfayı kapat">×</button>';b.querySelector('.ad').textContent=ad;
+/* sekmeler ve sayfalar: sekmeler yerinde güncellenir (yeniden çizilmez), böylece açılış / kapanış / geçiş yumuşak olur */
+const T=$('tabs'),AZ=matchMedia('(prefers-reduced-motion: reduce)'),YUMUSAK='cubic-bezier(.2,.8,.2,1)';
+const xIk='<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2.3 2.3l5.4 5.4M7.7 2.3L2.3 7.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+let giris=null,gosterilen=null,sonAktif=null;
+function frame(id){let f=document.querySelector('#sayfalar iframe[data-id="'+id+'"]');
+ if(!f){f=document.createElement('iframe');f.dataset.id=id;f.addEventListener('load',()=>{f.dataset.hazir='1'});
+  f.src='asorti_araci.html?sayfa='+encodeURIComponent(id);$('sayfalar').appendChild(f)}
+ return f}
+function sekme(id){let b=T.querySelector('.tab[data-id="'+id+'"]');
+ if(!b){b=document.createElement('div');b.className='tab';b.dataset.id=id;b.setAttribute('role','tab');
+  b.innerHTML='<span class="ik"></span><span class="ad"></span><button class="x" type="button" title="Sayfayı kapat" aria-label="Sayfayı kapat">'+xIk+'</button>';
+  b.addEventListener('click',e=>{if(b.dataset.kapaniyor)return;if(e.target.closest('.x'))kapat(id);else ac(id)})}
+ return b}
+/* sekme genişliği 0'dan kendi boyuna açılır / kapanırken 0'a iner; yanındakiler kayarak yer açar */
+function sekmeOyna(b,acil,bitince){const w=b.getBoundingClientRect().width,cs=getComputedStyle(b),ml=b.previousElementSibling?'-4px':'0px',
+  kapali={width:'0px',minWidth:'0px',paddingLeft:'0px',paddingRight:'0px',marginLeft:ml,opacity:0},
+  acik={width:w+'px',minWidth:'0px',paddingLeft:cs.paddingLeft,paddingRight:cs.paddingRight,marginLeft:'0px',opacity:1};
+ b.dataset.anim='1';
+ const an=b.animate(acil?[kapali,acik]:[acik,kapali],acil?{duration:340,easing:YUMUSAK}:{duration:240,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'});
+ an.onfinish=an.oncancel=()=>{delete b.dataset.anim;if(bitince)bitince()}}
+function sekmeCik(b){b.dataset.kapaniyor='1';b.classList.remove('on');
+ if(AZ.matches)b.remove();else sekmeOyna(b,false,()=>b.remove())}
+function ciz(){let onceki=null;
+ S.list.forEach((id,i)=>{const b=sekme(id),d=info[id]||{},yeniMi=!b.isConnected;
+  let h=onceki?onceki.nextElementSibling:T.firstElementChild;while(h&&h.dataset.kapaniyor)h=h.nextElementSibling;
+  if(h!==b)T.insertBefore(b,h);onceki=b;
+  const ad=d.ad||'Sayfa '+(i+1),ik='ik'+(d.busy?' is':d.bitti?' ok':''),a=b.querySelector('.ad'),k=b.querySelector('.ik');
+  b.classList.toggle('on',id===S.on);b.setAttribute('aria-selected',String(id===S.on));
+  if(a.textContent!==ad){a.textContent=ad;a.dataset.t=ad}if(k.className!==ik)k.className=ik;
   b.title=ad+(d.busy?' · Gerber işi sürüyor':d.bitti?' · Gerber işi bitti':'');
-  b.onclick=e=>{if(e.target.classList.contains('x'))return kapat(id);ac(id)};T.appendChild(b)});
- document.querySelectorAll('#sayfalar iframe').forEach(f=>f.classList.toggle('on',f.dataset.id===S.on));
- const a=T.querySelector('.tab.on');if(a)a.scrollIntoView({block:'nearest',inline:'nearest'})}
-function ac(id){S.on=id;save();frame(id);ciz()}
-function yeni(){const id=yeniId();S.list.push(id);ac(id)}
-function kapat(id){const d=info[id]||{};if(!confirm((d.ad?d.ad+' sayfası':'Bu sayfa')+' kapatılsın mı?'+(d.busy?'\n\nDikkat: bu sayfanın Gerber işi hâlâ sürüyor.':'')+'\nSayfadaki bilgiler silinir (Excel\'e kaydettiklerin durur).'))return;
- const i=S.list.indexOf(id);S.list.splice(i,1);const f=document.querySelector('iframe[data-id="'+id+'"]');if(f)f.remove();delete info[id];
+  if(yeniMi&&giris===id){giris=null;if(!AZ.matches)sekmeOyna(b,true,()=>{if(b.classList.contains('on'))b.scrollIntoView({block:'nearest',inline:'nearest'})})}});
+ [...T.children].forEach(b=>{if(!b.dataset.kapaniyor&&!S.list.includes(b.dataset.id))sekmeCik(b)});
+ sayfaGoster(S.on);
+ if(S.on!==sonAktif){sonAktif=S.on;const a=T.querySelector('.tab.on');if(a&&!a.dataset.anim)a.scrollIntoView({block:'nearest',inline:'nearest'})}}
+/* sayfa geçişi: yeni sayfa eskisinin üstünde hafifçe yükselerek belirir; yeni açılan sayfa yüklenince belirir */
+function sayfaKaldir(x){x.classList.remove('on','eski');if(x.dataset.sil)x.remove()}
+function sayfaGoster(id){const f=frame(id);if(gosterilen===f)return;
+ const gorunuyordu=f.classList.contains('eski');   // geçiş bitmeden geri dönüldü: sayfa zaten altta görünüyor
+ /* altta kalacak sayfa: ekranda görünen sayfa (öncekisi daha yüklenmediyse onun altındaki) */
+ const eski=gorunuyordu?null:gosterilen&&gosterilen.isConnected&&gosterilen.style.opacity!=='0'?gosterilen:document.querySelector('#sayfalar iframe.eski');
+ gosterilen=f;
+ document.querySelectorAll('#sayfalar iframe').forEach(x=>{if(x!==f&&x!==eski)sayfaKaldir(x)});
+ if(eski){eski.classList.remove('on');eski.classList.add('eski')}
+ f.classList.remove('eski');f.classList.add('on');
+ if(gorunuyordu){f.style.opacity='';return}
+ const bitir=()=>{if(eski&&eski!==gosterilen)sayfaKaldir(eski)};
+ const oynat=()=>{if(gosterilen!==f)return;if(AZ.matches)return bitir();
+  const an=f.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:eski?240:320,easing:YUMUSAK});an.onfinish=an.oncancel=bitir};
+ if(f.dataset.hazir)return oynat();
+ f.style.opacity='0';let t=0;
+ const hazir=()=>{clearTimeout(t);f.removeEventListener('load',hazir);f.style.opacity='';oynat()};
+ f.addEventListener('load',hazir);t=setTimeout(hazir,900)}
+function ac(id){S.on=id;save();ciz()}
+function yeni(){const id=yeniId();S.list.push(id);giris=id;ac(id)}
+/* boş sayfa (hiçbir şey yazılmamış, tablo yok, Gerber işi yok) sormadan kapanır */
+function sayfaBosMu(id,f){try{const w=f&&f.contentWindow;if(w&&typeof w.sayfaBos==='function')return !!w.sayfaBos()}catch(e){}
+ try{return !localStorage.getItem('asorti-sayfa-'+id)&&!localStorage.getItem('asorti-gjob-'+id)}catch(e){return false}}
+function kapat(id){const i=S.list.indexOf(id);if(i<0)return;const d=info[id]||{},f=document.querySelector('#sayfalar iframe[data-id="'+id+'"]');
+ if((d.busy||!sayfaBosMu(id,f))&&!confirm((d.ad?d.ad+' sayfası':'Bu sayfa')+' kapatılsın mı?'+(d.busy?'\n\nDikkat: bu sayfanın Gerber işi hâlâ sürüyor.':'')+'\nSayfadaki bilgiler silinir (Excel\'e kaydettiklerin durur).'))return;
+ S.list.splice(i,1);delete info[id];
+ if(f){try{f.contentWindow.sifirlaniyor=true}catch(e){}f.dataset.sil='1'}   // kapanan sayfa artık kendini kaydetmesin
  try{localStorage.removeItem('asorti-sayfa-'+id);localStorage.removeItem('asorti-gjob-'+id)}catch(e){}
- if(!S.list.length)return yeni();if(S.on===id)S.on=S.list[Math.max(0,i-1)];save();frame(S.on);ciz()}
+ if(!S.list.length){const n=yeniId();S.list.push(n);giris=n;S.on=n}else if(S.on===id)S.on=S.list[Math.max(0,i-1)];
+ save();ciz();if(f&&f!==gosterilen&&!f.classList.contains('eski'))f.remove()}
 $('yeni').onclick=yeni;
 $('serit').addEventListener('dblclick',e=>{if(e.target===$('serit')||e.target===$('tabs'))yeni()});
 $('tabs').addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){$('tabs').scrollLeft+=e.deltaY;e.preventDefault()}},{passive:false});

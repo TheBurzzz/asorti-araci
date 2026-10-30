@@ -1,9 +1,10 @@
 {
- "surum": "1.1.18",
+ "surum": "1.1.19",
  "tarih": "2026-10-30",
  "notlar": [
-  "Gerber bağlantısı → Otomatik bul: sonuç listesi 5 saniye sonra yumuşakça kapanıyor (fare üstündeyken beklemede kalır)",
-  "Eksik bir şey varsa yerinde kısa bir satır kalıyor (\"Eksik: …\"); yanındaki okla liste kayarak açılıp kapanıyor",
-  "Bulunan ayarlar uygulanınca çıkan onay da 5 saniye sonra kendiliğinden kayboluyor"
+  "Boş sayfa (hiçbir şey yazılmamış) kapatılırken artık soru sormuyor; içinde bilgi varsa yine soruyor",
+  "Yeni yazı tipi (Inter): sekmeler ve sayfalar daha okunaklı, Excel'i andırmıyor",
+  "Sol üstteki simge ve \"Asorti Aracı\" yazısı yenilendi; masaüstü simgesi de aynı",
+  "Yeni sayfa sekmesi yumuşakça açılıyor, kapanırken kayarak kapanıyor; sayfalar arası geçiş yumuşak"
  ]
 }

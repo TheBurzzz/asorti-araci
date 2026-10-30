@@ -69,6 +69,17 @@ function TaramaOneri($r) {
 }
 # bilgi taramasi: bu surumun tarama kodu ilk kez calisiyorsa bir kere (bir sey degistirmez; ileride sorun cikarsa neye bakilacagini gosterir)
 $script:ilkEski = TaramaOku $TARAMA_ILK
+# uygulama simgesi değiştiyse (güncellemeyle yeni simge geldiyse) masaüstü kısayolu da yenisini göstersin: Windows simge önbelleğini bir kez tazele
+try {
+  $ikon = Join-Path $Root 'sistem\asorti.ico'; $iz = Join-Path $Root 'kopru\log\simge.txt'
+  if (Test-Path $ikon) {
+    $h = (Get-FileHash $ikon -Algorithm MD5).Hash; $o = if (Test-Path $iz) { (Get-Content $iz -Raw).Trim() } else { '' }
+    if ($h -ne $o) {
+      $ie = Join-Path $env:SystemRoot 'System32\ie4uinit.exe'; if (Test-Path $ie) { Start-Process -FilePath $ie -ArgumentList '-show' -WindowStyle Hidden }
+      Set-Content -Path $iz -Value $h -Encoding ASCII; Log 'uygulama simgesi yenilendi'
+    }
+  }
+} catch {}
 if (-not $script:ilkEski -or -not $script:ilkEski.surum -or ([version]("$($script:ilkEski.surum)") -lt [version]'1.1.17')) { try { if (TaramaBaslat $TARAMA_ILK -Taze) { Log 'bilgisayar taramasi baslatildi (sadece bilgi icin, ayarlara dokunmaz)' } } catch {} }
 
 # ---------- guncelleme ----------
@@ -220,12 +231,12 @@ function YenidenBaslat {
 $L = New-Object Net.HttpListener
 $L.Prefixes.Add("http://localhost:$Port/")
 $L.Start(); Log "sunucu acildi: http://localhost:$Port/"
-$tipler = @{ '.html' = 'text/html; charset=utf-8'; '.js' = 'text/javascript; charset=utf-8'; '.json' = 'application/json; charset=utf-8'; '.txt' = 'text/plain; charset=windows-1254'; '.png' = 'image/png'; '.ico' = 'image/x-icon'; '.css' = 'text/css; charset=utf-8' }
+$tipler = @{ '.html' = 'text/html; charset=utf-8'; '.js' = 'text/javascript; charset=utf-8'; '.json' = 'application/json; charset=utf-8'; '.txt' = 'text/plain; charset=windows-1254'; '.png' = 'image/png'; '.ico' = 'image/x-icon'; '.css' = 'text/css; charset=utf-8'; '.woff2' = 'font/woff2' }
 $script:sunucuId = "$PID-" + (Get-Date).Ticks   # sayfa, sunucu yeniden basladiginda (guncelleme) bunu degismis gorup kendini tazeler
 $son = $null; $basla = Get-Date; $script:sonBak = [datetime]::MinValue; $script:kapanis = $null
 function JsonYanit($ctx, $obj) { Yanit $ctx 200 ($utf8.GetBytes(($obj | ConvertTo-Json -Depth 5 -Compress))) 'application/json; charset=utf-8' }
-function Yanit($ctx, [int]$kod, [byte[]]$veri, [string]$tip) {
-  $r = $ctx.Response; $r.StatusCode = $kod; $r.Headers['Cache-Control'] = 'no-store'
+function Yanit($ctx, [int]$kod, [byte[]]$veri, [string]$tip, [string]$onbellek = 'no-store') {
+  $r = $ctx.Response; $r.StatusCode = $kod; $r.Headers['Cache-Control'] = $onbellek
   if ($tip) { $r.ContentType = $tip }
   if ($veri) { $r.ContentLength64 = $veri.Length; $r.OutputStream.Write($veri, 0, $veri.Length) }
   $r.OutputStream.Close()
@@ -308,7 +319,7 @@ try {
         if ((Test-Path $dosya -PathType Leaf) -and $tipler.ContainsKey([IO.Path]::GetExtension($dosya).ToLowerInvariant())) {
           $ext = [IO.Path]::GetExtension($dosya).ToLowerInvariant()
           $veri = $null; for ($i = 0; $i -lt 10 -and $null -eq $veri; $i++) { try { $fs = New-Object IO.FileStream($dosya, 'Open', 'Read', 'ReadWrite'); try { $ms = New-Object IO.MemoryStream; $fs.CopyTo($ms); $veri = $ms.ToArray() } finally { $fs.Close() } } catch { Start-Sleep -Milliseconds 100 } }
-          if ($null -eq $veri) { Yanit $ctx 503 $null $null } else { Yanit $ctx 200 $veri $tipler[$ext] }
+          if ($null -eq $veri) { Yanit $ctx 503 $null $null } elseif ($ext -eq '.woff2') { Yanit $ctx 200 $veri $tipler[$ext] 'max-age=31536000, immutable' } else { Yanit $ctx 200 $veri $tipler[$ext] }   # yazı tipi değişmez: her sayfa açılışında yeniden yüklenmesin
         } else { Yanit $ctx 404 $null $null }
       } elseif (($m -eq 'PUT' -or $m -eq 'POST') -and $yol -match '^kopru/(gelen|iptal)/[A-Za-z0-9._\-]+$') {
         $ms = New-Object IO.MemoryStream; $ctx.Request.InputStream.CopyTo($ms); $veri = $ms.ToArray()

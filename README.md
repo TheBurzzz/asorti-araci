@@ -38,3 +38,7 @@ Sayfanın üstündeki dal seçiciden (**main** yazan düğme) istediğin sürüm
 ZIP'i çıkar → **Kurulum.bat**. Kurulum ayarlara ve çalışma sayfalarına dokunmaz; uygulama sonra yine en yeni sürümü önerir.
 
 İlk deneme sürümü (paketlenmeden önce `C:\AccuNest` içinde çalışan hali) `arsiv` dalında duruyor.
+
+## Yazı tipi
+Uygulama [Inter](https://rsms.me/inter/) yazı tipini kullanır (programla birlikte gelir, internet gerekmez).
+Inter, SIL Open Font License 1.1 ile dağıtılır: `AsortiAraci/sistem/Inter-OFL.txt`.
