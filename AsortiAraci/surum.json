@@ -1,13 +1,9 @@
 {
- "surum": "1.1.20",
+ "surum": "1.1.21",
  "tarih": "2026-10-30",
  "notlar": [
-  "Yeni sayfa açılırken ve sayfalar arasında geçerken ekran sallanmıyor, kaydırma çubuğu çıkıp kaybolmuyor; sayfa yerinde yumuşakça beliriyor",
-  "Excel'e kaydedince sağ üstte küçük bir bildirim çıkıp kendiliğinden kayboluyor (tıklayınca dosya açılır); Gerber işi bitince de haber veriyor",
-  "Alt-üst takımda her modelin kumaşı ayrı ayrı yönlü / yönsüz seçiliyor",
-  "İki model aynı anda: ikinci model sırada beklemeden Gerber'e alınıp OTOPASTAL kuyruğuna giriyor",
-  "En verimli asorti bulunduktan sonra Gerber'e gönderince pastallar yeniden yerleştirilmiyor: denemede yerleşen pastallar üretim adıyla (URT) kaydediliyor, sipariş de üretim adıyla",
-  "Masaüstü kısayolu yeni simgeyi gösteriyor",
-  "Daha hızlı açılış; açılırken tekrar tıklanırsa ikinci pencere açılmıyor, açık pencere öne gelir"
+  "Masaüstündeki simgeye tıklar tıklamaz uygulamanın açılış ekranı geliyor; uygulama hazır olunca yumuşakça kayboluyor",
+  "Açılırken tekrar tıklansa da ikinci pencere açılmıyor; uygulama zaten açıksa (simge durumunda olsa bile) öne geliyor",
+  "Açılış uzarsa ekranda “Hâlâ açılıyor” yazıyor; bir sorun olursa ne yapılacağını söylüyor"
  ]
 }

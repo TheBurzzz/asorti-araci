@@ -26,6 +26,22 @@ function PencereAcik {
   try { return (@(Get-CimInstance Win32_Process -Filter "Name='msedge.exe' OR Name='chrome.exe'" -ErrorAction Stop | Where-Object { $_.CommandLine -match $script:profilDesen }).Count -gt 0) }
   catch { return $null }   # bilinmiyor
 }
+# uygulama penceresi (Edge / Chrome, basligi "Asorti Araci")
+function UygulamaPencereleri { @(Get-Process -Name msedge, chrome -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne [IntPtr]::Zero -and $_.MainWindowTitle -like 'Asorti Ara*' }) }
+# acik uygulama penceresi simge durumundaysa eski boyutuna dondurur (one getirmeyi acilisi baslatan betik yapar)
+$script:u32Tanim = '[DllImport("user32.dll")] public static extern bool ShowWindowAsync(System.IntPtr h, int c); [DllImport("user32.dll")] public static extern bool IsIconic(System.IntPtr h);'
+function PencereOneGetir {
+  if (-not ('AsortiPencere.P' -as [type])) {
+    if ($script:u32Is) { [void]$script:u32Is.AsyncWaitHandle.WaitOne(8000) }   # arka planda hazirlaniyor: bitmesini bekle
+    if (-not ('AsortiPencere.P' -as [type])) { Add-Type -Namespace AsortiPencere -Name P -MemberDefinition $script:u32Tanim }
+  }
+  foreach ($p in UygulamaPencereleri) { if ([AsortiPencere.P]::IsIconic($p.MainWindowHandle)) { [void][AsortiPencere.P]::ShowWindowAsync($p.MainWindowHandle, 9) } }
+}
+# one getirme ilk seferde derleme beklemesin: pencere acildiktan bir sure sonra arka planda (ayri is parcaciginda) hazirlanir
+function PencereHazirla {
+  if ($script:u32Ps -or ('AsortiPencere.P' -as [type])) { return }
+  try { $script:u32Ps = [PowerShell]::Create(); [void]$script:u32Ps.AddScript('param($t) Add-Type -Namespace AsortiPencere -Name P -MemberDefinition $t').AddArgument($script:u32Tanim); $script:u32Is = $script:u32Ps.BeginInvoke() } catch { $script:u32Ps = 1 }
+}
 function Kapat([string]$neden = 'pencere kapandi') {
   Log "${neden}: kopru ve Batch kapatiliyor"
   try { if ($script:kopru -and -not $script:kopru.HasExited) { Stop-Process -Id $script:kopru.Id -Force } } catch {}
@@ -295,6 +311,7 @@ try {
         if ($acik -eq $false -and ($son -or $sessiz -gt 180)) { Kapat $(if ($son) { 'pencere kapandi' } else { 'pencere hic acilmadi' }); $L.Stop(); exit }
         if ($null -eq $acik -and $sessiz -gt 900) { Kapat 'pencereden 15 dakikadir haber yok'; $L.Stop(); exit }
       }
+      if ($script:acildiT -and -not $script:u32Ps -and ($simdi - $script:acildiT).TotalSeconds -gt 20) { PencereHazirla }
       if ($A.gerber -and $script:kopru.HasExited -and ((Get-Date) - $script:kBas).TotalSeconds -gt 30) { Log 'kopru durmustu, yeniden baslatiliyor'; KopruBaslat }
     }
     $ctx = $t.Result
@@ -302,7 +319,7 @@ try {
       $yol = [Uri]::UnescapeDataString($ctx.Request.Url.AbsolutePath).TrimStart('/')
       $m = $ctx.Request.HttpMethod
       if ($yol -eq 'kapaniyor') { $script:kapanis = (Get-Date).AddSeconds(6); Yanit $ctx 200 $null $null; continue }
-      if ($yol -eq 'nabiz') { $son = Get-Date; $script:kapanis = $null; if (-not $script:acildi) { $script:acildi = $true; Remove-Item -LiteralPath (Join-Path $Root 'kopru\log\acilis.txt') -Force -ErrorAction SilentlyContinue }   # pencere acildi: yeniden acma kilidi kalksin
+      if ($yol -eq 'nabiz') { $son = Get-Date; $script:kapanis = $null; if (-not $script:acildi) { $script:acildi = $true; $script:acildiT = Get-Date; Remove-Item -LiteralPath (Join-Path $Root 'kopru\log\acilis.txt') -Force -ErrorAction SilentlyContinue }   # pencere acildi: yeniden acma kilidi kalksin
         JsonYanit $ctx @{ kopru = [bool]($script:kopru -and -not $script:kopru.HasExited); gerber = [bool]$A.gerber; otopastal = "$($A.otopastal)"; id = $script:sunucuId }; continue }
       if ($yol -eq 'excel/klasor' -and $m -eq 'GET') { JsonYanit $ctx (ExcelDurum); continue }
       if ($yol -eq 'excel/klasor-sec' -and $m -eq 'POST') {
@@ -336,6 +353,13 @@ try {
         Log ('gerber ayarlari otomatik bulunanlarla degisti: ' + (($deg.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ' '))
         JsonYanit $ctx @{ ok = $true; ayar = (GerberAyar) }; continue
       }
+      if ($yol -eq 'pencere') {   # masaustu simgesi / acilis ekrani soruyor: uygulama penceresi acik mi
+        $ac = [bool]($son -and -not $script:kapanis)
+        if ($ac -and ((Get-Date) - $son).TotalSeconds -ge 9) { $ac = @(UygulamaPencereleri).Count -gt 0 }   # nabiz gecikmis olabilir (simge durumunda): pencere gercekten var mi
+        if ($script:kapanis) { $script:kapanis = (Get-Date).AddSeconds(15) }   # pencere az once kapandi ama yeniden aciliyor: program kapanmasin
+        JsonYanit $ctx @{ acik = $ac }; continue
+      }
+      if ($yol -eq 'one-getir' -and $m -eq 'POST') { try { PencereOneGetir } catch { Log ('pencere one getirilemedi: ' + $_.Exception.Message) }; Yanit $ctx 200 $null $null; continue }
       if ($yol -eq 'tema' -and $m -eq 'POST') { $tv = "$($ctx.Request.QueryString['v'])"; if ($tv -in @('dark', 'light') -and (KullaniciOku)['tema'] -ne $tv) { try { KullaniciYaz 'tema' $tv } catch {} }; Yanit $ctx 200 $null $null; continue }
       if ($yol -eq 'konum') { $k = IpKonum; if ($k) { JsonYanit $ctx $k } else { JsonYanit $ctx @{ hata = 'konum bulunamadi' } }; continue }
       if ($yol -eq 'surum') { $y = YerelSurum $Root; JsonYanit $ctx @{ surum = "$($y.surum)"; tarih = "$($y.tarih)"; gerber = [bool]$A.gerber; otopastal = "$($A.otopastal)"; guncelleme = [bool]$A.guncelleme }; continue }

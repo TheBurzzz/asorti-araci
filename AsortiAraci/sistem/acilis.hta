@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta charset="utf-8">
+<title>Asorti Arac&#305;</title>
+<hta:application id="aa" applicationname="AsortiAraciAcilis" border="none" caption="no" innerborder="no" scroll="no" showintaskbar="yes" singleinstance="yes" sysmenu="no" contextmenu="no" selection="no" icon="asorti.ico" windowstate="maximize" />
+<script>
+/* guvenlik: asagidaki betik herhangi bir sebeple calismazsa hata penceresi cikmasin, bu ekran da asili kalmasin */
+window.onerror=function(){return true};
+setTimeout(function(){if(!window.calisiyor)window.close()},4000);
+setTimeout(function(){window.close()},180000);
+</script>
+<style>
+/* Asorti Araci acilis ekrani: masaustu simgesine tiklaninca hemen gorunur, uygulama penceresi hazir olunca yumusakca kaybolur.
+   Gorunum, uygulama penceresinin acilis sayfasiyla (acilis.html) birebir aynidir. */
+html,body{margin:0;height:100%;overflow:hidden;cursor:default}
+body{background:#eef0f6;color:#1d1d1f;font-family:"Segoe UI Variable Text","Segoe UI",sans-serif;-ms-user-select:none;transition:opacity .35s ease}
+body.koyu{background:#0a0c13;color:#f5f5f7}
+#zemin{position:absolute;left:0;top:0;right:0;bottom:0}
+#orta{position:absolute;left:0;right:0;top:50%;margin-top:-88px;text-align:center;animation:gel .5s cubic-bezier(.2,.8,.2,1)}
+@keyframes gel{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+#ik{width:76px;height:76px;margin:0 auto;border-radius:17px;box-shadow:0 2px 3px rgba(0,58,150,.22),0 10px 24px rgba(0,58,150,.16)}
+#ik svg{display:block}
+.koyu #ik{box-shadow:0 3px 10px rgba(0,0,0,.55)}
+#ad{margin-top:16px;font-size:21px;line-height:28px;letter-spacing:-.02em;color:#6e6e73}#ad b{font-weight:600;color:#1d1d1f}
+.koyu #ad{color:#a1a1a6}.koyu #ad b{color:#f5f5f7}
+#hal{width:120px;height:3px;margin:16px auto 0;border-radius:2px;background:rgba(120,120,128,.18);overflow:hidden}
+#hal i{display:block;width:40%;height:3px;border-radius:2px;background:#0a84ff;animation:git 1.1s cubic-bezier(.45,.05,.55,.95) infinite}
+@keyframes git{from{transform:translateX(-110%)}to{transform:translateX(280%)}}
+#not{min-height:20px;margin:16px auto 0;max-width:420px;padding:0 20px;font-size:12.5px;line-height:1.4;color:#6e6e73}.koyu #not{color:#a1a1a6}
+</style>
+</head><body>
+<div id="zemin"></div>
+<div id="orta"><div id="ik"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="76" height="76" aria-hidden="true"><defs><linearGradient id="hA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5AACFF"/><stop offset="1" stop-color="#0068DA"/></linearGradient><radialGradient id="hH" cx=".5" cy="0" r=".95"><stop offset="0" stop-color="#fff" stop-opacity=".26"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><path d="M64 32L64 35.15L64 38.36L63.98 41.7L63.92 45.22L63.73 48.96L63.21 52.85L62.04 56.65L59.86 59.86L56.65 62.04L52.85 63.21L48.96 63.73L45.22 63.92L41.7 63.98L38.36 64L35.15 64L32 64L28.85 64L25.64 64L22.3 63.98L18.78 63.92L15.04 63.73L11.15 63.21L7.35 62.04L4.14 59.86L1.96 56.65L0.79 52.85L0.27 48.96L0.08 45.22L0.02 41.7L0 38.36L0 35.15L0 32L0 28.85L0 25.64L0.02 22.3L0.08 18.78L0.27 15.04L0.79 11.15L1.96 7.35L4.14 4.14L7.35 1.96L11.15 0.79L15.04 0.27L18.78 0.08L22.3 0.02L25.64 0L28.85 0L32 0L35.15 0L38.36 0L41.7 0.02L45.22 0.08L48.96 0.27L52.85 0.79L56.65 1.96L59.86 4.14L62.04 7.35L63.21 11.15L63.73 15.04L63.92 18.78L63.98 22.3L64 25.64L64 28.85Z" fill="url(#hA)"/><path d="M64 32L64 35.15L64 38.36L63.98 41.7L63.92 45.22L63.73 48.96L63.21 52.85L62.04 56.65L59.86 59.86L56.65 62.04L52.85 63.21L48.96 63.73L45.22 63.92L41.7 63.98L38.36 64L35.15 64L32 64L28.85 64L25.64 64L22.3 63.98L18.78 63.92L15.04 63.73L11.15 63.21L7.35 62.04L4.14 59.86L1.96 56.65L0.79 52.85L0.27 48.96L0.08 45.22L0.02 41.7L0 38.36L0 35.15L0 32L0 28.85L0 25.64L0.02 22.3L0.08 18.78L0.27 15.04L0.79 11.15L1.96 7.35L4.14 4.14L7.35 1.96L11.15 0.79L15.04 0.27L18.78 0.08L22.3 0.02L25.64 0L28.85 0L32 0L35.15 0L38.36 0L41.7 0.02L45.22 0.08L48.96 0.27L52.85 0.79L56.65 1.96L59.86 4.14L62.04 7.35L63.21 11.15L63.73 15.04L63.92 18.78L63.98 22.3L64 25.64L64 28.85Z" fill="url(#hH)"/><g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"><path d="M13.75 24.75L32 14.75L50.25 24.75L32 34.75Z" fill="#fff" stroke-width="2.5"/><path d="M13.75 31.75L32 41.75L50.25 31.75" stroke-opacity=".82" stroke-width="3.62"/><path d="M13.75 38.75L32 48.75L50.25 38.75" stroke-opacity=".6" stroke-width="3.62"/></g></svg></div><div id="ad"><b>Asorti</b> Arac&#305;</div><div id="hal"><i></i></div><div id="not"></div></div>
+<script>
+var cl='';try{cl=String(document.getElementById('aa').commandLine||'')}catch(e){}
+var P=(/\bp=(\d+)/.exec(cl)||[])[1]||'8642',T=(/\bt=(dark|light)/.exec(cl)||[])[1]||'light';
+var t0=new Date().getTime(),bitti=false,hatali=false,uzun=false,eski=false,sonTaze=0,fso=null,kilit='';
+var yazi=document.getElementById('not'),hal=document.getElementById('hal');
+/* arka plan: uygulamadaki renkli zeminin aynisi (IE vmax bilmedigi icin olculer burada hesaplanir) */
+function zemin(){var w=document.documentElement.clientWidth||screen.width,h=document.documentElement.clientHeight||screen.height,v=Math.max(w,h)/100;
+ var k=T==='dark'?['28,47,112','59,34,102','23,63,82','74,42,58']:['201,220,255','228,214,255','255,226,210','205,238,229'];
+ function g(a,b,yer,c){return 'radial-gradient('+Math.round(a*v)+'px '+Math.round(b*v)+'px at '+yer+',rgb('+c+') 0,rgba('+c+',0) 62%)'}
+ try{document.getElementById('zemin').style.background=[g(55,48,'10% 6%',k[0]),g(50,44,'92% 10%',k[1]),g(56,50,'78% 98%',k[2]),g(46,42,'6% 92%',k[3])].join(',')}catch(e){}}
+/* "acilmakta" isareti (kopru\log\acilis.txt): bu ekran beklerken tazelenir ki simgeye tekrar tiklaninca ikinci pencere acilmasin */
+try{fso=new ActiveXObject('Scripting.FileSystemObject');var hp=(/"([^"]+\.hta)"/i.exec(cl)||/(\S+\.hta)/i.exec(cl)||[])[1];
+ if(!hp)hp=decodeURIComponent(String(location.pathname||'')).replace(/^\/+/,'').replace(/\//g,'\\');
+ var kok=fso.GetParentFolderName(fso.GetParentFolderName(fso.GetAbsolutePathName(hp)));
+ if(kok&&fso.FolderExists(kok)){kilit=kok+'\\kopru\\log\\acilis.txt';
+  if(!/\bp=\d+/.test(cl))P=(/"port"\s*:\s*(\d+)/.exec(dosya(kok+'\\ayarlar.json'))||[])[1]||P;
+  if(!/\bt=(dark|light)/.test(cl))T=/"tema"\s*:\s*"dark"/.test(dosya(kok+'\\kullanici.json'))?'dark':T}}catch(e){fso=null;kilit=''}
+function dosya(f){try{if(fso.FileExists(f)){var t=fso.OpenTextFile(f,1,false),m=t.AtEndOfStream?'':t.ReadAll();t.Close();return m}}catch(e){}return ''}
+if(T==='dark')document.body.className='koyu';
+zemin();window.onresize=zemin;
+function kilitVar(){try{return !!(kilit&&fso.FileExists(kilit))}catch(e){return false}}
+function kilitTazele(){try{if(kilitVar()){var f=fso.OpenTextFile(kilit,2,true);f.WriteLine(String(new Date()));f.Close()}}catch(e){}}
+function kilitSil(){try{if(kilitVar())fso.DeleteFile(kilit,true)}catch(e){}}
+/* uygulama penceresi acildi (ya da Esc): pencereyi one getir, bu ekrani yumusakca kapat */
+function kapat(acildi){if(bitti)return;bitti=true;
+ if(acildi)kilitSil();
+ document.title='-';   /* one getirirken bu ekran degil uygulama penceresi bulunsun */
+ setTimeout(function(){try{new ActiveXObject('WScript.Shell').AppActivate('Asorti Ara\u0131')}catch(e){}},30);
+ document.body.style.opacity='0';setTimeout(function(){window.close()},420)}
+function hata(){hatali=true;kilitSil();   /* isaret kalkar: simgeye tekrar tiklaninca bastan acilir */
+ yazi.innerHTML='A\u00e7\u0131lamad\u0131. Bu ekrana t\u0131klay\u0131p kapat,<br>sonra masa\u00fcst\u00fcndeki simgeden tekrar a\u00e7.';hal.style.visibility='hidden'}
+function bastan(){hatali=false;uzun=false;t0=new Date().getTime();sonTaze=0;yazi.innerHTML='';hal.style.visibility='visible'}
+document.onclick=function(){if(hatali)kapat(false)};
+document.onkeydown=function(e){e=e||window.event;if(e&&e.keyCode===27)kapat(false)};
+function bak(){if(bitti)return;var x=null,tamam=false;
+ try{x=new ActiveXObject('MSXML2.XMLHTTP.6.0')}catch(e){try{x=new ActiveXObject('MSXML2.XMLHTTP')}catch(e2){x=null}}
+ if(!x){setTimeout(function(){kapat(false)},8000);return}
+ function son(s,m){if(tamam)return;tamam=true;
+  if(s===200&&/"acik"\s*:\s*true/.test(m))return kapat(true);
+  if(s===404&&!eski){eski=true;setTimeout(function(){kapat(false)},2500)}   /* eski surum program: beklemeden kapan */
+  sonra()}
+ try{x.open('GET','http://localhost:'+P+'/pencere?a='+new Date().getTime(),true);
+  x.onreadystatechange=function(){if(x.readyState!==4)return;var s=0,m='';try{s=x.status;m=String(x.responseText)}catch(e){}son(s,m)};
+  x.send()}catch(e){son(0,'')}}
+function sonra(){var g=new Date().getTime()-t0;
+ if(hatali){if(kilitVar())bastan()}   /* simgeye yeniden tiklandi: yeniden bekle */
+ else{if(g-sonTaze>=5000){sonTaze=g;kilitTazele()}
+  if(!uzun&&g>10000){uzun=true;yazi.innerHTML='H\u00e2l\u00e2 a\u00e7\u0131l\u0131yor, l\u00fctfen bekle\u2026'}
+  if(g>45000)hata()}
+ setTimeout(bak,hatali?1000:300)}
+setTimeout(bak,400);
+window.calisiyor=true;
+</script>
+</body></html>
