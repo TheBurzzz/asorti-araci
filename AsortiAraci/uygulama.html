@@ -6,8 +6,8 @@
 /* yazı tipi: Inter (SIL Open Font License, sistem/Inter-OFL.txt) — programla birlikte gelir, internet gerekmez */
 @font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:fallback;src:url(sistem/inter-latin.woff2?v=4) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 @font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:fallback;src:url(sistem/inter-latin-ext.woff2?v=4) format("woff2");unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
-:root{--ink:#1d1d1f;--mut:#6e6e73;--line:rgba(60,60,67,.14);--bg:#eef0f6;--bar:rgba(246,247,250,.86);--tabh:rgba(60,60,67,.07);--on:#fff;--acc:#0071e3;--accs:rgba(0,113,227,.12);--ok:#1f9d55;--bad:#d13b30;--pop:rgba(255,255,255,.9);--sh:0 1px 2px rgba(0,0,0,.08),0 3px 10px rgba(30,45,90,.10);--psh:0 18px 50px rgba(20,30,60,.22),0 2px 8px rgba(20,30,60,.10)}
-html[data-theme=dark]{--ink:#f5f5f7;--mut:#a1a1a6;--line:rgba(255,255,255,.12);--bg:#0a0c13;--bar:rgba(28,30,38,.88);--tabh:rgba(255,255,255,.07);--on:#3a3f4e;--acc:#0a84ff;--accs:rgba(10,132,255,.22);--ok:#32d17a;--bad:#ff6b61;--pop:rgba(40,43,54,.94);--sh:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.35);--psh:0 18px 50px rgba(0,0,0,.55),0 2px 8px rgba(0,0,0,.4)}
+:root{--bldbg:rgba(252,252,254,.97);--ink:#1d1d1f;--mut:#6e6e73;--line:rgba(60,60,67,.14);--bg:#eef0f6;--bar:rgba(246,247,250,.86);--tabh:rgba(60,60,67,.07);--on:#fff;--acc:#0071e3;--accs:rgba(0,113,227,.12);--ok:#1f9d55;--bad:#d13b30;--pop:rgba(255,255,255,.9);--sh:0 1px 2px rgba(0,0,0,.08),0 3px 10px rgba(30,45,90,.10);--psh:0 18px 50px rgba(20,30,60,.22),0 2px 8px rgba(20,30,60,.10)}
+html[data-theme=dark]{--bldbg:rgba(46,49,61,.97);--ink:#f5f5f7;--mut:#a1a1a6;--line:rgba(255,255,255,.12);--bg:#0a0c13;--bar:rgba(28,30,38,.88);--tabh:rgba(255,255,255,.07);--on:#3a3f4e;--acc:#0a84ff;--accs:rgba(10,132,255,.22);--ok:#32d17a;--bad:#ff6b61;--pop:rgba(40,43,54,.94);--sh:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.35);--psh:0 18px 50px rgba(0,0,0,.55),0 2px 8px rgba(0,0,0,.4)}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:13.5px/1.4 "Inter","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 button{font:inherit;color:inherit}
@@ -105,11 +105,28 @@ html[data-theme=dark] .gbKisa .i{color:#ffb340}
 .gbKisa+.gbAc .gbl{margin-top:4px}
 @media(prefers-reduced-motion:reduce){.gbAc,.gbKisa svg{transition:none}}
 .alt button{border:0;background:transparent;color:var(--acc);cursor:pointer;padding:4px 2px}
-#sayfalar{position:absolute;top:54px;left:0;right:0;bottom:0}
+/* pencerenin kendisi hiç kaymaz (kaydırma çubuğu sadece sayfaların içinde çıkar) */
+html,body{overflow:hidden}
+#sayfalar{position:absolute;top:54px;left:0;right:0;bottom:0;overflow:hidden}
 #sayfalar iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:var(--bg)}
 #sayfalar iframe.on{display:block;z-index:2}
-/* sayfa değişirken eski sayfa, yenisi üstünde belirene kadar altta durur (arada boşluk / titreme olmaz) */
-#sayfalar iframe.eski{display:block;z-index:1}
+/* yeni açılan sayfa görünmeden arkada yüklenir; hazır olunca öncekinin yerine geçer */
+#sayfalar iframe.yukleniyor{display:block;visibility:hidden;z-index:0}
+/* bildirim: sağ üstte küçük, Apple bildirimleri gibi kayarak gelir ve gider */
+#bildirimler{position:fixed;top:64px;right:14px;z-index:40;display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none;width:min(340px,calc(100vw - 28px))}
+.bld{position:relative;display:flex;align-items:center;gap:11px;width:100%;padding:10px 12px 10px 11px;border-radius:14px;background:var(--bldbg);border:1px solid var(--line);box-shadow:0 10px 30px rgba(20,30,60,.16),0 1px 4px rgba(20,30,60,.10);color:var(--ink);pointer-events:auto;cursor:default;user-select:none}
+.bld.tik{cursor:pointer}
+.bld .bik{flex:none;width:30px;height:30px;display:grid;place-items:center}
+.bld .bik svg{width:30px;height:30px}
+.bld .bmt{flex:1;min-width:0;line-height:1.3}
+.bld .bbas{display:flex;align-items:baseline;gap:8px;font-size:13px;font-weight:600}
+.bld .bbas span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bld .bzm{flex:none;font-size:11px;font-weight:400;font-style:normal;color:var(--mut)}
+.bld .bmet{font-size:12.5px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.bld .bx{position:absolute;top:-7px;left:-7px;width:20px;height:20px;border-radius:50%;border:1px solid var(--line);background:var(--bldbg);color:var(--mut);display:grid;place-items:center;padding:0;cursor:pointer;opacity:0;transform:scale(.8);transition:opacity .15s,transform .15s;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.bld .bx svg{width:8px;height:8px}
+.bld:hover .bx{opacity:1;transform:none}
+.bld .bx:hover{color:var(--ink)}
 /* mavi ışık filtresi: her şeyin üstünde, tıklamaları engellemez */
 ::view-transition-old(root),::view-transition-new(root){animation-duration:.55s;animation-timing-function:cubic-bezier(.4,0,.2,1)}
 #gece{position:fixed;inset:0;pointer-events:none;z-index:50;background:#ff8a1c;mix-blend-mode:multiply;opacity:0;transition:opacity .6s}
@@ -144,6 +161,7 @@ html[data-theme=dark] .gbKisa .i{color:#ffb340}
  </div>
 </div>
 <div id="sayfalar"></div>
+<div id="bildirimler" aria-live="polite"></div>
 <div id="gece"></div>
 <script>
 const $=i=>document.getElementById(i),LS='asorti-sayfalar',LG='asorti-gorunum';
@@ -169,7 +187,7 @@ function sekmeOyna(b,acil,bitince){const w=b.getBoundingClientRect().width,cs=ge
   kapali={width:'0px',minWidth:'0px',paddingLeft:'0px',paddingRight:'0px',marginLeft:ml,opacity:0},
   acik={width:w+'px',minWidth:'0px',paddingLeft:cs.paddingLeft,paddingRight:cs.paddingRight,marginLeft:'0px',opacity:1};
  b.dataset.anim='1';
- const an=b.animate(acil?[kapali,acik]:[acik,kapali],acil?{duration:340,easing:YUMUSAK}:{duration:240,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'});
+ const an=b.animate(acil?[kapali,acik]:[acik,kapali],acil?{duration:280,easing:YUMUSAK}:{duration:220,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'});
  an.onfinish=an.oncancel=()=>{delete b.dataset.anim;if(bitince)bitince()}}
 function sekmeCik(b){b.dataset.kapaniyor='1';b.classList.remove('on');
  if(AZ.matches)b.remove();else sekmeOyna(b,false,()=>b.remove())}
@@ -185,24 +203,18 @@ function ciz(){let onceki=null;
  [...T.children].forEach(b=>{if(!b.dataset.kapaniyor&&!S.list.includes(b.dataset.id))sekmeCik(b)});
  sayfaGoster(S.on);
  if(S.on!==sonAktif){sonAktif=S.on;const a=T.querySelector('.tab.on');if(a&&!a.dataset.anim)a.scrollIntoView({block:'nearest',inline:'nearest'})}}
-/* sayfa geçişi: yeni sayfa eskisinin üstünde hafifçe yükselerek belirir; yeni açılan sayfa yüklenince belirir */
-function sayfaKaldir(x){x.classList.remove('on','eski');if(x.dataset.sil)x.remove()}
-function sayfaGoster(id){const f=frame(id);if(gosterilen===f)return;
- const gorunuyordu=f.classList.contains('eski');   // geçiş bitmeden geri dönüldü: sayfa zaten altta görünüyor
- /* altta kalacak sayfa: ekranda görünen sayfa (öncekisi daha yüklenmediyse onun altındaki) */
- const eski=gorunuyordu?null:gosterilen&&gosterilen.isConnected&&gosterilen.style.opacity!=='0'?gosterilen:document.querySelector('#sayfalar iframe.eski');
- gosterilen=f;
- document.querySelectorAll('#sayfalar iframe').forEach(x=>{if(x!==f&&x!==eski)sayfaKaldir(x)});
- if(eski){eski.classList.remove('on');eski.classList.add('eski')}
- f.classList.remove('eski');f.classList.add('on');
- if(gorunuyordu){f.style.opacity='';return}
- const bitir=()=>{if(eski&&eski!==gosterilen)sayfaKaldir(eski)};
- const oynat=()=>{if(gosterilen!==f)return;if(AZ.matches)return bitir();
-  const an=f.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:eski?240:320,easing:YUMUSAK});an.onfinish=an.oncancel=bitir};
- if(f.dataset.hazir)return oynat();
- f.style.opacity='0';let t=0;
- const hazir=()=>{clearTimeout(t);f.removeEventListener('load',hazir);f.style.opacity='';oynat()};
- f.addEventListener('load',hazir);t=setTimeout(hazir,900)}
+/* sayfa geçişi: sayfalar yer değiştirir, arka plan aynı kalır; sadece sayfanın içeriği bir an yumuşakça belirir
+   (iki sayfa üst üste görünmez, hiçbir şey kaymaz). Yeni açılan sayfa arkada yüklenir, hazır olunca gelir. */
+function sayfaKaldir(x){x.classList.remove('on','yukleniyor');if(x.dataset.sil)x.remove()}
+function sayfaGoster(id){const f=frame(id);if(gosterilen===f)return;gosterilen=f;
+ const degis=()=>{if(gosterilen!==f)return;
+  document.querySelectorAll('#sayfalar iframe').forEach(x=>{if(x!==f&&!x.classList.contains('yukleniyor'))sayfaKaldir(x)});
+  f.classList.remove('yukleniyor');f.classList.add('on');
+  try{const w=f.contentWindow;if(w&&w.sayfaBelir)w.sayfaBelir()}catch(e){}};
+ if(f.dataset.hazir)return degis();
+ f.classList.add('yukleniyor');let t=0;
+ const hazir=()=>{clearTimeout(t);f.removeEventListener('load',hazir);if(gosterilen===f)degis();else f.classList.remove('yukleniyor')};
+ f.addEventListener('load',hazir);t=setTimeout(hazir,1200)}
 function ac(id){S.on=id;save();ciz()}
 function yeni(){const id=yeniId();S.list.push(id);giris=id;ac(id)}
 /* boş sayfa (hiçbir şey yazılmamış, tablo yok, Gerber işi yok) sormadan kapanır */
@@ -214,14 +226,43 @@ function kapat(id){const i=S.list.indexOf(id);if(i<0)return;const d=info[id]||{}
  if(f){try{f.contentWindow.sifirlaniyor=true}catch(e){}f.dataset.sil='1'}   // kapanan sayfa artık kendini kaydetmesin
  try{localStorage.removeItem('asorti-sayfa-'+id);localStorage.removeItem('asorti-gjob-'+id)}catch(e){}
  if(!S.list.length){const n=yeniId();S.list.push(n);giris=n;S.on=n}else if(S.on===id)S.on=S.list[Math.max(0,i-1)];
- save();ciz();if(f&&f!==gosterilen&&!f.classList.contains('eski'))f.remove()}
+ save();ciz();if(f&&f!==gosterilen&&!f.classList.contains('on'))f.remove()}
 $('yeni').onclick=yeni;
 $('serit').addEventListener('dblclick',e=>{if(e.target===$('serit')||e.target===$('tabs'))yeni()});
 $('tabs').addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){$('tabs').scrollLeft+=e.deltaY;e.preventDefault()}},{passive:false});
 window.addEventListener('message',e=>{const d=e.data||{};
  if(d.t==='exKlasor'){document.querySelectorAll('#sayfalar iframe').forEach(f=>{if(f.contentWindow!==e.source)try{f.contentWindow.postMessage(d,'*')}catch(x){}});if($('menu').classList.contains('on'))exGoster()}
  if(d.t==='sayfa'&&S.list.includes(d.id)){const o=info[d.id]||{};if(o.ad!==d.ad||o.busy!==d.busy||o.bitti!==d.bitti){info[d.id]={ad:d.ad,busy:d.busy,bitti:d.bitti};ciz()}}
- if(d.t==='tema'){G0.tema=d.v==='dark'?'koyu':'acik';kaydet();uygula()}});
+ if(d.t==='tema'){G0.tema=d.v==='dark'?'koyu':'acik';kaydet();uygula()}
+ if(d.t==='bildirim'&&S.list.includes(d.id))sayfaBildirimi(d)});
+
+/* ---------- bildirimler: sağ üstte küçük kart; kayarak gelir, birkaç saniye sonra kayarak gider (fare üstündeyken bekler) ---------- */
+const BIK={
+ excel:'<svg viewBox="0 0 30 30" aria-hidden="true"><rect x="1" y="1" width="28" height="28" rx="7.5" fill="#1f9d55"/><path d="M10.2 7.2h6.6l4.6 4.6v10.3a1.6 1.6 0 0 1-1.6 1.6H10.2a1.6 1.6 0 0 1-1.6-1.6V8.8a1.6 1.6 0 0 1 1.6-1.6z" fill="#fff"/><path d="M11.8 16.4l2.3 2.3 4.3-4.6" fill="none" stroke="#1f9d55" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ uygulama:'<svg viewBox="0 0 64 64" aria-hidden="true"><use href="#lgS" fill="url(#lgA)"/><use href="#lgS" fill="url(#lgH)"/><g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"><path d="M13.75 24.75L32 14.75L50.25 24.75L32 34.75Z" fill="#fff" stroke-width="2.5"/><path d="M13.75 31.75L32 41.75L50.25 31.75" stroke-opacity=".82" stroke-width="3.62"/><path d="M13.75 38.75L32 48.75L50.25 38.75" stroke-opacity=".6" stroke-width="3.62"/></g></svg>',
+ hata:'<svg viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="14" fill="#e5484d"/><path d="M15 8.6v8" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><circle cx="15" cy="21.2" r="1.6" fill="#fff"/></svg>'};
+function bildirim(o){const K=$('bildirimler');
+ while(K.children.length>=3)K.lastElementChild.remove();
+ const b=document.createElement('div');b.className='bld'+(o.tik?' tik':'');b.setAttribute('role','status');
+ b.innerHTML='<span class="bik">'+(BIK[o.tur]||BIK.uygulama)+'</span><div class="bmt"><div class="bbas"><span></span><i class="bzm">şimdi</i></div><div class="bmet"></div></div><button class="bx" type="button" aria-label="Kapat" title="Kapat">'+xIk+'</button>';
+ b.querySelector('.bbas span').textContent=o.baslik||'';b.querySelector('.bmet').textContent=o.metin||'';if(o.ipucu)b.title=o.ipucu;
+ K.prepend(b);
+ let kalan=o.sure||4500,bas=0,zam=0;
+ const git=()=>{clearTimeout(zam);if(b.dataset.gidiyor)return;b.dataset.gidiyor='1';b.style.pointerEvents='none';
+  if(AZ.matches)return b.remove();
+  const a=b.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateX(28px)'}],{duration:260,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});
+  a.onfinish=()=>{const h=b.offsetHeight;const c=b.animate([{height:h+'px',marginBottom:'0px'},{height:'0px',marginBottom:'-8px',paddingTop:'0px',paddingBottom:'0px',borderWidth:'0px'}],{duration:170,easing:'ease-out',fill:'forwards'});c.onfinish=c.oncancel=()=>b.remove()}};
+ const kur=()=>{clearTimeout(zam);bas=Date.now();zam=setTimeout(git,kalan)};
+ b.addEventListener('mouseenter',()=>{clearTimeout(zam);kalan=Math.max(1800,kalan-(Date.now()-bas))});
+ b.addEventListener('mouseleave',kur);
+ b.querySelector('.bx').addEventListener('click',e=>{e.stopPropagation();git()});
+ if(o.tik)b.addEventListener('click',()=>{try{o.tik()}catch(e){}git()});
+ if(!AZ.matches)b.animate([{opacity:0,transform:'translateX(34px) scale(.98)'},{opacity:1,transform:'none'}],{duration:440,easing:'cubic-bezier(.2,.9,.25,1)'});
+ kur()}
+function sayfaBildirimi(d){
+ if(d.tur==='excel')return bildirim({tur:'excel',baslik:d.baslik||'Excel\'e kaydedildi',metin:d.metin||d.ad||'',ipucu:'Açmak için tıkla',
+  tik:d.ad?()=>fetch('/excel/ac?ad='+encodeURIComponent(d.ad)+'&nasil=dosya',{method:'POST',body:'{}'}).catch(()=>{}):null});
+ bildirim({tur:d.tur==='hata'?'hata':'uygulama',baslik:d.baslik||'',metin:d.metin||'',ipucu:d.id!==S.on?'Sayfaya gitmek için tıkla':'',tik:d.id!==S.on?()=>ac(d.id):null,sure:d.tur==='hata'?7000:5000})}
 
 /* ---------- görünüm: tema, otomatik gece modu, mavi ışık filtresi ---------- */
 let G0=Object.assign({tema:'acik',gece:'kapali',sicak:50,konum:null},(()=>{try{return JSON.parse(localStorage.getItem(LG)||'{}')}catch(e){return{}}})());
@@ -261,7 +302,7 @@ function temaGec(t,yumusak){const yap=()=>{document.documentElement.dataset.them
  if(yumusak&&document.startViewTransition&&!document.hidden){try{document.startViewTransition(yap);return}catch(e){}}
  yap()}
 function uygula(){const gn=gunes(new Date()),gc=gecemi(),t=G0.tema==='oto'?(gc?'dark':'light'):(G0.tema==='koyu'?'dark':'light');
- if(t!==sonTema){const ilk=!sonTema;sonTema=t;try{localStorage.setItem('asorti-tema',t)}catch(e){}temaGec(t,!ilk)}
+ if(t!==sonTema){const ilk=!sonTema;sonTema=t;try{localStorage.setItem('asorti-tema',t)}catch(e){}temaGec(t,!ilk);fetch('/tema?v='+t,{method:'POST',body:'{}'}).catch(()=>{})}   // açılış ekranı da bu görünümle açılsın
  const filtre=G0.gece==='acik'||(G0.gece==='oto'&&gc);$('gece').style.opacity=filtre?(G0.sicak/100*0.42).toFixed(3):'0';
  document.querySelectorAll('#tmSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===G0.tema));
  document.querySelectorAll('#gcSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===G0.gece));
@@ -412,7 +453,11 @@ $('gunBtn').onclick=async()=>{if(!G)return;
   if(!yeniAcik){if(surum)birak('Güncelleme tamamlanamadı. Birazdan tekrar dene.');else birak();return}   // program hiç açılmadıysa nabız durumu gösterir; açılınca sayfa kendini tazeler
   try{if(surum===hedef)sessionStorage.setItem('asorti-guncellendi',hedef)}catch(e){}
   yenileniyor=true;sayfalarKaydetsin();setTimeout(()=>location.reload(),200)};
-surumYaz().then(j=>{if(j&&j.guncelleme){gunKontrol(false);setInterval(()=>gunKontrol(false),2*3600*1000)}});
+/* yeni sürüm denetimi internete çıkar: açılışta sayfalar yüklenirken araya girmesin diye birkaç saniye sonra yapılır */
+surumYaz().then(j=>{if(j&&j.guncelleme){setTimeout(()=>gunKontrol(false),6000);setInterval(()=>gunKontrol(false),2*3600*1000)}});
 
-if(!S.list.length)yeni();else{S.list.forEach(frame);if(!S.list.includes(S.on))S.on=S.list[0];ac(S.on)}
+/* açılışta önce görünen sayfa yüklenir, diğerleri hemen ardından (arkadaki Gerber işleri de kaldığı yerden sürer) */
+if(!S.list.length)yeni();else{if(!S.list.includes(S.on))S.on=S.list[0];ac(S.on);
+ const digerleri=()=>S.list.forEach(frame),f0=document.querySelector('#sayfalar iframe[data-id="'+S.on+'"]');
+ if(f0&&!f0.dataset.hazir&&S.list.length>1){const t=setTimeout(digerleri,1500);f0.addEventListener('load',()=>{clearTimeout(t);setTimeout(digerleri,120)},{once:true})}else digerleri()}
 </script></body></html>

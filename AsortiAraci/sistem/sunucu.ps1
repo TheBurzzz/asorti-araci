@@ -12,7 +12,8 @@ function Log($s) { try { Add-Content -Path $LOG -Value ((Get-Date -Format 'yyyy-
 
 function KopruSurecleri { @(Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -match 'kopru\\kopru\.ps1' }) }
 # baska yerden (eski kurulum) calisan kopru varsa kapat; kopruyu bu sunucu yonetiyor
-foreach ($p in KopruSurecleri) { try { Stop-Process -Id $p.ProcessId -Force } catch {} }
+# (kopru calismiyorsa adli kilidi de yoktur: o zaman yavas olan surec sorgusu hic yapilmaz, pencere daha cabuk acilir)
+$kk = $null; if ([Threading.Mutex]::TryOpenExisting('AsortiGerberKopru', [ref]$kk)) { $kk.Dispose(); foreach ($p in KopruSurecleri) { try { Stop-Process -Id $p.ProcessId -Force } catch {} } }
 $script:kopru = $null
 function KopruBaslat {
   $script:kBas = Get-Date
@@ -32,6 +33,26 @@ function Kapat([string]$neden = 'pencere kapandi') {
   foreach ($b in @(Get-Process -Name batch -ErrorAction SilentlyContinue)) { try { [void]$b.CloseMainWindow() } catch {} }
   Start-Sleep 3
   foreach ($b in @(Get-Process -Name batch -ErrorAction SilentlyContinue)) { try { Stop-Process -Id $b.Id -Force } catch {} }
+  try { OnerileriKapat (Join-Path $Root 'profil') } catch {}
+}
+# tarayicinin "kaydedilen bilgiler" onerilerini (adres / kisisel bilgi doldurma) sadece bu uygulamanin profilinde kapatir.
+# Normal Edge'e dokunmaz. Pencere kapandiktan sonra yapilir (Edge acikken ayar dosyasini kendisi yazar).
+function OnerileriKapat($profil) {
+  $pref = Join-Path $profil 'Default\Preferences'
+  if (-not (Test-Path $pref)) { return }
+  $metin = [IO.File]::ReadAllText($pref, [Text.Encoding]::UTF8)
+  if ($metin -match '"autofill":\{[^{}]*"credit_card_enabled":false' -and $metin -match '"autofill":\{[^{}]*"profile_enabled":false') { return }   # zaten kapali
+  try { $kf = [IO.File]::Open((Join-Path $profil 'lockfile'), 'Open', 'ReadWrite', 'None'); $kf.Close() } catch [IO.FileNotFoundException] { } catch { return }   # Edge hala bu profili kullaniyor
+  Add-Type -AssemblyName System.Web.Extensions
+  $js = New-Object System.Web.Script.Serialization.JavaScriptSerializer; $js.MaxJsonLength = [int]::MaxValue; $js.RecursionLimit = 1000
+  $d = $js.DeserializeObject($metin)
+  if (-not ($d -is [System.Collections.IDictionary])) { return }
+  if ($d.ContainsKey('autofill') -and $d['autofill'] -is [System.Collections.IDictionary]) { $af = $d['autofill'] } else { $af = New-Object 'System.Collections.Generic.Dictionary[string,object]'; $d['autofill'] = $af }
+  $deg = $false; foreach ($k in 'profile_enabled', 'credit_card_enabled') { if (-not ($af.ContainsKey($k) -and ($af[$k] -is [bool]) -and -not $af[$k])) { $af[$k] = $false; $deg = $true } }
+  if (-not $deg) { return }
+  $yeni = $js.Serialize($d); [void]$js.DeserializeObject($yeni)
+  Copy-Item -Force $pref ($pref + '.asorti_yedek')
+  [IO.File]::WriteAllText($pref, $yeni, (New-Object Text.UTF8Encoding($false))); Log 'tarayici onerileri kapatildi'
 }
 if ($A.gerber) { KopruBaslat } else { Log 'Gerber kapali (sadece asorti): kopru baslatilmadi' }
 
@@ -69,17 +90,35 @@ function TaramaOneri($r) {
 }
 # bilgi taramasi: bu surumun tarama kodu ilk kez calisiyorsa bir kere (bir sey degistirmez; ileride sorun cikarsa neye bakilacagini gosterir)
 $script:ilkEski = TaramaOku $TARAMA_ILK
-# uygulama simgesi değiştiyse (güncellemeyle yeni simge geldiyse) masaüstü kısayolu da yenisini göstersin: Windows simge önbelleğini bir kez tazele
-try {
-  $ikon = Join-Path $Root 'sistem\asorti.ico'; $iz = Join-Path $Root 'kopru\log\simge.txt'
-  if (Test-Path $ikon) {
-    $h = (Get-FileHash $ikon -Algorithm MD5).Hash; $o = if (Test-Path $iz) { (Get-Content $iz -Raw).Trim() } else { '' }
-    if ($h -ne $o) {
-      $ie = Join-Path $env:SystemRoot 'System32\ie4uinit.exe'; if (Test-Path $ie) { Start-Process -FilePath $ie -ArgumentList '-show' -WindowStyle Hidden }
-      Set-Content -Path $iz -Value $h -Encoding ASCII; Log 'uygulama simgesi yenilendi'
+# uygulama simgesi degistiyse (guncellemeyle yeni simge geldiyse) masaustu / Baslat menusu kisayollari da yenisini gostersin.
+# Windows simgeleri dosya yoluna gore onbellekte tuttugu icin ayni yoldaki dosyayi degistirmek yetmez: kisayollar simgenin
+# icerigine gore adlandirilmis kopyasina (sistem\simge\asorti-xxxxxxxx.ico) baglanir. Sadece bu kurulumun kisayollarina dokunur.
+function SimgeGuncelle {
+  $ikon = Join-Path $Root 'sistem\asorti.ico'; if (-not (Test-Path $ikon)) { return }
+  $h = (Get-FileHash $ikon -Algorithm MD5).Hash.Substring(0, 8).ToLowerInvariant()
+  $sd = Join-Path $Root 'sistem\simge'; $yeni = Join-Path $sd "asorti-$h.ico"
+  if (-not (Test-Path $yeni)) { New-Item -ItemType Directory -Force -Path $sd | Out-Null; Copy-Item -Force $ikon $yeni }
+  $yerler = @([Environment]::GetFolderPath('Desktop'), [Environment]::GetFolderPath('CommonDesktopDirectory'), $Root)
+  if ($env:APPDATA) { $yerler += @((Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'), (Join-Path $env:APPDATA 'Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar')) }
+  if ($env:OneDrive) { $yerler += (Join-Path $env:OneDrive 'Desktop') }
+  $w = $null; $deg = 0
+  foreach ($y in @($yerler | Where-Object { $_ -and (Test-Path $_) } | Select-Object -Unique)) {
+    foreach ($l in @(Get-ChildItem -LiteralPath $y -Filter *.lnk -File -ErrorAction SilentlyContinue)) {
+      try {
+        if (-not $w) { $w = New-Object -ComObject WScript.Shell }
+        $k = $w.CreateShortcut($l.FullName); $arg = "$($k.Arguments)"
+        if ($arg -notmatch '(?i)baslat\.vbs' -or $arg.IndexOf($Root, [StringComparison]::OrdinalIgnoreCase) -lt 0) { continue }   # bu kurulumun kisayolu degil
+        if ("$($k.IconLocation)".StartsWith($yeni, [StringComparison]::OrdinalIgnoreCase)) { continue }
+        $k.IconLocation = "$yeni,0"; $k.Save(); $deg++
+      } catch {}
     }
   }
-} catch {}
+  if ($deg) {
+    $ie = Join-Path $env:SystemRoot 'System32\ie4uinit.exe'; if (Test-Path $ie) { try { Start-Process -FilePath $ie -ArgumentList '-show' -WindowStyle Hidden } catch {} }
+    Log "kisayol simgesi yenilendi ($deg kisayol)"
+  }
+}
+try { SimgeGuncelle } catch { Log ('kisayol simgesi yenilenemedi: ' + $_.Exception.Message) }
 if (-not $script:ilkEski -or -not $script:ilkEski.surum -or ([version]("$($script:ilkEski.surum)") -lt [version]'1.1.17')) { try { if (TaramaBaslat $TARAMA_ILK -Taze) { Log 'bilgisayar taramasi baslatildi (sadece bilgi icin, ayarlara dokunmaz)' } } catch {} }
 
 # ---------- guncelleme ----------
@@ -263,7 +302,8 @@ try {
       $yol = [Uri]::UnescapeDataString($ctx.Request.Url.AbsolutePath).TrimStart('/')
       $m = $ctx.Request.HttpMethod
       if ($yol -eq 'kapaniyor') { $script:kapanis = (Get-Date).AddSeconds(6); Yanit $ctx 200 $null $null; continue }
-      if ($yol -eq 'nabiz') { $son = Get-Date; $script:kapanis = $null; JsonYanit $ctx @{ kopru = [bool]($script:kopru -and -not $script:kopru.HasExited); gerber = [bool]$A.gerber; otopastal = "$($A.otopastal)"; id = $script:sunucuId }; continue }
+      if ($yol -eq 'nabiz') { $son = Get-Date; $script:kapanis = $null; if (-not $script:acildi) { $script:acildi = $true; Remove-Item -LiteralPath (Join-Path $Root 'kopru\log\acilis.txt') -Force -ErrorAction SilentlyContinue }   # pencere acildi: yeniden acma kilidi kalksin
+        JsonYanit $ctx @{ kopru = [bool]($script:kopru -and -not $script:kopru.HasExited); gerber = [bool]$A.gerber; otopastal = "$($A.otopastal)"; id = $script:sunucuId }; continue }
       if ($yol -eq 'excel/klasor' -and $m -eq 'GET') { JsonYanit $ctx (ExcelDurum); continue }
       if ($yol -eq 'excel/klasor-sec' -and $m -eq 'POST') {
         $sec = ''; try { $sec = KlasorSec (ExcelKlasor) } catch { Log ('klasor secilemedi: ' + $_.Exception.Message) }
@@ -296,6 +336,7 @@ try {
         Log ('gerber ayarlari otomatik bulunanlarla degisti: ' + (($deg.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ' '))
         JsonYanit $ctx @{ ok = $true; ayar = (GerberAyar) }; continue
       }
+      if ($yol -eq 'tema' -and $m -eq 'POST') { $tv = "$($ctx.Request.QueryString['v'])"; if ($tv -in @('dark', 'light') -and (KullaniciOku)['tema'] -ne $tv) { try { KullaniciYaz 'tema' $tv } catch {} }; Yanit $ctx 200 $null $null; continue }
       if ($yol -eq 'konum') { $k = IpKonum; if ($k) { JsonYanit $ctx $k } else { JsonYanit $ctx @{ hata = 'konum bulunamadi' } }; continue }
       if ($yol -eq 'surum') { $y = YerelSurum $Root; JsonYanit $ctx @{ surum = "$($y.surum)"; tarih = "$($y.tarih)"; gerber = [bool]$A.gerber; otopastal = "$($A.otopastal)"; guncelleme = [bool]$A.guncelleme }; continue }
       if ($yol -eq 'guncelleme') {

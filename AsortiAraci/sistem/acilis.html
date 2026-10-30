@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><title>Asorti Aracı</title>
+<link rel="icon" type="image/png" href="asorti.png">
+<style>
+/* uygulama açılırken bir an görünen ekran: arka plandaki program hazır olunca kendiliğinden uygulamaya geçer */
+:root{--bg:#eef0f6;--ink:#1d1d1f;--mut:#6e6e73;--bl1:#c9dcff;--bl2:#e4d6ff;--bl3:#ffe2d2;--bl4:#cdeee5}
+html[data-theme=dark]{--bg:#0a0c13;--ink:#f5f5f7;--mut:#a1a1a6;--bl1:#1c2f70;--bl2:#3b2266;--bl3:#173f52;--bl4:#4a2a3a}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font:14px/1.4 "Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;user-select:none;cursor:default}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(55vmax 48vmax at 10% 6%,var(--bl1),transparent 62%),radial-gradient(50vmax 44vmax at 92% 10%,var(--bl2),transparent 62%),radial-gradient(56vmax 50vmax at 78% 98%,var(--bl3),transparent 62%),radial-gradient(46vmax 42vmax at 6% 92%,var(--bl4),transparent 62%),var(--bg)}
+main{position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;animation:gel .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes gel{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+main svg{width:76px;height:76px;filter:drop-shadow(0 2px 3px rgba(0,58,150,.22)) drop-shadow(0 10px 24px rgba(0,58,150,.16))}
+html[data-theme=dark] main svg{filter:drop-shadow(0 3px 10px rgba(0,0,0,.55))}
+.ad{font-size:21px;letter-spacing:-.02em;color:var(--mut);font-weight:400}.ad b{font-weight:650;color:var(--ink)}
+.hal{width:120px;height:3px;border-radius:2px;background:rgba(120,120,128,.18);overflow:hidden}
+.hal i{display:block;width:40%;height:100%;border-radius:2px;background:#0a84ff;animation:git 1.1s cubic-bezier(.45,.05,.55,.95) infinite}
+@keyframes git{from{transform:translateX(-110%)}to{transform:translateX(280%)}}
+.not{min-height:20px;font-size:12.5px;color:var(--mut);text-align:center;max-width:420px;padding:0 20px}
+@media(prefers-reduced-motion:reduce){main,.hal i{animation:none}}
+</style></head><body>
+<main><svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="aA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5AACFF"/><stop offset="1" stop-color="#0068DA"/></linearGradient><radialGradient id="aH" cx=".5" cy="0" r=".95"><stop offset="0" stop-color="#fff" stop-opacity=".26"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></radialGradient><path id="aS" d="M64 32L64 35.15L64 38.36L63.98 41.7L63.92 45.22L63.73 48.96L63.21 52.85L62.04 56.65L59.86 59.86L56.65 62.04L52.85 63.21L48.96 63.73L45.22 63.92L41.7 63.98L38.36 64L35.15 64L32 64L28.85 64L25.64 64L22.3 63.98L18.78 63.92L15.04 63.73L11.15 63.21L7.35 62.04L4.14 59.86L1.96 56.65L0.79 52.85L0.27 48.96L0.08 45.22L0.02 41.7L0 38.36L0 35.15L0 32L0 28.85L0 25.64L0.02 22.3L0.08 18.78L0.27 15.04L0.79 11.15L1.96 7.35L4.14 4.14L7.35 1.96L11.15 0.79L15.04 0.27L18.78 0.08L22.3 0.02L25.64 0L28.85 0L32 0L35.15 0L38.36 0L41.7 0.02L45.22 0.08L48.96 0.27L52.85 0.79L56.65 1.96L59.86 4.14L62.04 7.35L63.21 11.15L63.73 15.04L63.92 18.78L63.98 22.3L64 25.64L64 28.85Z"/></defs><use href="#aS" fill="url(#aA)"/><use href="#aS" fill="url(#aH)"/><g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"><path d="M13.75 24.75L32 14.75L50.25 24.75L32 34.75Z" fill="#fff" stroke-width="2.5"/><path d="M13.75 31.75L32 41.75L50.25 31.75" stroke-opacity=".82" stroke-width="3.62"/><path d="M13.75 38.75L32 48.75L50.25 38.75" stroke-opacity=".6" stroke-width="3.62"/></g></svg><div class="ad"><b>Asorti</b> Aracı</div><div class="hal"><i></i></div><div class="not" id="not"></div></main>
+<script>
+const q=new URLSearchParams(location.search),P=/^\d+$/.test(q.get('p')||'')?q.get('p'):'8642',U='http://localhost:'+P+'/';
+if(q.get('t')==='dark')document.documentElement.dataset.theme='dark';
+const t0=Date.now();
+/* arka plandaki program cevap verince uygulamaya geç */
+function dene(){const i=new Image();i.onload=()=>location.replace(U);
+ i.onerror=()=>{if(Date.now()-t0>25000)document.getElementById('not').textContent='Arka plandaki program açılamadı. Bu pencereyi kapatıp masaüstündeki Asorti Aracı simgesinden tekrar aç.';setTimeout(dene,150)};
+ i.src=U+'sistem/asorti.png?a='+Date.now()}
+dene();
+</script></body></html>

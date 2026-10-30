@@ -1,10 +1,13 @@
 {
- "surum": "1.1.19",
+ "surum": "1.1.20",
  "tarih": "2026-10-30",
  "notlar": [
-  "Boş sayfa (hiçbir şey yazılmamış) kapatılırken artık soru sormuyor; içinde bilgi varsa yine soruyor",
-  "Yeni yazı tipi (Inter): sekmeler ve sayfalar daha okunaklı, Excel'i andırmıyor",
-  "Sol üstteki simge ve \"Asorti Aracı\" yazısı yenilendi; masaüstü simgesi de aynı",
-  "Yeni sayfa sekmesi yumuşakça açılıyor, kapanırken kayarak kapanıyor; sayfalar arası geçiş yumuşak"
+  "Yeni sayfa açılırken ve sayfalar arasında geçerken ekran sallanmıyor, kaydırma çubuğu çıkıp kaybolmuyor; sayfa yerinde yumuşakça beliriyor",
+  "Excel'e kaydedince sağ üstte küçük bir bildirim çıkıp kendiliğinden kayboluyor (tıklayınca dosya açılır); Gerber işi bitince de haber veriyor",
+  "Alt-üst takımda her modelin kumaşı ayrı ayrı yönlü / yönsüz seçiliyor",
+  "İki model aynı anda: ikinci model sırada beklemeden Gerber'e alınıp OTOPASTAL kuyruğuna giriyor",
+  "En verimli asorti bulunduktan sonra Gerber'e gönderince pastallar yeniden yerleştirilmiyor: denemede yerleşen pastallar üretim adıyla (URT) kaydediliyor, sipariş de üretim adıyla",
+  "Masaüstü kısayolu yeni simgeyi gösteriyor",
+  "Daha hızlı açılış; açılırken tekrar tıklanırsa ikinci pencere açılmıyor, açık pencere öne gelir"
  ]
 }
