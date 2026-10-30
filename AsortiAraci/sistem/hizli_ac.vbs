@@ -1,4 +1,5 @@
 ' Asorti Araci - hizli acilis (baslat.vbs calistirir). Basariyla biterse 10 doner; donmezse baslat.vbs eski yoldan acar.
+' Uygulamanin kendi penceresi (sistem\AsortiAraci.exe) bu bilgisayarda derlenmisse acilisi o yapar; yoksa asagidaki eski yol.
 ' Tiklar tiklamaz acilis ekrani (AsortiAcilis.exe) uygulama penceresinin acilacagi yeri ayni gorunumle kaplar; arka plandaki
 ' program ve uygulama penceresi onun arkasinda acilir, ilk sayfa ekrana cizilince acilis ekrani yumusakca solar.
 ' Uygulama zaten aciksa yeni pencere acmaz, acik olani one getirir (simge durumundaysa eski boyutuna dondurur);
@@ -6,13 +7,18 @@
 Option Explicit
 On Error Resume Next
 Const TAMAM = 10
-Dim sh, fso, d, kok, ayar, port, tarayici, profil, tema, kilit, k, edge, adaylar, a, url, hazir, acik, mesgul, x, y, t0, st, rt, yas, ad, ekran, i
+Dim sh, fso, d, kok, ayar, port, tarayici, profil, tema, kilit, k, edge, adaylar, a, url, hazir, acik, mesgul, x, y, t0, st, rt, yas, ad, ekran, i, eski, uyg
 Set sh = CreateObject("WScript.Shell")
 Set fso = CreateObject("Scripting.FileSystemObject")
 d = fso.GetParentFolderName(WScript.ScriptFullName)
 kok = fso.GetParentFolderName(d)
 profil = kok & "\profil"
 ad = "Asorti Ara" & ChrW(305)   ' uygulama penceresinin (ve acilis ekraninin) basligi
+' "eski": uygulamanin kendi penceresi (AsortiAraci.exe) acilamadi, eski yoldan (Edge penceresiyle) ac
+eski = False
+For Each a In WScript.Arguments
+  If LCase(a) = "eski" Then eski = True
+Next
 
 Function Oku(f)
   On Error Resume Next
@@ -102,6 +108,15 @@ If acik Then
 End If
 If mesgul Then
   If Etkin(ad) Then WScript.Quit TAMAM
+End If
+
+' 2b) uygulamanin kendi penceresi (sistem\AsortiAraci.exe) varsa acilisi o yapar: acilis ekrani, tek pencere, program icinde
+uyg = d & "\AsortiAraci.exe"
+If Not eski And fso.FileExists(uyg) Then
+  Err.Clear
+  sh.Run """" & uyg & """", 1, False
+  If Err.Number = 0 Then WScript.Quit TAMAM
+  Err.Clear
 End If
 
 ' 3) az once acilmaya baslandiysa ikinci kez acma (acilis ekrani beklerken bu isareti tazeler, pencere acilinca silinir)

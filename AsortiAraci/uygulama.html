@@ -164,10 +164,26 @@ html,body{overflow:hidden}
 <div id="bildirimler" aria-live="polite"></div>
 <div id="gece"></div>
 <script>
+/* çalışma sayfaları ve ayarlar pencerenin yerel kaydında (localStorage) durur; ayrıca diskte de yedeklenir (yerel_kayit.json).
+   Yeni pencere (ör. uygulama ilk kez kendi penceresinde açılınca) boş başlıyorsa her şey o yedekten geri gelir. */
+(()=>{try{if(localStorage.getItem('asorti-sayfalar')!==null||!/^https?:$/.test(location.protocol))return;
+ const x=new XMLHttpRequest();x.open('GET','/yerel-kayit',false);x.send();if(x.status!==200)return;
+ const d=JSON.parse(x.responseText||'{}');for(const k in d)if(k.startsWith('asorti-')&&typeof d[k]==='string'&&localStorage.getItem(k)===null)localStorage.setItem(k,d[k])}catch(e){}})();
+var yedekT=0,yedekSon='';
+function yedekVeri(){const d={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('asorti-'))d[k]=localStorage.getItem(k)}return JSON.stringify(d)}
+function yerelYedek(hemen){clearTimeout(yedekT);
+ const yap=()=>{try{const v=yedekVeri();if(v==='{}'||v===yedekSon)return;yedekSon=v;fetch('/yerel-kayit',{method:'POST',body:v,keepalive:v.length<60000}).catch(()=>{yedekSon=''})}catch(e){}};
+ if(hemen)yap();else yedekT=setTimeout(yap,1500)}
+/* pencere kapanmadan hemen önce (uygulama penceresi çağırır): yedek beklemeden yazılsın */
+window.yedekAl=()=>{try{const v=yedekVeri();if(v==='{}')return false;const x=new XMLHttpRequest();x.open('POST','/yerel-kayit',false);x.send(v);yedekSon=v;return x.status===200}catch(e){return false}};
+window.addEventListener('storage',()=>yerelYedek());
+document.addEventListener('visibilitychange',()=>{if(document.hidden)yerelYedek(true)});
+window.addEventListener('pagehide',()=>yerelYedek(true));
+setInterval(()=>yerelYedek(),20000);setTimeout(()=>yerelYedek(true),4000);
 const $=i=>document.getElementById(i),LS='asorti-sayfalar',LG='asorti-gorunum';
 let S=(()=>{try{return JSON.parse(localStorage.getItem(LS)||'null')}catch(e){return null}})()||{list:[],on:''};
 const info={};
-function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
+function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}yerelYedek()}
 function yeniId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5)}
 /* sekmeler ve sayfalar: sekmeler yerinde güncellenir (yeniden çizilmez), böylece açılış / kapanış / geçiş yumuşak olur */
 const T=$('tabs'),AZ=matchMedia('(prefers-reduced-motion: reduce)'),YUMUSAK='cubic-bezier(.2,.8,.2,1)';
@@ -403,6 +419,7 @@ let guncelleniyor=false,yenileniyor=false,sunucuId=null,kopukBas=0,hizliT=null,y
 const bekle=ms=>new Promise(r=>setTimeout(r,ms));
 function durumYaz(c,t,ipucu){const d=$('durum');d.className=c;$('durumYazi').textContent=t;d.title=ipucu||'Gerber köprüsünün durumu'}
 function sayfalarKaydetsin(){document.querySelectorAll('#sayfalar iframe').forEach(f=>{try{f.contentWindow.postMessage({t:'kaydet'},'*')}catch(e){}})}
+window.kapanmadan=()=>sayfalarKaydetsin();   // uygulama penceresi kapanırken sayfalar son hallerini kaydetsin
 function tazele(){if(yenileniyor)return;yenileniyor=true;durumYaz('bekle','Yenileniyor…');sayfalarKaydetsin();setTimeout(()=>location.reload(),300)}
 async function nabiz(){if(yenileniyor)return;
  try{const r=await fetch('/nabiz',{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();

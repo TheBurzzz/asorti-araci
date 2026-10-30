@@ -43,8 +43,20 @@ ZIP'i çıkar → **Kurulum.bat**. Kurulum ayarlara ve çalışma sayfalarına d
 Uygulama [Inter](https://rsms.me/inter/) yazı tipini kullanır (programla birlikte gelir, internet gerekmez).
 Inter, SIL Open Font License 1.1 ile dağıtılır: `AsortiAraci/sistem/Inter-OFL.txt`.
 
-## Açılış ekranı
-Masaüstü simgesine tıklayınca gelen açılış ekranı (`AsortiAraci/sistem/acilis.cs`), bilgisayardaki .NET Framework'ün kendi derleyicisiyle
-(`csc.exe`) o bilgisayarda derlenir ve `sistem\AsortiAcilis.exe` olur. Bunu program kendisi yapar: kurulumdan ya da güncellemeden sonra ilk
-açılışta birkaç saniye içinde, arka planda. Derleme kaydı `kopru\log\acilis_derleme.txt` dosyasına yazılır. Açılış ekranı yoksa uygulama
-yine açılır, sadece bu ekran görünmez.
+## Uygulama penceresi
+Asorti Aracı kendi penceresinde açılır (`sistem\AsortiAraci.exe`). Paketin içinde hazır bir exe yoktur: uygulamanın kaynağı
+(`AsortiAraci/sistem/uygulama/*.cs`) her bilgisayarda o bilgisayarın .NET Framework derleyicisiyle (`csc.exe`) derlenir. Bunu kurulum ya da
+güncellemeden sonra program kendisi yapar, birkaç saniye sürer; derleme kaydı `kopru\log\uygulama_derleme.txt` dosyasına yazılır.
+
+- Pencerenin içi Windows'un içindeki Edge motorudur (Microsoft Edge WebView2); Windows 10 ve Windows 11'de hazır gelir.
+- 64 bit, 32 bit ve ARM bilgisayarlarda çalışır (her biri için yükleyici `AsortiAraci/sistem/wv2` klasöründe).
+- Açılış ekranı pencerenin kendisidir: simgeye tıklar tıklamaz pencere açılır, sayfa ekrana çizilince açılış ekranı yumuşakça solar.
+- Edge motoru yoksa ya da pencere açılamazsa uygulama eskisi gibi Edge penceresiyle açılır (`sistem\hizli_ac.vbs`); hiçbir şey kaybolmaz.
+- Çalışma sayfaları ve ayarlar eski pencereden yeni pencereye kendiliğinden taşınır; sayfaların diskteki yedeği `yerel_kayit.json`.
+- Uygulamanın kaydı: `kopru\log\uygulama.txt`.
+
+Edge motorunun bağlantı dosyaları (`Microsoft.Web.WebView2.*.dll`, `wv2\*\WebView2Loader.dll`) Microsoft'undur; lisansı
+`AsortiAraci/sistem/wv2/WebView2-LICENSE.txt`.
+
+Eski yolun açılış ekranı (`AsortiAraci/sistem/acilis.cs` → `sistem\AsortiAcilis.exe`) da aynı şekilde o bilgisayarda derlenir; sadece
+uygulama eski yoldan açıldığında kullanılır (kaydı `kopru\log\acilis_derleme.txt`).

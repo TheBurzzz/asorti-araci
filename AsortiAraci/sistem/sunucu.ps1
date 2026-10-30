@@ -73,6 +73,18 @@ function AcilisDerle([string]$csc = (Join-Path ([Runtime.InteropServices.Runtime
     Log 'acilis ekrani derleniyor'
   } catch { Log ('acilis ekrani derlenemedi: ' + $_.Exception.Message) }
 }
+# uygulamanin kendi penceresi (sistem\AsortiAraci.exe, kaynagi sistem\uygulama\*.cs): bir sonraki acilis bununla olur.
+# Guncellemeden sonra bir kez, arka planda (ayri is parcaciginda) derlenir; kaynak degismediyse hic derlenmez.
+function UygulamaDerleArka {
+  $script:uygBakildi = $true
+  if (-not (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'uygulama\Program.cs'))) { return }
+  try {
+    $script:uygPs = [PowerShell]::Create()
+    [void]$script:uygPs.AddScript({ param($kok) . (Join-Path $kok 'sistem\ortak.ps1'); UygulamaDerle $kok }).AddArgument($Root)
+    $script:uygIs = $script:uygPs.BeginInvoke()
+    Log 'uygulama penceresi hazirlaniyor (derleme)'
+  } catch { Log ('uygulama derlenemedi: ' + $_.Exception.Message) }
+}
 function Kapat([string]$neden = 'pencere kapandi') {
   Log "${neden}: kopru ve Batch kapatiliyor"
   try { if ($script:kopru -and -not $script:kopru.HasExited) { Stop-Process -Id $script:kopru.Id -Force } } catch {}
@@ -171,12 +183,14 @@ if (-not $script:ilkEski -or -not $script:ilkEski.surum -or ([version]("$($scrip
 # ---------- guncelleme ----------
 $script:uzak = $null; $script:uzakZaman = [datetime]::MinValue
 function Web { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 }
+# yeni surumlerin geldigi dal (ayarlar.json "dal"; yoksa main). Uygulamanin kendisi (Ayarlar.Dal) ayni kurali kullanir.
+function Dal { $d = "$($A.dal)".Trim(); if ($d -match '^[A-Za-z0-9._/-]+$' -and $d -notmatch '\.\.') { return $d }; return 'main' }
 function SurumNo($v) { try { return [version]("$v".Trim()) } catch { return [version]'0.0' } }
 function UzakSurum([bool]$taze) {
   if (-not $A.guncelleme) { return $null }
   if (-not $taze -and $script:uzak -and ((Get-Date) - $script:uzakZaman).TotalMinutes -lt 10) { return $script:uzak }
   Web
-  $r = Invoke-WebRequest -UseBasicParsing -TimeoutSec 8 -Uri ("https://raw.githubusercontent.com/$($A.guncelleme)/main/AsortiAraci/surum.json?t=" + [DateTime]::UtcNow.Ticks)
+  $r = Invoke-WebRequest -UseBasicParsing -TimeoutSec 8 -Uri ("https://raw.githubusercontent.com/$($A.guncelleme)/$(Dal)/AsortiAraci/surum.json?t=" + [DateTime]::UtcNow.Ticks)
   $metin = [Text.Encoding]::UTF8.GetString($r.RawContentStream.ToArray()).TrimStart([char]0xFEFF)
   $script:uzak = $metin | ConvertFrom-Json; $script:uzakZaman = Get-Date
   return $script:uzak
@@ -285,7 +299,7 @@ function Guncelle {
   $tmp = Join-Path ([IO.Path]::GetTempPath()) ('asorti_guncelleme_' + [guid]::NewGuid().ToString('N').Substring(0, 8)); New-Item -ItemType Directory -Force -Path $tmp | Out-Null
   try {
     $zip = Join-Path $tmp 'paket.zip'
-    Invoke-WebRequest -UseBasicParsing -TimeoutSec 120 -Uri "https://codeload.github.com/$($A.guncelleme)/zip/refs/heads/main" -OutFile $zip
+    Invoke-WebRequest -UseBasicParsing -TimeoutSec 120 -Uri "https://codeload.github.com/$($A.guncelleme)/zip/refs/heads/$(Dal)" -OutFile $zip
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     [IO.Compression.ZipFile]::ExtractToDirectory($zip, (Join-Path $tmp 'ac'))
     $ic = Get-ChildItem (Join-Path $tmp 'ac') -Directory | Select-Object -First 1
@@ -345,6 +359,7 @@ try {
       }
       if ($script:acildiT -and -not $script:u32Ps -and ($simdi - $script:acildiT).TotalSeconds -gt 20) { PencereHazirla }
       if (-not $script:derleBakildi -and ($simdi - $basla).TotalSeconds -gt 3) { AcilisDerle }   # guncellemeden sonra bir kez gerekir
+      if (-not $script:uygBakildi -and ($simdi - $basla).TotalSeconds -gt 5) { UygulamaDerleArka }
       if ($A.gerber -and $script:kopru.HasExited -and ((Get-Date) - $script:kBas).TotalSeconds -gt 30) { Log 'kopru durmustu, yeniden baslatiliyor'; KopruBaslat }
     }
     $ctx = $t.Result
@@ -352,6 +367,25 @@ try {
       $yol = [Uri]::UnescapeDataString($ctx.Request.Url.AbsolutePath).TrimStart('/')
       $m = $ctx.Request.HttpMethod
       if ($yol -eq 'kapaniyor') { $script:kapanis = (Get-Date).AddSeconds(6); $script:hazirT = $null; Yanit $ctx 200 $null $null; continue }
+      if ($yol -eq 'sunucu-kapat' -and $m -eq 'POST') {   # uygulamanin kendi penceresi (AsortiAraci.exe) aciliyor: bu pencere acik degilse yer acsin
+        $ac = [bool]($son -and -not $script:kapanis -and ((Get-Date) - $son).TotalSeconds -lt 9)
+        if ($ac) { JsonYanit $ctx @{ acik = $true }; continue }
+        JsonYanit $ctx @{ acik = $false; ok = $true }
+        Log 'uygulamanin yeni penceresi aciliyor: bu sunucu kapaniyor'; try { $L.Stop() } catch {}; Kapat 'yeni pencereye geciliyor'; exit
+      }
+      if ($yol -eq 'yerel-kayit') {   # calisma sayfalarinin disk yedegi (pencerenin yerel kaydi)
+        $yf = Join-Path $Root 'yerel_kayit.json'
+        if ($m -eq 'GET') { $v = $null; try { if (Test-Path -LiteralPath $yf) { $v = [IO.File]::ReadAllBytes($yf) } } catch {}; if (-not $v) { $v = $utf8.GetBytes('{}') }; Yanit $ctx 200 $v 'application/json; charset=utf-8'; continue }
+        if ($m -eq 'POST') {
+          $ms = New-Object IO.MemoryStream; $ctx.Request.InputStream.CopyTo($ms); $metin = $utf8.GetString($ms.ToArray()); $mt = $metin.Trim()
+          if ($mt.Length -lt 3 -or -not $mt.StartsWith('{') -or -not $mt.EndsWith('}')) { JsonYanit $ctx @{ hata = 'gecersiz' }; continue }
+          try {
+            if ((Test-Path -LiteralPath $yf) -and ((Get-Date) - (Get-Item -LiteralPath $yf).LastWriteTime).TotalMinutes -gt 10) { Copy-Item -Force -LiteralPath $yf -Destination (Join-Path $Root 'yerel_kayit.onceki.json') }
+            $tmp = $yf + '.yeni'; [IO.File]::WriteAllText($tmp, $metin, $utf8); Move-Item -Force -LiteralPath $tmp -Destination $yf
+          } catch { Log ('yerel kayit yazilamadi: ' + $_.Exception.Message) }
+          JsonYanit $ctx @{ ok = $true }; continue
+        }
+      }
       if ($yol -eq 'hazir' -and $m -eq 'POST') { $script:hazirT = Get-Date; Yanit $ctx 200 $null $null; continue }   # ilk sayfa ekrana cizildi: acilis ekrani kaybolabilir
       if ($yol -eq 'nabiz') { $son = Get-Date; $script:kapanis = $null; if (-not $script:acildi) { $script:acildi = $true; $script:acildiT = Get-Date; Remove-Item -LiteralPath (Join-Path $Root 'kopru\log\acilis.txt') -Force -ErrorAction SilentlyContinue }   # pencere acildi: yeniden acma kilidi kalksin
         JsonYanit $ctx @{ kopru = [bool]($script:kopru -and -not $script:kopru.HasExited); gerber = [bool]$A.gerber; otopastal = "$($A.otopastal)"; id = $script:sunucuId }; continue }
@@ -415,7 +449,8 @@ try {
       if ($yol -match '\.\.' -or $yol -match ':') { Yanit $ctx 400 $null $null; continue }
       $dosya = Join-Path $Root ($yol -replace '/', '\')
       if ($m -eq 'GET') {
-        if ((Test-Path $dosya -PathType Leaf) -and $tipler.ContainsKey([IO.Path]::GetExtension($dosya).ToLowerInvariant())) {
+        $izinli = $(if ($yol.Contains('/')) { $yol -match '^(sistem|kopru)/' } else { $yol -match '\.html$' })   # ayarlar, kullanici bilgileri ve sayfa yedegi verilmez
+        if ($izinli -and (Test-Path $dosya -PathType Leaf) -and $tipler.ContainsKey([IO.Path]::GetExtension($dosya).ToLowerInvariant())) {
           $ext = [IO.Path]::GetExtension($dosya).ToLowerInvariant()
           $veri = $null; for ($i = 0; $i -lt 10 -and $null -eq $veri; $i++) { try { $fs = New-Object IO.FileStream($dosya, 'Open', 'Read', 'ReadWrite'); try { $ms = New-Object IO.MemoryStream; $fs.CopyTo($ms); $veri = $ms.ToArray() } finally { $fs.Close() } } catch { Start-Sleep -Milliseconds 100 } }
           if ($null -eq $veri) { Yanit $ctx 503 $null $null } elseif ($ext -eq '.woff2') { Yanit $ctx 200 $veri $tipler[$ext] 'max-age=31536000, immutable' } else { Yanit $ctx 200 $veri $tipler[$ext] }   # yazı tipi değişmez: her sayfa açılışında yeniden yüklenmesin

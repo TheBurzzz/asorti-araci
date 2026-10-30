@@ -1,9 +1,10 @@
 {
- "surum": "1.1.22",
+ "surum": "2.0.0",
  "tarih": "2026-10-30",
  "notlar": [
-  "Yeni açılış ekranı: masaüstündeki simgeye tıklar tıklamaz uygulamanın açılacağı yeri uygulamanın kendi görünümüyle kaplıyor",
-  "Uygulama ilk sayfasıyla ekrana çizilince açılış ekranı yumuşakça solup uygulamaya geçiyor; küçük pencere çıkmıyor",
-  "Açılırken tekrar tıklansa da ikinci pencere açılmıyor; uygulama zaten açıksa öne geliyor"
+  "Asorti Aracı artık kendi penceresinde açılıyor: tarayıcı penceresi yok, açılış ekranı ile uygulama tek parça",
+  "Daha hızlı açılış: arka plandaki program uygulamanın içinde, ayrıca beklenmiyor",
+  "Windows 10 ve Windows 11'de çalışıyor (64 bit, 32 bit ve ARM bilgisayarlar); görev çubuğuna sabitlenebiliyor",
+  "Çalışma sayfaları ve ayarlar yeni pencereye kendiliğinden taşınıyor; bir sorun olursa uygulama eskisi gibi açılıyor"
  ]
 }

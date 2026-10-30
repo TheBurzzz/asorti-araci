@@ -36,7 +36,8 @@ function TarayiciBul {
 function UygulamaSurecleri {
   @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
     ($_.Name -eq 'powershell.exe' -and $_.CommandLine -match '(sunucu|kopru)\.ps1') -or
-    ($_.Name -match '^(msedge|chrome)\.exe$' -and $_.CommandLine -match '(AccuNest\\uygulama|AsortiAraci)\\profil') })
+    ($_.Name -match '^(AsortiAraci|AsortiAcilis)\.exe$') -or
+    ($_.Name -match '^(msedge|chrome|msedgewebview2)\.exe$' -and $_.CommandLine -match '(AccuNest\\uygulama|AsortiAraci)\\profil') })
 }
 function PortBos([int]$p) { try { $l = New-Object Net.Sockets.TcpListener([Net.IPAddress]::Loopback, $p); $l.Start(); $l.Stop(); return $true } catch { return $false } }
 function UncBilgisayar([string]$y) { if ($y -match '^\\\\([^\\]+)\\') { return $matches[1] }; return '' }
@@ -316,6 +317,9 @@ function Kur {
   $script:sonNot = New-Object System.Collections.ArrayList
   try {
     Adim '1/10  Açık Asorti Aracı süreçleri kapatılıyor'
+    $uyg = @(Get-Process -Name AsortiAraci -ErrorAction SilentlyContinue)
+    foreach ($p in $uyg) { try { [void]$p.CloseMainWindow() } catch {} }
+    for ($i = 0; $i -lt 30 -and @($uyg | Where-Object { -not $_.HasExited }).Count; $i++) { Start-Sleep -Milliseconds 100 }
     foreach ($p in UygulamaSurecleri) { try { Stop-Process -Id $p.ProcessId -Force } catch {} }
     Start-Sleep -Milliseconds 800
     $ilerleme.Value = 1
@@ -324,6 +328,12 @@ function Kur {
     New-Item -ItemType Directory -Force -Path $hedef | Out-Null
     Copy-Item -Path (Join-Path $KAYNAK '*') -Destination $hedef -Recurse -Force
     foreach ($d in 'gelen', 'isleniyor', 'bitti', 'sonuc', 'log', 'iptal') { New-Item -ItemType Directory -Force -Path (Join-Path $hedef "kopru\$d") | Out-Null }
+    # uygulamanin kendi penceresi (sistem\AsortiAraci.exe) bu bilgisayarin .NET Framework'uyle derlenir; olmazsa eski yoldan (Edge penceresiyle) acilir
+    Adim '     uygulama penceresi hazırlanıyor (AsortiAraci.exe)'
+    $exe = Join-Path $hedef 'sistem\AsortiAraci.exe'; $derlendi = $false
+    try { . (Join-Path $hedef 'sistem\ortak.ps1'); $derlendi = [bool](UygulamaDerle $hedef) } catch { Not ('derleme: ' + $_.Exception.Message) }
+    $exeVar = $derlendi -and (Test-Path -LiteralPath $exe)
+    Adim $(if ($exeVar) { '     hazır' } else { '     hazırlanamadı; uygulama eski yoldan (Edge penceresiyle) açılacak (kopru\log\uygulama_derleme.txt)' })
     $ilerleme.Value = 2
 
     Adim '3/10  Bağlantı noktası'
@@ -406,15 +416,21 @@ function Kur {
     Adim '7/10  Kısayollar oluşturuluyor'
     $w = New-Object -ComObject WScript.Shell
     $vbs = Join-Path $hedef 'sistem\baslat.vbs'; $ico = Join-Path $hedef 'sistem\asorti.ico'
+    # kisayol uygulamanin kendisini acar (gorev cubuguna sabitlenince ayni dugmede birlesir); derlenemediyse eskisi gibi baslat.vbs'yi
+    function KisayolYaz([string]$l) {
+      $k = $w.CreateShortcut($l)
+      if ($exeVar) { $k.TargetPath = $exe; $k.Arguments = ''; $k.WorkingDirectory = (Join-Path $hedef 'sistem'); $k.IconLocation = "$exe,0" }
+      else { $k.TargetPath = "$env:WINDIR\System32\wscript.exe"; $k.Arguments = "`"$vbs`""; $k.WorkingDirectory = $hedef; $k.IconLocation = "$ico,0" }
+      $k.Description = 'Asorti Aracı'; $k.Save()
+    }
     $masa = @([Environment]::GetFolderPath('Desktop'), (Join-Path $env:USERPROFILE 'Desktop')); if ($env:OneDrive) { $masa += (Join-Path $env:OneDrive 'Desktop') }
     foreach ($m in ($masa | Select-Object -Unique)) { $l = Join-Path $m 'Asorti Araci.lnk'; if (Test-Path $l) { Remove-Item -Force $l -ErrorAction SilentlyContinue } }
     $yerler = @([Environment]::GetFolderPath('Desktop'), (Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'))
     foreach ($y in $yerler) {
       if (-not (Test-Path $y)) { continue }
-      $k = $w.CreateShortcut((Join-Path $y 'Asorti Araci.lnk')); $k.TargetPath = "$env:WINDIR\System32\wscript.exe"; $k.Arguments = "`"$vbs`""
-      $k.WorkingDirectory = $hedef; $k.IconLocation = "$ico,0"; $k.Description = 'Asorti Aracı'; $k.Save(); Adim "     $y"
+      KisayolYaz (Join-Path $y 'Asorti Araci.lnk'); Adim "     $y"
     }
-    $k = $w.CreateShortcut((Join-Path $hedef 'Asorti Araci.lnk')); $k.TargetPath = "$env:WINDIR\System32\wscript.exe"; $k.Arguments = "`"$vbs`""; $k.WorkingDirectory = $hedef; $k.IconLocation = "$ico,0"; $k.Save()
+    KisayolYaz (Join-Path $hedef 'Asorti Araci.lnk')
     $ilerleme.Value = 7
 
     Adim '8/10  Eski otomatik başlatma kaldırılıyor'
@@ -435,7 +451,8 @@ function Kur {
 $hedef = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 Add-Type -AssemblyName System.Windows.Forms
 if ([Windows.Forms.MessageBox]::Show("Asorti Araci kaldirilsin mi?`r`n$hedef klasoru ve kisayollar silinecek (Excel dosyalarina dokunulmaz).", 'Asorti Araci', 'YesNo', 'Question') -ne 'Yes') { exit }
-Get-CimInstance Win32_Process | Where-Object { ($_.Name -eq 'powershell.exe' -and $_.CommandLine -match '(sunucu|kopru)\.ps1') -or ($_.Name -match '^(msedge|chrome)\.exe$' -and $_.CommandLine -match 'AsortiAraci\\profil') } | ForEach-Object { try { Stop-Process -Id $_.ProcessId -Force } catch {} }
+Get-CimInstance Win32_Process | Where-Object { ($_.Name -eq 'powershell.exe' -and $_.CommandLine -match '(sunucu|kopru)\.ps1') -or ($_.Name -match '^(AsortiAraci|AsortiAcilis)\.exe$') -or ($_.Name -match '^(msedge|chrome|msedgewebview2)\.exe$' -and $_.CommandLine -match 'AsortiAraci\\profil') } | ForEach-Object { try { Stop-Process -Id $_.ProcessId -Force } catch {} }
+Start-Sleep -Milliseconds 800
 foreach ($y in @([Environment]::GetFolderPath('Desktop'), (Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'))) { $l = Join-Path $y 'Asorti Araci.lnk'; if (Test-Path $l) { Remove-Item -Force $l } }
 Start-Process cmd.exe -WindowStyle Hidden -ArgumentList "/c timeout /t 2 >nul & rmdir /s /q `"$hedef`""
 '@
@@ -481,7 +498,11 @@ $bIleri.Add_Click({
     $script:sira = 3; Goster; return
   }
   if ($script:sira -eq 4) {
-    if ($cAc.Checked -and $script:kuruldu) { Start-Process -FilePath "$env:WINDIR\System32\wscript.exe" -ArgumentList ('"' + (Join-Path $tHedef.Text.TrimEnd('\') 'sistem\baslat.vbs') + '"') }
+    if ($cAc.Checked -and $script:kuruldu) {
+      $hk = $tHedef.Text.TrimEnd('\'); $ux = Join-Path $hk 'sistem\AsortiAraci.exe'
+      if (Test-Path -LiteralPath $ux) { Start-Process -FilePath $ux -WorkingDirectory (Join-Path $hk 'sistem') }
+      else { Start-Process -FilePath "$env:WINDIR\System32\wscript.exe" -ArgumentList ('"' + (Join-Path $hk 'sistem\baslat.vbs') + '"') }
+    }
     $F.Close(); return
   }
   $script:sira++; Goster
