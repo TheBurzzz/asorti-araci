@@ -35,6 +35,22 @@ function Kapat([string]$neden = 'pencere kapandi') {
 }
 if ($A.gerber) { KopruBaslat } else { Log 'Gerber kapali (sadece asorti): kopru baslatilmadi' }
 
+# ---------- Gerber / OTOPASTAL'i otomatik bulma (ayarlar menusundeki "Otomatik bul") ----------
+$script:taramaP = $null
+$TARAMA = Join-Path $Root 'kopru\log\tarama.json'
+$TARAMA_ILK = Join-Path $Root 'kopru\log\tarama_ilk.json'
+function TaramaBaslat([string]$cikti, [switch]$Taze) {
+  if ($script:taramaP -and -not $script:taramaP.HasExited) { return $false }
+  $arg = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', ('"' + (Join-Path $Root 'sistem\tara.ps1') + '"'), '-Cikti', ('"' + $cikti + '"'))
+  if ($Taze) { $arg += '-Taze' }
+  $script:taramaP = Start-Process -FilePath 'powershell.exe' -WindowStyle Hidden -PassThru -ArgumentList $arg
+  return $true
+}
+function TaramaOku([string]$f) { if (Test-Path $f) { try { return (Get-Content $f -Raw -Encoding UTF8 | ConvertFrom-Json) } catch {} }; return $null }
+function GerberAyar { [ordered]@{ gerber = [bool]$A.gerber; accumark = "$($A.accumark)"; userroot = "$($A.userroot)"; depo = "$($A.depo)"; kuyruk = "$($A.kuyruk)"; otopastal = "$($A.otopastal)"; surucu = "$($A.surucu)"; surucu2 = "$($A.surucu2)" } }
+# bu kurulumda bir kere: ilk kurulum gibi tarar ve sonucu saklar (bir sey degistirmez; ileride sorun cikarsa neye bakilacagini gosterir)
+if (-not (Test-Path $TARAMA_ILK)) { try { if (TaramaBaslat $TARAMA_ILK -Taze) { Log 'bilgisayar taramasi baslatildi (sadece bilgi icin, ayarlara dokunmaz)' } } catch {} }
+
 # ---------- guncelleme ----------
 $script:uzak = $null; $script:uzakZaman = [datetime]::MinValue
 function Web { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 }
@@ -69,7 +85,7 @@ function IpKonum {
 # (pastal kaydi icinde: 258 = en, 274 = boy (inc, double), 308 = verim % (double))
 function OkuPaylasimli($yol) { $fs = New-Object IO.FileStream($yol, 'Open', 'Read', 'ReadWrite'); try { $ms = New-Object IO.MemoryStream; $fs.CopyTo($ms); return , $ms.ToArray() } finally { $fs.Close() } }
 function PastalBilgi([string]$alan, [string]$ad) {
-  $dd = Join-Path (Join-Path (Join-Path $A.userroot 'storage') $alan) 'data'
+  $dd = Join-Path (Join-Path (Join-Path $A.depo 'storage') $alan) 'data'
   $ctl = Join-Path $dd 'mark.ctl'; if (-not (Test-Path $ctl)) { return @{ var = $false; mesaj = "$alan klasoru bulunamadi" } }
   $c = OkuPaylasimli $ctl; $lat = [Text.Encoding]::GetEncoding(28591); $ad = $ad.ToUpperInvariant(); $kay = $null
   for ($i = 0; $i + 64 -le $c.Length; $i += 64) {
@@ -157,7 +173,7 @@ function Guncelle {
     [IO.Compression.ZipFile]::ExtractToDirectory($zip, (Join-Path $tmp 'ac'))
     $ic = Get-ChildItem (Join-Path $tmp 'ac') -Directory | Select-Object -First 1
     $src = Join-Path $ic.FullName 'AsortiAraci'
-    foreach ($g in 'uygulama.html', 'asorti_araci.html', 'surum.json', 'sistem\sunucu.ps1', 'sistem\ortak.ps1', 'kopru\kopru.ps1') { if (-not (Test-Path (Join-Path $src $g))) { throw "indirilen pakette $g yok" } }
+    foreach ($g in 'uygulama.html', 'asorti_araci.html', 'surum.json', 'sistem\sunucu.ps1', 'sistem\ortak.ps1', 'sistem\bul.ps1', 'sistem\tara.ps1', 'kopru\kopru.ps1') { if (-not (Test-Path (Join-Path $src $g))) { throw "indirilen pakette $g yok" } }
     $yeni = (Get-Content (Join-Path $src 'surum.json') -Raw -Encoding UTF8 | ConvertFrom-Json).surum; $eski = (YerelSurum $Root).surum
     # geri donebilmek icin simdiki surumu yedekle (sadece program dosyalari)
     $yd = Join-Path $Root 'yedek'; if (Test-Path $yd) { Remove-Item -Recurse -Force $yd }
@@ -216,7 +232,7 @@ try {
       $yol = [Uri]::UnescapeDataString($ctx.Request.Url.AbsolutePath).TrimStart('/')
       $m = $ctx.Request.HttpMethod
       if ($yol -eq 'kapaniyor') { $script:kapanis = (Get-Date).AddSeconds(6); Yanit $ctx 200 $null $null; continue }
-      if ($yol -eq 'nabiz') { $son = Get-Date; $script:kapanis = $null; JsonYanit $ctx @{ kopru = [bool]($script:kopru -and -not $script:kopru.HasExited); gerber = [bool]$A.gerber; id = $script:sunucuId }; continue }
+      if ($yol -eq 'nabiz') { $son = Get-Date; $script:kapanis = $null; JsonYanit $ctx @{ kopru = [bool]($script:kopru -and -not $script:kopru.HasExited); gerber = [bool]$A.gerber; otopastal = "$($A.otopastal)"; id = $script:sunucuId }; continue }
       if ($yol -eq 'excel/klasor' -and $m -eq 'GET') { JsonYanit $ctx (ExcelDurum); continue }
       if ($yol -eq 'excel/klasor-sec' -and $m -eq 'POST') {
         $sec = ''; try { $sec = KlasorSec (ExcelKlasor) } catch { Log ('klasor secilemedi: ' + $_.Exception.Message) }
@@ -230,8 +246,27 @@ try {
         if ($al -notmatch '^[^\\/:*?"<>|]+$' -or $al -match '\.\.' -or $pa -notmatch '^[^\\/:*?"<>|]+$') { JsonYanit $ctx @{ var = $false; mesaj = 'gecersiz ad' }; continue }
         try { JsonYanit $ctx (PastalBilgi $al $pa) } catch { JsonYanit $ctx @{ var = $false; mesaj = $_.Exception.Message } }; continue
       }
+      if ($yol -eq 'gerber/tara') {
+        if ($m -eq 'POST') { $b0 = $false; try { $b0 = TaramaBaslat $TARAMA } catch { Log ('tarama baslatilamadi: ' + $_.Exception.Message) }; JsonYanit $ctx @{ basladi = [bool]$b0 }; continue }
+        $kb = Join-Path $Root 'kurulum_paketi\Kurulum.bat'
+        JsonYanit $ctx @{ calisiyor = [bool]($script:taramaP -and -not $script:taramaP.HasExited); rapor = (TaramaOku $TARAMA); ayar = (GerberAyar); kurulum = $(if (Test-Path $kb) { $kb } else { '' }) }; continue
+      }
+      if ($yol -eq 'gerber/uygula' -and $m -eq 'POST') {
+        $r0 = TaramaOku $TARAMA
+        if (-not $r0 -or -not $r0.oneri) { JsonYanit $ctx @{ hata = 'Önce "Otomatik bul" ile ara.' }; continue }
+        if (SurenIs) { JsonYanit $ctx @{ hata = 'Gerber''de süren bir iş var. Pastallar bitince dene.' }; continue }
+        $deg = [ordered]@{}; foreach ($k in 'gerber', 'accumark', 'userroot', 'depo', 'kuyruk', 'otopastal', 'surucu', 'surucu2') { if ($null -ne $r0.oneri.$k) { $deg[$k] = $r0.oneri.$k } }
+        try { AyarYaz $Root $deg } catch { JsonYanit $ctx @{ hata = 'Ayarlar yazılamadı: ' + $_.Exception.Message }; continue }
+        $A = Ayarlar $Root
+        Remove-Item -Force (Join-Path $Root 'kopru\surucu.txt') -ErrorAction SilentlyContinue
+        try { if ($script:kopru -and -not $script:kopru.HasExited) { Stop-Process -Id $script:kopru.Id -Force } } catch {}
+        foreach ($p in KopruSurecleri) { try { Stop-Process -Id $p.ProcessId -Force } catch {} }
+        if ($A.gerber) { KopruBaslat } else { $script:kopru = $null }
+        Log ('gerber ayarlari otomatik bulunanlarla degisti: ' + (($deg.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ' '))
+        JsonYanit $ctx @{ ok = $true; ayar = (GerberAyar) }; continue
+      }
       if ($yol -eq 'konum') { $k = IpKonum; if ($k) { JsonYanit $ctx $k } else { JsonYanit $ctx @{ hata = 'konum bulunamadi' } }; continue }
-      if ($yol -eq 'surum') { $y = YerelSurum $Root; JsonYanit $ctx @{ surum = "$($y.surum)"; tarih = "$($y.tarih)"; gerber = [bool]$A.gerber; guncelleme = [bool]$A.guncelleme }; continue }
+      if ($yol -eq 'surum') { $y = YerelSurum $Root; JsonYanit $ctx @{ surum = "$($y.surum)"; tarih = "$($y.tarih)"; gerber = [bool]$A.gerber; otopastal = "$($A.otopastal)"; guncelleme = [bool]$A.guncelleme }; continue }
       if ($yol -eq 'guncelleme') {
         $y = YerelSurum $Root
         try { $u = UzakSurum ($ctx.Request.QueryString['taze'] -eq '1') } catch { JsonYanit $ctx @{ hata = 'Güncelleme sunucusuna ulaşılamadı: ' + $_.Exception.Message; yerel = "$($y.surum)" }; continue }

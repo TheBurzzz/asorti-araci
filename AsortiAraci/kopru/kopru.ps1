@@ -13,13 +13,17 @@ try {
 $K      = Split-Path -Parent $MyInvocation.MyCommand.Path       # ...\kopru
 $KOK    = Split-Path -Parent $K                                 # kurulum klasoru
 . (Join-Path $KOK 'sistem\ortak.ps1'); $A = Ayarlar $KOK
+# otomatik bulma yardimcilari (yuklenemezse kopru eskisi gibi calisir, sadece kendi kendini onarma kapali olur)
+$script:bulHata = ''; try { . (Join-Path $KOK 'sistem\bul.ps1') } catch { $script:bulHata = $_.Exception.Message }
+$script:bulVar = -not $script:bulHata -and [bool](Get-Command AccuMarkGecerli -ErrorAction SilentlyContinue)
 $AM     = $A.accumark
-$UR     = $A.userroot
-$STOR   = Join-Path $UR 'storage'
+$UR     = $A.userroot                                           # AccuMark sistem klasoru (Batch dosyalari)
+$STOR   = Join-Path $A.depo 'storage'                           # musteri klasorleri
 $ENGQ   = Join-Path $UR 'engine.que'
 $BPRM   = Join-Path $UR 'bprmtbl'
-$DRV    = Split-Path -Qualifier $UR                             # depolama alanlarinin surucusu (C:)
+$DRV    = $(if ("$($A.depo)" -match '^([A-Za-z]:)') { $matches[1] } else { 'C:' })   # musteri klasorlerinin surucusu (C:)
 $QUEUE  = $A.kuyruk
+$OTO    = $A.otopastal                                          # ayri | ayni | yok
 $DEV    = $A.surucu
 # OTOPASTAL bu bilgisayarin C: diskini hangi harfle goruyor: once ayarlardaki (k:), olmazsa yedek (z:).
 # Calisan harf hatirlanir (kopru\surucu.txt); OTOPASTAL'da bir harfin baglantisi koparsa digeri denenir.
@@ -252,7 +256,8 @@ function Bekle($base, $res, $orders, $sub0, $ek = @()) {
   elseif ($iptalS -eq $sonuclar.Count) { $res.asama = 'iptal' }
   else {
     $res.asama = 'hata'
-    $res.mesaj = $(if (@($sonuclar | Where-Object { $_.adet -eq 0 -and $_.sonuc -ne 'iptal' }).Count) { "OTOPASTAL pastallari acamadi (hic parca yuklenemedi). OTOPASTAL bu bilgisayarin C: diskine ulasamiyor olabilir: OTOPASTAL'da Bilgisayarim'dan K: ve Z: suruculerini acip kontrol et." } else { 'OTOPASTAL pastallari yerlestiremedi.' })
+    $harfler = (($DEVS | ForEach-Object { $_.ToUpperInvariant() }) -join ' ve ')
+    $res.mesaj = $(if (@($sonuclar | Where-Object { $_.adet -eq 0 -and $_.sonuc -ne 'iptal' }).Count) { "OTOPASTAL pastallari acamadi (hic parca yuklenemedi). OTOPASTAL bu bilgisayarin pastallarina ulasamiyor olabilir: OTOPASTAL'da Bilgisayarim'dan $harfler suruculerini acip kontrol et." } else { 'OTOPASTAL pastallari yerlestiremedi.' })
   }
   Durum $base $res
 }
@@ -271,6 +276,8 @@ function Isle($file) {
     # Gerber'de olusturulacak ama OTOPASTAL'a gonderilmeyecek pastallar (ek asorti tablolari)
     if ($l -match '^#\s*kuyruksuz\s*:\s*(.+)$') { $nq += @($matches[1] -split ',' | ForEach-Object { $_.Trim().ToUpperInvariant() } | Where-Object { $_ }) }
   }
+  # OTOPASTAL yoksa butun pastallar sadece Gerber'de olusur (yerlestirmeyi kullanici elle yapar)
+  if ($OTO -eq 'yok') { $nq = @($orders) }
   $res = @{ dosya = $file.Name; alan = $area; asama = 'basladi'; mesaj = ''; pastallar = @() }
   try {
     if (-not $area) { throw 'Dosyada musteri klasoru (# alan:) yok.' }
@@ -279,7 +286,7 @@ function Isle($file) {
     if ($varolan.Count -and -not $over) { throw ('Bu siparisler klasorde zaten var: ' + ($varolan -join ', ') + '. Uzerine yazmak icin programda kutuyu isaretle.') }
     # 0) "En verimli asortiyi bul" denemelerinden kalan MODEL-ASnn siparis ve pastallarini sil
     if ($temiz) {
-      $pend = @(); try { $pend = @(ReadQueue | Where-Object { -not $_.d['result'] } | ForEach-Object { ('' + $_.d['marker']).ToUpperInvariant() }) } catch {}
+      $pend = @(); if ($QUEUE) { try { $pend = @(ReadQueue | Where-Object { -not $_.d['result'] } | ForEach-Object { ('' + $_.d['marker']).ToUpperInvariant() }) } catch {} }
       $mods = @($mods | Sort-Object -Unique); $sil = 0
       foreach ($kind in 'order', 'mark') {
         $cand = @(CtlNames $area $kind | Sort-Object -Unique | Where-Object { $n = $_; @($mods | Where-Object { $n -match ('^' + [regex]::Escape($_) + '-AS\d+$') }).Count -gt 0 -and $pend -notcontains $n })
@@ -331,6 +338,7 @@ function Isle($file) {
     $res.pastallar = $hazir
     # 3) OTOPASTAL kuyruguna yolla
     $res.asama = 'yerlesim'; Durum $base $res
+    KuyrukProgramiCalistir
     $sub0 = (Get-Date).AddSeconds(-5).ToOADate()
     $out = & (Join-Path $K 'kuyruga_ekle.ps1') -Area $area -Markers $qo -Queue $QUEUE -Device $DEV 2>&1 | Out-String
     Log ($out.Trim() -replace '\s+', ' ')
@@ -343,6 +351,18 @@ function Isle($file) {
     $res.asama = 'hata'; $res.mesaj = $_.Exception.Message; Durum $base $res; Log "$base : HATA $($res.mesaj)"
   }
   Move-Item -Force $work (Join-Path $K "bitti\$($file.Name)"); $script:isBitti = Get-Date; IptalTemizle $base
+}
+
+# OTOPASTAL bu bilgisayardaysa ve kuyruk programi kapaliysa acar (yoksa isler kuyrukta bekler)
+function KuyrukProgramiCalistir {
+  if ($OTO -ne 'ayni' -or -not $script:bulVar) { return }
+  try {
+    $p = KuyrukProgramiBul
+    if ($p.calisiyor) { return }
+    if (-not $p.exe) { Log 'UYARI: bu bilgisayardaki OTOPASTAL (AccuNest kuyruk) programi bulunamadi; acik degilse pastallar kuyrukta bekler'; return }
+    Start-Process -FilePath $p.exe -WorkingDirectory (Split-Path -Parent $p.exe) -WindowStyle Minimized
+    Log "OTOPASTAL programi acildi: $($p.exe)"; Start-Sleep 5
+  } catch { Log ('OTOPASTAL programi acilamadi: ' + $_.Exception.Message) }
 }
 
 # isi bitince bu ise ait durdurma isaretlerini temizle
@@ -367,14 +387,30 @@ function BatchKapatGerekirse {
   $script:batchBizde = $false
 }
 
-Log ('Gerber koprusu calisiyor (' + $KOK + ')')
+Log ('Gerber koprusu calisiyor (' + $KOK + ')' + " OTOPASTAL: $OTO")
+if (-not $script:bulVar) { Log ('UYARI: bul.ps1 yuklenemedi: ' + $script:bulHata) }
+# AccuMark baska yere kurulduysa (surum yukseltme vb.) kendisi bulur ve ayarlara yazar
+if ($script:bulVar -and -not (AccuMarkGecerli $AM)) {
+  $bAm = AccuMarkBul
+  if ($bAm.yol) { Log "AccuMark $AM klasorunde yok; $($bAm.yol) bulundu, o kullaniliyor"; $AM = $bAm.yol; try { AyarYaz $KOK @{ accumark = $AM } } catch {} }
+  else { Log "UYARI: AccuMark programlari bulunamadi ($AM)" }
+}
 # eski kayitlari temizle: gunlukler 30 gun, bitmis isler 14 gun
 try {
   Get-ChildItem (Join-Path $K 'log') -File -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-30) } | Remove-Item -Force -ErrorAction SilentlyContinue
   Get-ChildItem (Join-Path $K 'iptal') -File -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-1) } | Remove-Item -Force -ErrorAction SilentlyContinue
   foreach ($d in 'bitti','sonuc','iptal') { Get-ChildItem (Join-Path $K $d) -File -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-14) } | Remove-Item -Force -ErrorAction SilentlyContinue }
 } catch {}
-try { Copy-Item -Force $QUEUE (Join-Path $K 'log\kuyruk_son.umq'); $E = ReadQueue; Log ("kuyruk okundu: {0} kayit" -f $E.Count) } catch { Log ('kuyruk okunamadi: ' + $_.Exception.Message) }
+if ($QUEUE) {
+  try {
+    Copy-Item -Force $QUEUE (Join-Path $K 'log\kuyruk_son.umq'); $E = ReadQueue; Log ("kuyruk okundu: {0} kayit" -f $E.Count)
+    # OTOPASTAL bu bilgisayarin pastallarina gecmiste hangi harflerle ulasti: yedek harf olarak eklenir
+    $alS = New-Object 'System.Collections.Generic.HashSet[string]'; foreach ($d in (Get-ChildItem -Path $STOR -Directory -ErrorAction SilentlyContinue)) { [void]$alS.Add($d.Name.ToUpperInvariant()) }
+    $ogr = @(); if ($script:bulVar) { $ogr = @(CihazOgren $E $alS) }
+    $yeniH = @($ogr | Where-Object { $DEVS -notcontains $_ })
+    if ($yeniH.Count) { $script:DEVS = @($DEVS + $yeniH); Log ('gecmis islerden ogrenilen harf: ' + ($yeniH -join ', ')) }
+  } catch { Log ('kuyruk okunamadi: ' + $_.Exception.Message) }
+} else { Log 'OTOPASTAL (kuyruk) ayarlanmamis: pastallar sadece Gerber''de olusturulur' }
 # yarim kalan isleri surdur (kopru yeniden baslatildiysa)
 Get-ChildItem -Path (Join-Path $K 'isleniyor') -Filter *.txt -ErrorAction SilentlyContinue | ForEach-Object {
   $f = $_; $base = [IO.Path]::GetFileNameWithoutExtension($f.Name); $js = Join-Path $K "sonuc\$base.json"

@@ -605,13 +605,15 @@ gdb.cfg=Object.assign({a:'YAZ-DKSLI',b:'BAFIR-005',g:'P-NOTCH',f:'K',ly:'TEK-AYN
 function gMods(){const B=mainBlocks();return B.length>1?B.map(b=>({b,m:gM(b.id=='a'?(info.gA||info.art):(info.gU||info.art))})):[{b:B[0],m:gM(info.art)}]}
 function gDefW(k){const M=gMods(),x=M[k||0];if(!x)return'';const v=k?info.gW2:info.gW;if(v)return v;const m=gdb.models[x.m];return m&&m.w?String(m.w).replace('.',','):''}
 function gOrdUI(){if(!info||info.cizgili)return'';const c=gdb.cfg,y=info.gY||'n',sel=(v,t)=>'<option value="'+v+'"'+(y==v?' selected':'')+'>'+t+'</option>';
- return '<div><b>Gerber\'e gönder</b> <span class="m">· sipariş Gerber\'e alınır, pastal hazırlanır, OTOPASTAL\'da yerleşir; BİRİM ve PASTAL BOYU tabloya gelir</span><div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">'+
+ const yok=OTO==='yok',kap=OTO==='kapali';
+ return '<div><b>Gerber\'e gönder</b> <span class="m">· '+(kap?'bu bilgisayarda Gerber bağlantısı kapalı (⚙ → Gerber bağlantısı → Otomatik bul); siparişi dosya olarak kaydedip Gerber\'de CSV Getir ile alabilirsin':yok?'sipariş Gerber\'e alınır, pastallar hazırlanır; OTOPASTAL olmadığı için pastalları Gerber\'de yerleştirip <b>Gerber\'den boy ve verimi al</b>\'a bas':'sipariş Gerber\'e alınır, pastal hazırlanır, OTOPASTAL\'da yerleşir; BİRİM ve PASTAL BOYU tabloya gelir')+'</span><div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">'+
  gMods().map((x,k)=>'<label class="m">'+(k||gMods().length>1?esc(x.m)+' ':'')+'Kumaş eni <input id="gW'+(k?'2':'')+'" style="width:70px" value="'+esc(gDefW(k))+'" oninput="info.gW'+(k?'2':'')+'=this.value.trim()"> cm</label>').join('')+
  '<select id="gY" class="sel" onchange="info.gY=this.value">'+sel('n','Yönsüz')+sel('y','Yönlü')+'</select>'+
  '<label class="m">Müşteri klasörü <input id="gAr" list="gArL" style="width:150px" value="'+esc(gArDef())+'" placeholder="listeden seç" autocomplete="off" onclick="if(!gAlan)gAlanYukle()" oninput="this.value=this.value.toLocaleUpperCase(\'tr\');info.gAr=this.value.trim();gArNot()" onchange="show()"></label><datalist id="gArL">'+gArOpts()+'</datalist><span id="gArN" class="m">'+gArNotH()+'</span>'+
  '<label class="m" title="Klasörde aynı isimde sipariş varsa üzerine yazar"><input type="checkbox" id="gOv"'+(info.gOv?' checked':'')+' onchange="info.gOv=this.checked"> var olanın üzerine yaz</label>'+
+ (kap?'':yok?'<button type="button" class="pri" onclick="gSend()" title="Siparişi Gerber\'e alır ve pastalları hazırlar (OTOPASTAL\'a gönderilmez)">Gerber\'de pastalları oluştur</button><button type="button" onclick="gOku()" title="Pastalları Gerber\'de yerleştirip kaydettikten sonra bas: boy ve verim tabloya yazılır">Gerber\'den boy ve verimi al</button>':
  '<button type="button" class="pri" onclick="gSend()" title="Siparişi Gerber köprüsüne bırakır: Gerber\'e alınır, pastal hazırlanır, OTOPASTAL\'da yerleşir, sonuç tabloya gelir">Gerber\'e gönder</button>'+
- '<button type="button" onclick="gAra()" title="Ayarlardaki kurallara uyan asorti seçeneklerini OTOPASTAL\'da yerleştirip en az kumaş harcayanı seçer">🔎 En verimli asortiyi bul</button>'+
+ '<button type="button" onclick="gAra()" title="Ayarlardaki kurallara uyan asorti seçeneklerini OTOPASTAL\'da yerleştirip en az kumaş harcayanı seçer">🔎 En verimli asortiyi bul</button>')+
   '<button type="button" onclick="gOrder()" title="Sadece sipariş dosyasını kaydeder (elle CSV Getir için)">Dosya olarak kaydet</button>'+
  '<details style="display:inline-block"><summary class="m" style="cursor:pointer">tablolar</summary><div class="m" style="margin-top:4px">'+
  [['ln','Yönsüz serim lmt'],['ly','Yönlü serim lmt'],['a','Yazdırım'],['b','Blok bafır'],['g','Çıt'],['f','Kumaş tipi']].map(([k,t])=>t+' <input style="width:190px" value="'+esc(c[k])+'" onchange="gdb.cfg.'+k+'=this.value.trim().toLocaleUpperCase(\'tr\');gSave();show()">').join(' ')+'</div></details></div>'+gFabUI()+(kOk()?'':'<div class="m" style="margin-top:4px">Gerber\'e göndermek için programı masaüstündeki <b>Asorti Araci</b> simgesinden aç.</div>')+'<div id="gSt">'+gStHtml()+'</div></div>'}
@@ -630,6 +632,7 @@ function gBuild(){if(!info||!sols[cur])return null;const c=gdb.cfg,M=gMods(),W=M
   if(!FABX[Lt]){const wx=gnum((info.gWx||{})[Lt]);if(!(wx>20)){alert(Lt+' kumaşı için kumaş enini yaz.');return null}
    M.forEach(({m})=>P.forEach((p,j)=>{const nm=m+'-URT'+(j+1)+'-'+Lt;names.push(nm);addO(nm,String(+wx.toFixed(2)),m,Lt,p.a)}));continue}
   }
+ if(OTO==='yok')names.forEach(n=>{if(!kq.includes(n))kq.push(n)});
  if(kq.length)L.splice(hp,0,'# kuyruksuz:'+kq.join(','));
  if(!names.length){alert('Gönderilecek pastal yok: en az bir kumaş tipi seç.');return null}
  return{data:enc1254(L.join('\r\n')+'\r\n'),names,map,ws,kq}}
@@ -654,6 +657,10 @@ function gFabUI(){const F=gFabs();info.gFab=info.gFab||{};if(!F)return'';const o
   else if(c)h+=(x||!FABX[L])?'<label class="m">'+esc(L)+' eni <input style="width:60px" value="'+esc((info.gWx||{})[L]||'')+'" oninput="(info.gWx=info.gWx||{})[\''+L+'\']=this.value.trim()"> cm</label>':'<span class="e">'+esc(L)+': önce ek asortiyi hesapla</span>'});
  return h+'</div>'}
 
+/* ---- OTOPASTAL durumu: ayri (başka bilgisayar) | ayni (bu bilgisayar) | yok (sadece Gerber) | kapali (Gerber yok) ---- */
+let OTO='ayri';
+function otoAyarla(v){v=v||'ayri';if(v===OTO)return;OTO=v;try{if(info&&sols[cur])show()}catch(e){}}
+if(KHTTP)fetch('/surum',{cache:'no-store'}).then(r=>r.json()).then(j=>otoAyarla(j.gerber===false?'kapali':j.otopastal)).catch(()=>{});
 /* ---- köprü klasörüne erişim: uygulama penceresinde (http://localhost) sunucu üzerinden, dosyadan açılınca klasör izniyle ---- */
 const kOk=()=>KHTTP;
 async function kGet(rel){if(!KHTTP)return null;try{const r=await fetch('/kopru/'+rel,{cache:'no-store'});return r.ok?await r.text():null}catch(e){return null}}
@@ -726,6 +733,17 @@ async function gSend(){if(!info.gAr){alert('Müşteri klasörünü listeden seç
  gPoll();show()}
 
 
+/* ana pastalları Gerber'de elle yerleştirdikten sonra boy ve verimi pastal dosyalarından okur (OTOPASTAL olmayan kurulumlar için) */
+async function gOku(){if(!info||!sols[cur])return;if(!KHTTP){alert('Bunun için programı masaüstündeki "Asorti Araci" simgesinden aç.');return}
+ if(!info.gAr){alert('Müşteri klasörünü listeden seç.');const e=$('gAr');if(e)e.focus();return}
+ const M=gMods(),P=sols[cur].pastals.filter(p=>p.a.some(v=>v)),L=[];
+ M.forEach(({m,b})=>P.forEach((p,j)=>L.push({nm:m+'-URT'+(j+1),key:b.id+'|'+p.a.join(),pc:p.a.reduce((x,y)=>x+y,0)})));
+ const g=$('gpm');if(g)g.innerHTML='<div class="m">Gerber\'den okunuyor…</div>';
+ let ok=0;const eks=[];
+ for(const x of L){let j;try{j=await (await fetch('/pastal?alan='+encodeURIComponent(info.gAr)+'&ad='+encodeURIComponent(x.nm),{cache:'no-store'})).json()}catch(err){eks.push(x.nm+' (okunamadı)');continue}
+  if(!j.var){eks.push(x.nm+' (Gerber\'de yok)');continue}if(!(j.boy_cm>0)){eks.push(x.nm+' (henüz yerleştirilmemiş)');continue}
+  const o=meas[x.key]=meas[x.key]||{};o.l=nl(j.boy_cm.toFixed(2));o.b=String(Math.round(j.boy_cm/x.pc));o.v=String(j.verim.toFixed(2)).replace('.',',');o.nm=x.nm;ok++}
+ gMsg=(ok?'<div style="color:#18794e">✔ '+ok+' pastalın boyu ve verimi Gerber\'den tabloya yazıldı.</div>':'')+(eks.length?'<div class="e">Okunamayan: '+esc(eks.join(', '))+'</div>':'');show()}
 /* pastal pastal durum listesi; OTOPASTAL'da yerleşirken her pastal ayrı durdurulabilir */
 function gPList(){if(!gJob)return'';const s=gJob.st||{},R={};(s.pastallar||[]).forEach(r=>R[String(r.ad).toUpperCase()]=r);const live=s.asama=='yerlesim',stp=gJob.stop||{};
  if(!(s.pastallar||[]).length&&!live)return'';
@@ -1111,7 +1129,7 @@ $('th').onclick=()=>{const t=document.documentElement.dataset.theme==='dark'?'li
  const yap=()=>{document.documentElement.dataset.theme=t};try{localStorage.setItem('asorti-tema',t)}catch(e){}
  if(document.startViewTransition){try{document.startViewTransition(yap);return}catch(e){}}yap()};
 {const cs=document.createElement('style');cs.textContent='::view-transition-old(root),::view-transition-new(root){animation-duration:.55s;animation-timing-function:cubic-bezier(.4,0,.2,1)}';document.head.appendChild(cs)}
-window.addEventListener('message',e=>{const d=e.data||{};if(d.t==='tema'){document.documentElement.dataset.theme=d.v}if(d.t==='kaydet'&&window.sayfaKaydet)sayfaKaydet()});
+window.addEventListener('message',e=>{const d=e.data||{};if(d.t==='tema'){document.documentElement.dataset.theme=d.v}if(d.t==='oto')otoAyarla(d.v);if(d.t==='kaydet'&&window.sayfaKaydet)sayfaKaydet()});
 /* Gerber'siz kurulum (sadece asorti): Gerber / OTOPASTAL bölümünü gizle */
 if(KHTTP)fetch('/surum',{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j&&j.gerber===false)document.documentElement.classList.add('gerbersiz')}).catch(()=>{});
 {const cs=document.createElement('style');cs.textContent='html.gerbersiz .gpb{display:none!important}';document.head.appendChild(cs)}

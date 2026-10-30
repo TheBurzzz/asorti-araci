@@ -48,7 +48,7 @@ button{font:inherit;color:inherit}
 #ayar:hover,#ayar.acik{background:var(--tabh);color:var(--ink)}
 #ayar svg{width:19px;height:19px;pointer-events:none}
 /* görünüm menüsü */
-#menu{position:absolute;top:50px;right:10px;width:320px;padding:14px;border-radius:16px;background:var(--pop);backdrop-filter:saturate(180%) blur(24px);box-shadow:var(--psh);border:1px solid var(--line);opacity:0;transform:translateY(-6px) scale(.98);transform-origin:top right;pointer-events:none;transition:opacity .16s,transform .16s;z-index:20}
+#menu{position:absolute;top:50px;right:10px;width:320px;max-height:calc(100vh - 62px);overflow-y:auto;overscroll-behavior:contain;padding:14px;border-radius:16px;background:var(--pop);backdrop-filter:saturate(180%) blur(24px);box-shadow:var(--psh);border:1px solid var(--line);opacity:0;transform:translateY(-6px) scale(.98);transform-origin:top right;pointer-events:none;transition:opacity .16s,transform .16s;z-index:20}
 #menu.on{opacity:1;transform:none;pointer-events:auto}
 #menu h4{margin:2px 2px 8px;font-size:11.5px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;color:var(--mut)}
 .blok{padding:10px;border-radius:12px;background:var(--tabh);margin-bottom:12px}
@@ -75,6 +75,11 @@ select{flex:1;height:28px;border-radius:8px;border:1px solid var(--line);backgro
 .dug button:hover{background:var(--accs);color:var(--acc)}
 .dug button:disabled{opacity:.5;cursor:default}
 .alt{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--mut);padding:0 2px}
+#gbOzet{font-size:12.5px;font-weight:600;line-height:1.35}#gbOzet.bos{font-weight:400;color:var(--mut)}
+.gbl{list-style:none;margin:8px 0 0;padding:0;font-size:12px;line-height:1.45}
+.gbl li{display:flex;gap:6px;padding:1px 0;color:var(--ink)}.gbl li b{font-weight:600}.gbl .m{color:var(--mut)}
+.gbl .i{flex:none;width:14px;text-align:center;font-weight:700}.gbl .ok .i{color:var(--ok)}.gbl .uy .i{color:#c27c0e}.gbl .no .i{color:var(--bad)}
+html[data-theme=dark] .gbl .uy .i{color:#ffb340}
 .alt button{border:0;background:transparent;color:var(--acc);cursor:pointer;padding:4px 2px}
 #sayfalar{position:absolute;top:54px;left:0;right:0;bottom:0}
 #sayfalar iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:var(--bg)}
@@ -105,6 +110,10 @@ select{flex:1;height:28px;border-radius:8px;border:1px solid var(--line);backgro
   <div class="blok"><div class="yol" id="exYol">Yükleniyor…</div>
    <div class="satir dug"><button type="button" id="exSec">Klasör seç…</button><button type="button" id="exAc">Klasörü aç</button></div>
    <div class="not">"Excel dosyasını kaydet" dediğinde dosya sormadan bu klasöre kaydedilir.</div></div>
+  <h4>Gerber bağlantısı</h4>
+  <div class="blok"><div id="gbOzet">Yükleniyor…</div><div class="not" id="gbAlt" style="margin-top:3px"></div>
+   <div class="satir dug"><button type="button" id="gbBul" title="AccuMark'ı, müşteri klasörlerini ve OTOPASTAL'ı bu bilgisayarda ve ağda arar; ayarlara dokunmaz">Otomatik bul</button><button type="button" id="gbUy" style="display:none">Bulunanları kullan</button></div>
+   <div id="gbNot"></div></div>
   <div class="alt"><span id="surum"></span><button id="denetle" type="button">Güncellemeleri denetle</button></div>
  </div>
 </div>
@@ -193,7 +202,7 @@ document.addEventListener('load',e=>{if(e.target.tagName==='IFRAME')temaYolla(e.
 if(G0.konum)KONUM=G0.konum;
 uygula();setInterval(uygula,60000);
 if(G0.tema==='oto'||G0.gece==='oto')konumBul();
-function menu(on){$('menu').classList.toggle('on',on);$('ayar').classList.toggle('acik',on);if(on)exGoster()}
+function menu(on){$('menu').classList.toggle('on',on);$('ayar').classList.toggle('acik',on);if(on){exGoster();gbGoster()}}
 /* Excel kayıt klasörü (sunucu kullanici.json'da tutar; sayfalara da haber verilir) */
 function exYaz(j){const e=$('exYol');if(!j||!j.klasor){e.textContent='Seçilmedi (ilk kaydette sorulur)';e.className='yol bos';$('exAc').disabled=true;return}
  e.textContent=j.klasor+(j.var?'':'  (klasör bulunamadı)');e.className='yol';e.title=j.klasor;$('exAc').disabled=!j.var}
@@ -203,6 +212,48 @@ $('exSec').onclick=async e=>{e.stopPropagation();const b=$('exSec');b.disabled=t
   if(!j.iptal)document.querySelectorAll('#sayfalar iframe').forEach(f=>{try{f.contentWindow.postMessage({t:'exKlasor',klasor:j.klasor},'*')}catch(x){}})}catch(x){}
  b.disabled=false;b.textContent='Klasör seç…'};
 $('exAc').onclick=async e=>{e.stopPropagation();try{await fetch('/excel/ac?ad=&nasil=klasor',{method:'POST',body:'{}'})}catch(x){}};
+/* Gerber bağlantısı: AccuMark, müşteri klasörleri ve OTOPASTAL nerede (sunucu bilgisayarı tarar; ayarlar ancak "Bulunanları kullan" ile değişir) */
+const gbHost=q=>{const m=/^\\\\([^\\]+)\\/.exec(q||'');return m?m[1]:''};
+function gbOzetYaz(a){const o=$('gbOzet'),al=$('gbAlt');
+ if(!a){o.textContent='Okunamadı';o.className='bos';al.textContent='';return}
+ if(!a.gerber){o.textContent='Gerber kapalı · sadece asorti';o.className='bos';al.textContent='Bu bilgisayara AccuMark kurulduysa "Otomatik bul" ile açılır.';return}
+ const h=String(a.surucu||'').toUpperCase(),host=gbHost(a.kuyruk),st=(a.depo||a.userroot||'C:\\userroot')+'\\storage';o.className='';
+ o.textContent=a.otopastal==='ayri'?'OTOPASTAL ayrı bilgisayarda':a.otopastal==='ayni'?'OTOPASTAL bu bilgisayarda':'Gerber açık · OTOPASTAL yok';
+ al.textContent=a.otopastal==='ayri'?[host,h?h+' harfi':'',st].filter(Boolean).join(' · '):a.otopastal==='ayni'?st:'Pastallar Gerber\'de oluşur, yerleştirmeyi Gerber\'de yaparsın.'}
+async function gbGoster(){try{const j=await (await fetch('/gerber/tara',{cache:'no-store'})).json();gbOzetYaz(j.ayar);return j}catch(e){gbOzetYaz(null);return null}}
+function gbSatir(c,ik,t){return '<li class="'+c+'"><span class="i">'+ik+'</span><span>'+t+'</span></li>'}
+const gbEsc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function gbSonuc(j){const r=j.rapor||{},a=j.ayar||{},o=r.oneri||{},n=$('gbNot'),L=[];
+ if(r.hata){n.innerHTML='<ul class="gbl">'+gbSatir('no','✖','Tarama hata verdi: '+gbEsc(r.hata))+'</ul>';return}
+ const am=r.accumark||{},ur=r.userroot||{},ku=r.kuyruk||{},ci=r.cihaz||{},pa=r.paylasim||{},kur=j.kurulum?' <span class="m">(kurulum bunu kendisi yapar: '+gbEsc(j.kurulum)+')</span>':'';
+ L.push(am.yol?gbSatir('ok','✔','<span title="'+gbEsc(am.yol)+'">AccuMark '+gbEsc(am.surum||'')+'</span>'):gbSatir('no','✖','AccuMark bulunamadı'));
+ if(am.yol)L.push(ur.alan?gbSatir('ok','✔','<b>'+ur.alan+'</b> müşteri klasörü <span class="m">'+gbEsc(ur.depo)+'\\storage</span>'):gbSatir('uy','!','Müşteri klasörü bulunamadı'));
+ if(am.yol){const pc=r.otopastal_bilgisayari||gbHost(ku.yol);
+  if(r.otopastal==='ayri')L.push(gbSatir('ok','✔','OTOPASTAL: <b>'+gbEsc(pc)+'</b> bilgisayarında, kuyruğa ulaşılıyor'));
+  else if(r.otopastal==='ayni')L.push(gbSatir('ok','✔','OTOPASTAL bu bilgisayarda'));
+  else L.push(gbSatir('uy','!','OTOPASTAL bulunamadı: pastallar Gerber\'de oluşur, yerleştirmeyi elle yaparsın'));
+  if(r.otopastal==='ayri'&&ci.harf){const H=String(ci.harf).toUpperCase();
+   L.push(ci.sunucuda_baglanti_gerekli?gbSatir('uy','!','OTOPASTAL bu bilgisayarın pastallarını <b>'+H+'</b> harfiyle görmeli: OTOPASTAL\'da bir kerelik bağlantı gerekir'+kur):gbSatir('ok','✔','OTOPASTAL pastallara <b>'+H+'</b> ile ulaşıyor <span class="m">('+gbEsc(ci.kaynak)+')</span>'));
+   if(pa.gerekli)L.push(gbSatir('uy','!','Bu bilgisayarın '+gbEsc(ur.harf||'C')+': diski paylaşılmamış, OTOPASTAL pastallara ulaşamaz'+kur))}}
+ const ny=v=>String(v==null?'':v).toLowerCase().replace(/\\+$/,''),od=o.depo||o.userroot,ad=a.depo||a.userroot;
+ /* sadece işe yarayan farklar: Gerber kapalıyken yollar, OTOPASTAL yokken kuyruk/harf önemsiz */
+ const fark=[];if(!!o.gerber!==!!a.gerber)fark.push('gerber');
+ if(o.gerber){if(ny(o.accumark)!==ny(a.accumark))fark.push('accumark');if(ny(od)!==ny(ad))fark.push('depo');if(ny(o.otopastal)!==ny(a.otopastal))fark.push('otopastal');
+  if(o.otopastal!=='yok'&&ny(o.kuyruk)!==ny(a.kuyruk))fark.push('kuyruk');if(o.otopastal==='ayri'&&ny(o.surucu)!==ny(a.surucu))fark.push('surucu')}
+ L.push(fark.length?gbSatir('uy','↻','Şu anki ayarlardan farklı: '+fark.map(k=>({gerber:'Gerber',accumark:'AccuMark yeri',depo:'müşteri klasörleri',kuyruk:'OTOPASTAL kuyruğu',otopastal:'OTOPASTAL',surucu:'sürücü harfi'})[k]).join(', ')):gbSatir('ok','✔','Şu anki ayarlar bulunanlarla aynı'));
+ n.innerHTML='<ul class="gbl">'+L.join('')+'</ul>';$('gbUy').style.display=fark.length?'':'none'}
+$('gbBul').onclick=async e=>{e.stopPropagation();const b=$('gbBul'),n=$('gbNot');b.disabled=true;b.textContent='Aranıyor…';$('gbUy').style.display='none';
+ n.innerHTML='<div class="not">Bu bilgisayar ve ağdaki bilgisayarlar taranıyor… (genelde 10-30 sn)</div>';
+ try{await fetch('/gerber/tara',{method:'POST',body:'{}',cache:'no-store'})}catch(x){}
+ let j=null;for(let i=0;i<120;i++){await bekle(1000);try{j=await (await fetch('/gerber/tara',{cache:'no-store'})).json();if(!j.calisiyor)break}catch(x){}}
+ b.disabled=false;b.textContent='Otomatik bul';if(!j||!j.rapor){n.innerHTML='<div class="not">Sonuç alınamadı, tekrar dene.</div>';return}
+ gbOzetYaz(j.ayar);gbSonuc(j)};
+$('gbUy').onclick=async e=>{e.stopPropagation();const b=$('gbUy');b.disabled=true;
+ try{const j=await (await fetch('/gerber/uygula',{method:'POST',body:'{}',cache:'no-store'})).json();
+  if(!j.ok)throw new Error(j.hata||'bilinmeyen hata');gbOzetYaz(j.ayar);b.style.display='none';
+  $('gbNot').insertAdjacentHTML('beforeend','<div class="not" style="color:var(--ok)">✓ Bulunan ayarlar kullanılıyor, Gerber köprüsü yeniden başladı.</div>');
+  document.querySelectorAll('#sayfalar iframe').forEach(f=>{try{f.contentWindow.postMessage({t:'oto',v:j.ayar.gerber?j.ayar.otopastal:'kapali'},'*')}catch(x){}});nabiz()}
+ catch(x){alert('Uygulanamadı: '+x.message)}b.disabled=false};
 $('ayar').onclick=e=>{e.stopPropagation();menu(!$('menu').classList.contains('on'))};
 document.addEventListener('click',e=>{if(!$('menu').contains(e.target))menu(false)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')menu(false)});

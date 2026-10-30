@@ -13,11 +13,15 @@ Klasörler
     kopru\               Gerber köprüsü (sipariş → Batch → OTOPASTAL → sonuç)
 
 Yeni bilgisayara kurarken
-  1. Bu bilgisayarda Gerber AccuMark kurulu ve C:\userroot dolu olmalı.
-  2. Kurulum.bat → sihirbaz kontrolleri yapar, eksik C: paylaşımını açar,
-     K: sürücüsünü bağlar ve masaüstüne "Asorti Araci" simgesini koyar.
-  3. Sihirbazın son sayfasında yazan "net use ..." komutunu OTOPASTAL'da bir kere çalıştır
-     (ya da kurulum klasöründeki OTOPASTAL_icin_baglanti.bat dosyasını OTOPASTAL'a götürüp çalıştır).
+  Kurulum.bat → sihirbaz bilgisayarı kendisi tarar: AccuMark nerede, müşteri klasörleri nerede,
+  OTOPASTAL bu bilgisayarda mı / başka bilgisayarda mı / hiç yok mu, OTOPASTAL pastallara hangi
+  harfle ulaşıyor. Bulduklarını gösterir, "Kur"a basınca ona göre kurar. Bir şey girmen gerekmez.
+  - Gerber yoksa sadece asorti kurulur.
+  - OTOPASTAL başka bilgisayardaysa ve harf geçmiş işlerden belli değilse, OTOPASTAL için bir kerelik
+    bağlantı dosyası hazırlanır (OTOPASTAL'ın masaüstüne konmaya çalışılır). Orada bir kere çift tıklamak
+    yeter; bağlantı her açılışta kendiliğinden yenilenir.
+  - İstersen "Ayarları elle değiştir…" ile bulunanları değiştirebilirsin.
+  Sonradan bir şey değişirse: uygulamada ⚙ → Gerber bağlantısı → Otomatik bul.
 
 Güncelleme: yeni paketi aynı şekilde kur; ayarların ve çalışma sayfaların korunur.
 Kaldırma : C:\AsortiAraci\Kaldir.bat

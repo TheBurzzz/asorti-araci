@@ -1,9 +1,11 @@
 {
- "surum": "1.1.15",
+ "surum": "1.1.16",
  "tarih": "2026-10-30",
  "notlar": [
-  "İmza geri geldi: her çalışma sayfasının en altında sade bir “Created by Şamil Yeşil” yazısı var; kısa sayfada pencerenin dibinde, uzun sayfada Excel kaydet bölümünün altında durur",
-  "İmza yazdırılan sayfada çıkmaz",
-  "Boş sayfada gereksiz yere çıkan küçük kaydırma payı kalktı"
+  "Kurulum artık bilgisayarı kendisi tarıyor: AccuMark nerede, müşteri klasörleri nerede, OTOPASTAL bu bilgisayarda mı / ağdaki başka bilgisayarda mı / hiç yok mu, OTOPASTAL pastallara hangi harfle ulaşıyor (geçmiş işlerden öğrenir). Soru sormadan buna göre kurar",
+  "OTOPASTAL ayrı bilgisayardaysa kurulum gerekiyorsa diski paylaşır ve OTOPASTAL için bağlantıyı her açılışta kendiliğinden yenileyen bir dosya hazırlar",
+  "OTOPASTAL'ı olmayan bilgisayarlarda pastallar Gerber'de oluşturulur; elle yerleştirdikten sonra \"Gerber'den boy ve verimi al\" tabloya yazar",
+  "Ayarlar menüsünde yeni bölüm: Gerber bağlantısı → Otomatik bul (bir şey değişirse yeniden kurmadan düzeltir)",
+  "Köprü, OTOPASTAL'ın daha önce kullandığı sürücü harflerini kuyruktan öğrenip yedek olarak kullanıyor; AccuMark başka klasöre taşınırsa kendisi buluyor"
  ]
 }
