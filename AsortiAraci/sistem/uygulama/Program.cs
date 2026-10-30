@@ -82,7 +82,7 @@ namespace AsortiAraci
                 AppDomain.CurrentDomain.UnhandledException += delegate(object o, UnhandledExceptionEventArgs ev) { Kayit.Yaz("beklenmedik hata: " + ev.ExceptionObject); };
 
                 string wv = WebView2Surum();
-                if (wv == null) { Kayit.Yaz("Edge motoru (WebView2) bulunamadi: eski yoldan aciliyor"); EskiYol(); return; }
+                if (wv == null) { Kayit.Yaz("Edge motoru (WebView2) bulunamadi: eski yoldan aciliyor"); MotoruKur(); EskiYol(); return; }
 
                 Sunucu s = new Sunucu();
                 if (!s.Baslat())
@@ -145,6 +145,40 @@ namespace AsortiAraci
                 Kayit.Yaz("WebView2: " + ex.Message);
                 return null;
             }
+        }
+
+        // Edge motoru bu bilgisayarda yoksa: Microsoft'un resmi kurulumu (imzası denetlenerek) arka planda, sessizce, bir kez kurulur.
+        // Bu sefer uygulama eski yoldan açılır; kurulum bitince sonraki açılışlar uygulamanın kendi penceresiyle olur.
+        const string MotorBetik =
+            "$ErrorActionPreference = 'Stop'\n" +
+            "$k = '{K}'\n" +
+            "try {\n" +
+            "  [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12\n" +
+            "  $f = Join-Path $env:TEMP ('MicrosoftEdgeWebview2Setup_' + [guid]::NewGuid().ToString('N').Substring(0, 6) + '.exe')\n" +
+            "  Invoke-WebRequest -UseBasicParsing -TimeoutSec 120 -Uri 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile $f\n" +
+            "  $s = Get-AuthenticodeSignature -LiteralPath $f\n" +
+            "  if ($s.Status -ne 'Valid' -or \"$($s.SignerCertificate.Subject)\" -notmatch 'O=Microsoft Corporation') { throw ('imza gecersiz: ' + $s.Status) }\n" +
+            "  $p = Start-Process -FilePath $f -ArgumentList '/silent', '/install' -Wait -PassThru\n" +
+            "  Add-Content -LiteralPath $k -Value ((Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + ' bitti, cikis kodu ' + $p.ExitCode)\n" +
+            "  Remove-Item -LiteralPath $f -Force -ErrorAction SilentlyContinue\n" +
+            "} catch { Add-Content -LiteralPath $k -Value ((Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + ' kurulamadi: ' + $_.Exception.Message) }\n";
+
+        static void MotoruKur()
+        {
+            try
+            {
+                string isaret = Path.Combine(Yer.Log, "webview2_kurulum.txt");
+                if (File.Exists(isaret) && (DateTime.Now - File.GetLastWriteTime(isaret)).TotalDays < 3) return;   // az önce denendi
+                Directory.CreateDirectory(Yer.Log);
+                File.WriteAllText(isaret, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " Edge motoru (WebView2) kuruluyor\r\n", Dosya.Utf8);
+                string betik = MotorBetik.Replace("{K}", isaret.Replace("'", "''"));
+                ProcessStartInfo si = new ProcessStartInfo("powershell.exe", "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -EncodedCommand " + Convert.ToBase64String(Encoding.Unicode.GetBytes(betik)));
+                si.UseShellExecute = false;
+                si.CreateNoWindow = true;
+                Process.Start(si);
+                Kayit.Yaz("Edge motoru (WebView2) arka planda kuruluyor");
+            }
+            catch (Exception ex) { Kayit.Yaz("Edge motoru kurulamadi: " + ex.Message); }
         }
 
         // eski yol: Edge penceresi + PowerShell sunucusu (hizli_ac.vbs "eski" ile bu programı atlar)

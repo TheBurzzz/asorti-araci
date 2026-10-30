@@ -40,7 +40,9 @@ namespace AsortiAraci
             sunucu = s;
             cizim = new AcilisCizim(Kullanici.Al("tema") == "dark");
             Text = "Asorti Aracı";
-            try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
+            // simgenin bütün boyutları (16…256): başlıkta ve görev çubuğunda her ekran ölçeğinde keskin
+            try { Icon = new Icon(Path.Combine(Yer.Sistem, "asorti.ico")); }
+            catch { try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { } }
             StartPosition = FormStartPosition.Manual;
             BackColor = cizim.Zemin;
             MinimumSize = new Size(760, 520);
@@ -154,7 +156,7 @@ namespace AsortiAraci
                 // pencere arka planda / simge durumundayken de zamanlayıcılar yavaşlamasın (Gerber işlerinin takibi sürsün)
                 o.AdditionalBrowserArguments = "--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows";
                 string udf = Yer.Yol("profil_uygulama");
-                if (!Directory.Exists(udf)) await System.Threading.Tasks.Task.Run(delegate { EskiKayitlariAl(udf); });
+                if (!Directory.Exists(udf)) await System.Threading.Tasks.Task.Run(new Action(delegate { EskiKayitlariAl(udf); }));
                 CoreWebView2Environment env = await CoreWebView2Environment.CreateAsync(null, udf, o);
                 await wv.EnsureCoreWebView2Async(env);
                 CoreWebView2 c = wv.CoreWebView2;
@@ -169,7 +171,9 @@ namespace AsortiAraci
                 c.ProcessFailed += Coktu;
                 c.NavigationCompleted += Gezildi;
                 double z;
-                if (double.TryParse(Kullanici.Al("yakinlik"), NumberStyles.Float, CultureInfo.InvariantCulture, out z) && z >= 0.25 && z <= 5 && Math.Abs(z - 1) > 0.001) wv.ZoomFactor = z;
+                string yk = Kullanici.Al("yakinlik");
+                if (yk.Length == 0) yk = EskiYakinlik();
+                if (double.TryParse(yk, NumberStyles.Float, CultureInfo.InvariantCulture, out z) && z >= 0.25 && z <= 5 && Math.Abs(z - 1) > 0.001) wv.ZoomFactor = z;
                 wv.ZoomFactorChanged += delegate { try { Kullanici.Yaz("yakinlik", Math.Round(wv.ZoomFactor, 3)); } catch { } };
                 Kayit.Yaz("pencere acildi (Edge motoru " + env.BrowserVersionString + ")");
                 Git();
@@ -211,6 +215,25 @@ namespace AsortiAraci
                 Kayit.Yaz("eski pencerenin kayitlari tasinamadi: " + ex.Message);
                 try { if (Directory.Exists(udf)) Directory.Delete(udf, true); } catch { }
             }
+        }
+
+        // eski Edge penceresinde yakınlaştırma (Ctrl + / -) kullanıldıysa yeni pencere de aynı büyüklükte açılır
+        static string EskiYakinlik()
+        {
+            try
+            {
+                Match m = Regex.Match(Dosya.MetinOku(Yer.Yol("profil", "Default", "Preferences")), "\"localhost\"\\s*:\\s*(?:\\{[^{}]*?\"zoom_level\"\\s*:\\s*)?(-?[0-9.]+(?:[eE][-+]?[0-9]+)?)");
+                double l;
+                if (m.Success && double.TryParse(m.Groups[1].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out l) && Math.Abs(l) > 0.001 && Math.Abs(l) < 9)
+                {
+                    double z = Math.Round(Math.Pow(1.2, l), 3);
+                    Kullanici.Yaz("yakinlik", z);
+                    Kayit.Yaz("eski pencerenin yakinlastirmasi alindi: %" + Math.Round(z * 100));
+                    return z.ToString(CultureInfo.InvariantCulture);
+                }
+            }
+            catch { }
+            return "";
         }
 
         void Git()

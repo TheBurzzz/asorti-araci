@@ -327,6 +327,8 @@ function Kur {
     Adim "2/10  Dosyalar kopyalanıyor → $hedef"
     New-Item -ItemType Directory -Force -Path $hedef | Out-Null
     Copy-Item -Path (Join-Path $KAYNAK '*') -Destination $hedef -Recurse -Force
+    # paket internetten (ZIP) indirildiyse dosyalardaki "internetten geldi" isareti kaldirilir (Edge motorunun dosyalari engelsiz yuklensin)
+    try { @(Get-ChildItem -LiteralPath (Join-Path $hedef 'sistem') -Recurse -File -ErrorAction SilentlyContinue) + @(Get-ChildItem -LiteralPath (Join-Path $hedef 'kopru') -Filter *.ps1 -File -ErrorAction SilentlyContinue) | Unblock-File -ErrorAction SilentlyContinue } catch {}
     foreach ($d in 'gelen', 'isleniyor', 'bitti', 'sonuc', 'log', 'iptal') { New-Item -ItemType Directory -Force -Path (Join-Path $hedef "kopru\$d") | Out-Null }
     # uygulamanin kendi penceresi (sistem\AsortiAraci.exe) bu bilgisayarin .NET Framework'uyle derlenir; olmazsa eski yoldan (Edge penceresiyle) acilir
     Adim '     uygulama penceresi hazırlanıyor (AsortiAraci.exe)'
