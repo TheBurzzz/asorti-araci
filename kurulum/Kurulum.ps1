@@ -84,7 +84,7 @@ if /i not "%~dp0"=="%BAS%" (
   pause >nul
 )
 endlocal
-"@
+"@ -replace "`r?`n", "`r`n"   # cmd, satırları LF ile biten .bat dosyalarında goto etiketlerini bulamayabilir: CRLF yap
 }
 # bağlantı dosyasını OTOPASTAL'ın masaüstüne (olmazsa Ortak Belgeler'e) koymayı dener
 function SunucuyaKoy([string]$pc, [string]$ad, [string]$icerik) {
