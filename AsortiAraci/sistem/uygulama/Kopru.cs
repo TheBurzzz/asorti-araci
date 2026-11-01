@@ -28,30 +28,71 @@ namespace AsortiAraci
         }
     }
 
+    // Gerber köprüsü (kopru\kopru.ps1) uygulamanın içinde, Windows PowerShell motoruyla çalışır: ayrı program açılmaz,
+    // yeni sipariş gelince hemen uyanır, iş ilerleyince sayfa hemen haberdar olur. İçeride çalışamazsa eskisi gibi ayrı süreçte.
     sealed class Kopru
     {
         readonly object kilit = new object();
         Process p;
+        KopruCalisma ic;
         DateTime bas = DateTime.MinValue;
         public bool Etkin = true;   // ayarlarda Gerber kapalıysa false
+        public bool Icte = true;    // false: eski yol (ayrı powershell.exe)
+        public Action<string> IsDegisti;   // köprü bir işin durumunu yazdı (sonuc\<iş>.json)
 
         public bool Calisiyor
         {
-            get { lock (kilit) { try { return p != null && !p.HasExited; } catch { return false; } } }
+            get
+            {
+                lock (kilit)
+                {
+                    try
+                    {
+                        if (ic != null) return ic.Calisiyor;
+                        return p != null && !p.HasExited;
+                    }
+                    catch { return false; }
+                }
+            }
         }
+
+        public bool UygulamaIcinde { get { lock (kilit) return ic != null; } }
 
         public void Baslat()
         {
             lock (kilit)
             {
                 bas = DateTime.Now;
+                string betik = Yer.Yol("kopru", "kopru.ps1");
+                if (Icte)
+                {
+                    try
+                    {
+                        if (ic != null) { ic.Dispose(); ic = null; }
+                        ic = KopruCalisma.Baslat(betik, delegate(string ad) { Action<string> d = IsDegisti; if (d != null) d(ad); });
+                        Kayit.Yaz("kopru uygulamanin icinde baslatildi");
+                        return;
+                    }
+                    catch (Exception ex)
+                    {
+                        ic = null;
+                        Icte = false;
+                        Kayit.Yaz("kopru uygulamanin icinde baslatilamadi (" + ex.Message + "), ayri surec olarak baslatiliyor");
+                    }
+                }
                 try
                 {
-                    p = Betik.Baslat(Yer.Yol("kopru", "kopru.ps1"), null);
+                    p = Betik.Baslat(betik, null);
                     Kayit.Yaz("kopru baslatildi, pid " + p.Id);
                 }
                 catch (Exception ex) { p = null; Kayit.Yaz("kopru baslatilamadi: " + ex.Message); }
             }
+        }
+
+        // yeni sipariş ya da durdurma isteği geldi: köprü beklemeden baksın
+        public void Uyandir()
+        {
+            lock (kilit) { if (ic != null) ic.Uyandir(); }
         }
 
         // durmuşsa yeniden başlat (en az 30 sn arayla)
@@ -59,14 +100,29 @@ namespace AsortiAraci
         {
             if (!Etkin) return;
             bool dur;
-            lock (kilit) dur = (p == null || p.HasExited) && (DateTime.Now - bas).TotalSeconds > 30;
+            lock (kilit)
+            {
+                if (ic != null) ic.Temizle();
+                dur = !CalisiyorKilitli() && (DateTime.Now - bas).TotalSeconds > 30;
+            }
             if (dur) { Kayit.Yaz("kopru durmustu, yeniden baslatiliyor"); Baslat(); }
+        }
+
+        bool CalisiyorKilitli()
+        {
+            try
+            {
+                if (ic != null) return ic.Calisiyor;
+                return p != null && !p.HasExited;
+            }
+            catch { return false; }
         }
 
         public void Durdur()
         {
             lock (kilit)
             {
+                if (ic != null) { try { ic.Dispose(); } catch { } ic = null; }
                 try { if (p != null && !p.HasExited) p.Kill(); } catch { }
                 p = null;
             }

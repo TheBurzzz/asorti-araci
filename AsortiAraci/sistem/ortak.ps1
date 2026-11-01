@@ -46,11 +46,29 @@ function YerelSurum([string]$Kok) {
 
 # uygulamanin kendisi (sistem\uygulama\*.cs) bu bilgisayarda .NET Framework'un derleyicisiyle derlenir: sistem\AsortiAraci.exe
 # Parmak izi uygulamanin kendi hesabiyla (Derleyici.Damga) birebir aynidir; degismediyse yeniden derlenmez.
+# uygulama\derleme.txt: derlenirken hangi kitapliklara basvurulacagi (uygulamanin kendi hesabiyla, Derleyici.Basvurular, birebir ayni)
+function UygulamaBasvurulari([string]$uk) {
+  $f = Join-Path $uk 'derleme.txt'; if (Test-Path -LiteralPath ($f + '.yeni')) { $f += '.yeni' }
+  $l = @(); if (Test-Path -LiteralPath $f) { $l = @(Get-Content -LiteralPath $f -Encoding UTF8 | ForEach-Object { $_.Trim().TrimStart([char]0xFEFF) } | Where-Object { $_ -and -not $_.StartsWith('#') }) }
+  if (-not $l.Count) { $l = @('System.dll', 'System.Core.dll', 'System.Drawing.dll', 'System.Windows.Forms.dll', 'System.Management.dll', 'System.IO.Compression.dll', 'System.IO.Compression.FileSystem.dll', 'gac:System.Management.Automation', 'sistem:Microsoft.Web.WebView2.Core.dll', 'sistem:Microsoft.Web.WebView2.WinForms.dll') }
+  return ,$l
+}
+# Windows'un ortak kitapligindaki (GAC) en yeni 4.x surumu (or. PowerShell motoru)
+function GacYolu([string]$ad) {
+  $kok = Join-Path $env:WINDIR 'Microsoft.NET\assembly'
+  foreach ($g in @('GAC_MSIL', $(if ([Environment]::Is64BitProcess) { 'GAC_64' } else { 'GAC_32' }))) {
+    $d = Join-Path (Join-Path $kok $g) $ad; if (-not (Test-Path -LiteralPath $d)) { continue }
+    [string[]]$alt = @(Get-ChildItem -LiteralPath $d -Directory -Filter 'v4.0_*' -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName }); [Array]::Sort($alt, [StringComparer]::OrdinalIgnoreCase)
+    for ($i = $alt.Count - 1; $i -ge 0; $i--) { $f = Join-Path $alt[$i] ($ad + '.dll'); if (Test-Path -LiteralPath $f) { return $f } }
+  }
+  return $null
+}
 function UygulamaDamga([string]$Kok) {
   $sis = Join-Path $Kok 'sistem'; $uk = Join-Path $sis 'uygulama'
   [string[]]$cs = @(Get-ChildItem -LiteralPath $uk -Filter *.cs -File -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })
   [Array]::Sort($cs, [StringComparer]::OrdinalIgnoreCase)
-  $liste = @($cs) + @((Join-Path $uk 'uygulama.manifest'), (Join-Path $sis 'Microsoft.Web.WebView2.Core.dll'), (Join-Path $sis 'Microsoft.Web.WebView2.WinForms.dll'))
+  $liste = @($cs) + @((Join-Path $uk 'uygulama.manifest'), (Join-Path $uk 'derleme.txt'))
+  foreach ($b in (UygulamaBasvurulari $uk)) { if ($b -like 'sistem:*') { $liste += (Join-Path $sis $b.Substring(7)) } }
   $ms = New-Object IO.MemoryStream
   foreach ($f in $liste) {
     $g = $(if (Test-Path -LiteralPath ($f + '.yeni')) { $f + '.yeni' } else { $f }); if (-not (Test-Path -LiteralPath $g)) { continue }
@@ -70,10 +88,13 @@ function UygulamaDerle([string]$Kok) {
   $kayit = Join-Path $Kok 'kopru\log\uygulama_derleme.txt'
   if (-not (Test-Path -LiteralPath $csc)) { try { Set-Content -LiteralPath $kayit -Value 'csc.exe bulunamadi' -Encoding UTF8 } catch {}; return $false }
   $yeni = Join-Path $sis 'AsortiAraci.yeni.exe'; Remove-Item -LiteralPath $yeni -Force -ErrorAction SilentlyContinue
-  $wvc = Join-Path $sis 'Microsoft.Web.WebView2.Core.dll'; if (Test-Path -LiteralPath ($wvc + '.yeni')) { $wvc += '.yeni' }
-  $wvw = Join-Path $sis 'Microsoft.Web.WebView2.WinForms.dll'; if (Test-Path -LiteralPath ($wvw + '.yeni')) { $wvw += '.yeni' }
-  $arg = @('/nologo', '/target:winexe', '/optimize+', '/platform:anycpu', '/codepage:65001', "/out:$yeni", ('/win32icon:' + (Join-Path $sis 'asorti.ico')), ('/win32manifest:' + (Join-Path $uk 'uygulama.manifest')),
-    '/r:System.dll', '/r:System.Core.dll', '/r:System.Drawing.dll', '/r:System.Windows.Forms.dll', '/r:System.Management.dll', '/r:System.IO.Compression.dll', '/r:System.IO.Compression.FileSystem.dll', "/r:$wvc", "/r:$wvw")
+  $arg = @('/nologo', '/target:winexe', '/optimize+', '/platform:anycpu', '/codepage:65001', "/out:$yeni", ('/win32icon:' + (Join-Path $sis 'asorti.ico')), ('/win32manifest:' + (Join-Path $uk 'uygulama.manifest')))
+  foreach ($b in (UygulamaBasvurulari $uk)) {
+    if ($b -like 'sistem:*') { $f = Join-Path $sis $b.Substring(7); if (Test-Path -LiteralPath ($f + '.yeni')) { $f += '.yeni' }; $arg += "/r:$f" }
+    elseif ($b -like 'gac:*') { $g = GacYolu $b.Substring(4); $arg += $(if ($g) { "/r:$g" } else { '/r:' + $b.Substring(4) + '.dll' }) }
+    elseif ($b.StartsWith('/')) { if ($b -match '^/[A-Za-z0-9:+.\-]+$') { $arg += $b } }
+    else { $arg += "/r:$b" }
+  }
   [string[]]$kaynak = @(Get-ChildItem -LiteralPath $uk -Filter *.cs -File | ForEach-Object { $_.FullName }); [Array]::Sort($kaynak, [StringComparer]::OrdinalIgnoreCase)
   $cikti = (& $csc @arg @kaynak 2>&1 | Out-String)
   $ok = ($LASTEXITCODE -eq 0) -and (Test-Path -LiteralPath $yeni)

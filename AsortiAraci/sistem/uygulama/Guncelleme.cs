@@ -194,7 +194,54 @@ namespace AsortiAraci
             return k;
         }
 
-        // kaynakların, ekranın ve WebView2 dosyalarının parmak izi: değişince yeniden derlenir
+        static readonly string[] VarsayilanBasvurular = { "System.dll", "System.Core.dll", "System.Drawing.dll", "System.Windows.Forms.dll", "System.Management.dll", "System.IO.Compression.dll", "System.IO.Compression.FileSystem.dll", "gac:System.Management.Automation", "sistem:Microsoft.Web.WebView2.Core.dll", "sistem:Microsoft.Web.WebView2.WinForms.dll" };
+
+        // uygulama\derleme.txt: hangi kitaplıklara başvurulacağı (yeni sürüm yeni kitaplık isterse eski sürüm de bilsin diye dosyada)
+        public static List<string> Basvurular()
+        {
+            List<string> l = new List<string>();
+            string f = Path.Combine(Klasor, "derleme.txt");
+            if (File.Exists(f + ".yeni")) f += ".yeni";
+            try
+            {
+                if (File.Exists(f))
+                    foreach (string s0 in File.ReadAllLines(f, Encoding.UTF8))
+                    {
+                        string s = s0.Trim().TrimStart('\uFEFF');
+                        if (s.Length > 0 && s[0] != '#') l.Add(s);
+                    }
+            }
+            catch { }
+            if (l.Count == 0) l.AddRange(VarsayilanBasvurular);
+            return l;
+        }
+
+        static string SistemDosyasi(string ad)
+        {
+            string f = Path.Combine(Yer.Sistem, ad);
+            return File.Exists(f + ".yeni") ? f + ".yeni" : f;
+        }
+
+        // Windows'un ortak kitaplığındaki (GAC) en yeni 4.x sürümü (ör. PowerShell motoru)
+        public static string GacYolu(string ad)
+        {
+            string kok = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Microsoft.NET" + Path.DirectorySeparatorChar + "assembly");
+            foreach (string g in new string[] { "GAC_MSIL", Environment.Is64BitProcess ? "GAC_64" : "GAC_32" })
+            {
+                string d = Path.Combine(Path.Combine(kok, g), ad);
+                if (!Directory.Exists(d)) continue;
+                string[] alt = Directory.GetDirectories(d, "v4.0_*");
+                Array.Sort(alt, StringComparer.OrdinalIgnoreCase);
+                for (int i = alt.Length - 1; i >= 0; i--)
+                {
+                    string f = Path.Combine(alt[i], ad + ".dll");
+                    if (File.Exists(f)) return f;
+                }
+            }
+            return null;
+        }
+
+        // kaynakların, ekranın, başvuru listesinin ve sistem klasöründeki başvuruların parmak izi: değişince yeniden derlenir
         public static string Damga()
         {
             using (MD5 md5 = MD5.Create())
@@ -202,8 +249,8 @@ namespace AsortiAraci
             {
                 List<string> l = new List<string>(Kaynaklar());
                 l.Add(Path.Combine(Klasor, "uygulama.manifest"));
-                l.Add(Path.Combine(Yer.Sistem, "Microsoft.Web.WebView2.Core.dll"));
-                l.Add(Path.Combine(Yer.Sistem, "Microsoft.Web.WebView2.WinForms.dll"));
+                l.Add(Path.Combine(Klasor, "derleme.txt"));
+                foreach (string b in Basvurular()) if (b.StartsWith("sistem:", StringComparison.OrdinalIgnoreCase)) l.Add(Path.Combine(Yer.Sistem, b.Substring(7)));
                 foreach (string f in l)
                 {
                     string g = File.Exists(f + ".yeni") ? f + ".yeni" : f;
@@ -230,15 +277,21 @@ namespace AsortiAraci
             if (!File.Exists(csc)) { hata = "csc.exe bulunamadı"; return false; }
             string yeni = Path.Combine(Yer.Sistem, "AsortiAraci.yeni.exe");
             try { File.Delete(yeni); } catch { }
-            string wvc = Path.Combine(Yer.Sistem, "Microsoft.Web.WebView2.Core.dll"), wvw = Path.Combine(Yer.Sistem, "Microsoft.Web.WebView2.WinForms.dll");
-            if (File.Exists(wvc + ".yeni")) wvc += ".yeni";
-            if (File.Exists(wvw + ".yeni")) wvw += ".yeni";
             StringBuilder a = new StringBuilder("/nologo /target:winexe /optimize+ /platform:anycpu /codepage:65001");
             a.Append(" \"/out:").Append(yeni).Append('"');
             a.Append(" \"/win32icon:").Append(Path.Combine(Yer.Sistem, "asorti.ico")).Append('"');
             a.Append(" \"/win32manifest:").Append(Path.Combine(Klasor, "uygulama.manifest")).Append('"');
-            foreach (string r in new string[] { "System.dll", "System.Core.dll", "System.Drawing.dll", "System.Windows.Forms.dll", "System.Management.dll", "System.IO.Compression.dll", "System.IO.Compression.FileSystem.dll" }) a.Append(" /r:").Append(r);
-            a.Append(" \"/r:").Append(wvc).Append('"').Append(" \"/r:").Append(wvw).Append('"');
+            foreach (string b in Basvurular())
+            {
+                if (b.StartsWith("sistem:", StringComparison.OrdinalIgnoreCase)) a.Append(" \"/r:").Append(SistemDosyasi(b.Substring(7))).Append('"');
+                else if (b.StartsWith("gac:", StringComparison.OrdinalIgnoreCase))
+                {
+                    string g = GacYolu(b.Substring(4));
+                    a.Append(" \"/r:").Append(g ?? b.Substring(4) + ".dll").Append('"');
+                }
+                else if (b.StartsWith("/")) { if (System.Text.RegularExpressions.Regex.IsMatch(b, "^/[A-Za-z0-9:+.\\-]+$")) a.Append(' ').Append(b); }
+                else a.Append(" \"/r:").Append(b).Append('"');
+            }
             foreach (string k in Kaynaklar()) a.Append(" \"").Append(k).Append('"');
             string cikti = "";
             int kod = -1;

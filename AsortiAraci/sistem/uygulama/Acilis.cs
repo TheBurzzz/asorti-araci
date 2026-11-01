@@ -207,10 +207,14 @@ namespace AsortiAraci
         }
     }
 
-    // pencerenin içini (başlık çubuğu hariç) tam kaplayan, pencereye bağlı saydamlaşabilen katman.
+    // pencerenin içini tam kaplayan, pencereye bağlı saydamlaşabilen katman.
     // Uygulama arkasında açılır ve ekrana çizilir; hazır olunca bu katman yumuşakça solar.
+    // Tek parça başlıkta açılış sırasında da pencere düğmeleri (küçült, büyüt, kapat) aynı yerde durur ve pencere üstten tutulup taşınır.
     sealed class AcilisKatmani : Form
     {
+        [DllImport("user32.dll")] static extern bool ReleaseCapture();
+        [DllImport("user32.dll")] static extern IntPtr SendMessage(IntPtr h, int m, IntPtr w, IntPtr l);
+
         const double OPAK = 0.997;     // tam 1 olunca pencere katmanlı olmaktan çıkar ve bir an titrer
         const double KAYBOL = 480;     // ms
         readonly Form sahip;
@@ -221,11 +225,23 @@ namespace AsortiAraci
         string not = "";
         bool cubuk = true;
         public event EventHandler Bitti;
+        bool dugmeler, surukle;
+        int ustune = -1, basili = -1;   // fare hangi düğmenin üstünde / hangisine basıldı (0 küçült, 1 büyüt, 2 kapat)
+        Point basma;
+        readonly float yak = 1f;        // sayfanın yakınlaştırması (düğmeler sayfadakiyle aynı yerde olsun)
+
+        public bool Dugmeler
+        {
+            get { return dugmeler; }
+            set { dugmeler = value; if (IsHandleCreated) Invalidate(); }
+        }
 
         public AcilisKatmani(Form sahip, AcilisCizim cizim)
         {
             this.sahip = sahip;
             this.cizim = cizim;
+            double z;
+            if (double.TryParse(Kullanici.Al("yakinlik"), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out z) && z >= 0.25 && z <= 5) yak = (float)z;
             FormBorderStyle = FormBorderStyle.None;
             StartPosition = FormStartPosition.Manual;
             ShowInTaskbar = false;
@@ -308,6 +324,127 @@ namespace AsortiAraci
         protected override void OnPaint(PaintEventArgs e)
         {
             cizim.Ciz(e.Graphics, e.ClipRectangle, cubuk, not, sw.Elapsed.TotalMilliseconds);
+            DugmeleriCiz(e.Graphics, e.ClipRectangle);
+        }
+
+        // ---------- pencere düğmeleri (sayfadaki üst çubuktakilerle aynı ölçü ve yerde) ----------
+        float Bir { get { return cizim.Olcek * yak; } }
+        int CubukYuk { get { return (int)Math.Round(54 * Bir); } }
+
+        Rectangle Dugme(int i)
+        {
+            int w = (int)Math.Round(46 * Bir);
+            return new Rectangle(ClientSize.Width - (3 - i) * w, 0, w, CubukYuk);
+        }
+
+        int DugmeBul(Point p)
+        {
+            if (!dugmeler) return -1;
+            for (int i = 0; i < 3; i++) if (Dugme(i).Contains(p)) return i;
+            return -1;
+        }
+
+        void DugmeleriCiz(Graphics g, Rectangle clip)
+        {
+            if (!dugmeler) return;
+            Color yazi = cizim.Koyu ? Color.FromArgb(245, 245, 247) : Color.FromArgb(29, 29, 31);
+            bool tam = sahip.WindowState == FormWindowState.Maximized;
+            for (int i = 0; i < 3; i++)
+            {
+                Rectangle r = Dugme(i);
+                if (!r.IntersectsWith(clip)) continue;
+                Color c = yazi;
+                if (i == ustune || i == basili)
+                {
+                    Color z = i == 2 ? (i == basili ? Color.FromArgb(176, 38, 26) : Color.FromArgb(196, 43, 28))
+                                     : (cizim.Koyu ? Color.FromArgb(i == basili ? 31 : 20, 255, 255, 255) : Color.FromArgb(i == basili ? 26 : 15, 0, 0, 0));
+                    g.SmoothingMode = SmoothingMode.None;
+                    using (SolidBrush b = new SolidBrush(z)) g.FillRectangle(b, r);
+                    if (i == 2) c = Color.White;
+                }
+                float u = Bir, x = r.X + (float)Math.Round((r.Width - 10 * u) / 2), y = r.Y + (float)Math.Round((r.Height - 10 * u) / 2);
+                g.PixelOffsetMode = PixelOffsetMode.None;
+                g.SmoothingMode = i == 2 ? SmoothingMode.AntiAlias : SmoothingMode.None;
+                using (Pen p = new Pen(c, Math.Max(1f, (float)Math.Round(cizim.Olcek))))
+                {
+                    if (i == 0) g.DrawLine(p, x, y + 5.5f * u, x + 10 * u, y + 5.5f * u);
+                    else if (i == 1 && !tam) g.DrawRectangle(p, x + .5f * u, y + .5f * u, 9 * u, 9 * u);
+                    else if (i == 1)
+                    {
+                        g.DrawRectangle(p, x + .5f * u, y + 2.5f * u, 7 * u, 7 * u);
+                        g.DrawLines(p, new PointF[] { new PointF(x + 2.5f * u, y + 2.5f * u), new PointF(x + 2.5f * u, y + .5f * u), new PointF(x + 9.5f * u, y + .5f * u), new PointF(x + 9.5f * u, y + 7.5f * u), new PointF(x + 7.5f * u, y + 7.5f * u) });
+                    }
+                    else
+                    {
+                        g.DrawLine(p, x + .5f * u, y + .5f * u, x + 9.5f * u, y + 9.5f * u);
+                        g.DrawLine(p, x + 9.5f * u, y + .5f * u, x + .5f * u, y + 9.5f * u);
+                    }
+                }
+            }
+            g.SmoothingMode = SmoothingMode.None;
+        }
+
+        void Buyut()
+        {
+            sahip.WindowState = sahip.WindowState == FormWindowState.Maximized ? FormWindowState.Normal : FormWindowState.Maximized;
+        }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            int u = DugmeBul(e.Location);
+            if (u != ustune)
+            {
+                if (ustune >= 0) Invalidate(Dugme(ustune));
+                ustune = u;
+                if (u >= 0) Invalidate(Dugme(u));
+            }
+            Cursor c = dugmeler && e.Y < CubukYuk ? Cursors.Default : Cursors.AppStarting;
+            if (Cursor != c) Cursor = c;
+            // üst çubuktan tutup biraz çekince pencere taşınır (Windows'un kendi taşıması: ekran kenarına yapıştırma dahil)
+            Size ds = SystemInformation.DragSize;
+            if (surukle && (e.Button & MouseButtons.Left) != 0 && (Math.Abs(e.X - basma.X) > ds.Width / 2 || Math.Abs(e.Y - basma.Y) > ds.Height / 2))
+            {
+                surukle = false;
+                Point sp = Cursor.Position;
+                ReleaseCapture();
+                SendMessage(sahip.Handle, 0x00A1, (IntPtr)2, (IntPtr)((sp.Y << 16) | (sp.X & 0xFFFF)));   // WM_NCLBUTTONDOWN, HTCAPTION
+            }
+        }
+
+        protected override void OnMouseLeave(EventArgs e)
+        {
+            base.OnMouseLeave(e);
+            if (ustune >= 0) { Invalidate(Dugme(ustune)); ustune = -1; }
+        }
+
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+            if (e.Button != MouseButtons.Left || !dugmeler) return;
+            basili = DugmeBul(e.Location);
+            if (basili >= 0) { Invalidate(Dugme(basili)); return; }
+            if (e.Y < CubukYuk) { surukle = true; basma = e.Location; }
+        }
+
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+            surukle = false;
+            int b = basili;
+            basili = -1;
+            if (b < 0) return;
+            Invalidate(Dugme(b));
+            if (DugmeBul(e.Location) != b) return;
+            if (b == 0) sahip.WindowState = FormWindowState.Minimized;
+            else if (b == 1) Buyut();
+            else sahip.Close();
+        }
+
+        protected override void OnMouseDoubleClick(MouseEventArgs e)
+        {
+            base.OnMouseDoubleClick(e);
+            if (dugmeler && e.Button == MouseButtons.Left && e.Y < CubukYuk && DugmeBul(e.Location) < 0) Buyut();
         }
 
         protected override void Dispose(bool disposing)

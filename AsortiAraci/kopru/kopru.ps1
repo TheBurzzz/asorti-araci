@@ -2,14 +2,24 @@
 # gelen\ klasorune dusen siparis dosyalarini: Gerber'e alir -> Batch ile pastal yapar ->
 # OTOPASTAL kuyruguna yollar -> sonuclari sonuc\ klasorune yazar.
 $ErrorActionPreference = 'Stop'
-$mtx = New-Object Threading.Mutex($false, 'AsortiGerberKopru')
-if (-not $mtx.WaitOne(0)) { Write-Host 'Kopru zaten calisiyor.'; Start-Sleep 3; exit }
-try { $Host.UI.RawUI.WindowTitle = 'Gerber koprusu' } catch {}
-# konsol penceresine tiklayinca programin donmamasi icin "Hizli Duzenleme"yi kapat
-try {
-  Add-Type -Namespace W -Name C -MemberDefinition '[DllImport("kernel32.dll")] public static extern System.IntPtr GetStdHandle(int h); [DllImport("kernel32.dll")] public static extern bool GetConsoleMode(System.IntPtr h, out uint m); [DllImport("kernel32.dll")] public static extern bool SetConsoleMode(System.IntPtr h, uint m);'
-  $hIn = [W.C]::GetStdHandle(-10); [uint32]$mode = 0; [void][W.C]::GetConsoleMode($hIn, [ref]$mode); [void][W.C]::SetConsoleMode($hIn, [uint32](([uint64]$mode -bor 0x80) -band 0xFFFFFFBF))
-} catch {}
+# Asorti Araci programinin icinde mi calisiyor (program $Uygulama verir: bekleme, isin degistigini bildirme) yoksa ayri powershell.exe'de mi
+$script:Uyg = $null; try { $script:Uyg = Get-Variable -Name Uygulama -Scope Global -ValueOnly -ErrorAction Stop } catch {}
+$script:icte = $null -ne $script:Uyg
+$mtx = New-Object Threading.Mutex($false, 'AsortiGerberKopru'); $sahip = $false
+try { $sahip = $mtx.WaitOne($(if ($script:icte) { 3000 } else { 0 })) }
+catch {   # onceki kopru kilidi birakmadan kapandiysa (terk edilmis kilit) kilit artik bizim
+  $e = $_.Exception; while ($e -and -not ($e -is [Threading.AbandonedMutexException])) { $e = $e.InnerException }
+  if ($e) { $sahip = $true } else { throw }
+}
+if (-not $sahip) { Write-Host 'Kopru zaten calisiyor.'; if (-not $script:icte) { Start-Sleep 3 }; exit }
+if (-not $script:icte) {
+  try { $Host.UI.RawUI.WindowTitle = 'Gerber koprusu' } catch {}
+  # konsol penceresine tiklayinca programin donmamasi icin "Hizli Duzenleme"yi kapat
+  try {
+    Add-Type -Namespace W -Name C -MemberDefinition '[DllImport("kernel32.dll")] public static extern System.IntPtr GetStdHandle(int h); [DllImport("kernel32.dll")] public static extern bool GetConsoleMode(System.IntPtr h, out uint m); [DllImport("kernel32.dll")] public static extern bool SetConsoleMode(System.IntPtr h, uint m);'
+    $hIn = [W.C]::GetStdHandle(-10); [uint32]$mode = 0; [void][W.C]::GetConsoleMode($hIn, [ref]$mode); [void][W.C]::SetConsoleMode($hIn, [uint32](([uint64]$mode -bor 0x80) -band 0xFFFFFFBF))
+  } catch {}
+}
 $K      = Split-Path -Parent $MyInvocation.MyCommand.Path       # ...\kopru
 $KOK    = Split-Path -Parent $K                                 # kurulum klasoru
 . (Join-Path $KOK 'sistem\ortak.ps1'); $A = Ayarlar $KOK
@@ -38,9 +48,12 @@ foreach ($d in 'gelen','isleniyor','bitti','sonuc','log','iptal') { New-Item -It
 $LOGF = Join-Path $K ('log\kopru_' + (Get-Date -Format 'yyyy-MM-dd') + '.txt')
 # Gerber programlarini calistirir; hata akisina yazsalar bile isi durdurmaz, butun ciktiyi metin olarak dondurur
 function Yerel([scriptblock]$b) { $ErrorActionPreference = 'Continue'; Push-Location $AM; try { (& $b 2>&1 | ForEach-Object { "$_" }) -join "`r`n" } finally { Pop-Location } }
-function Log($s) { $l = (Get-Date -Format 'HH:mm:ss') + ' ' + $s; Add-Content -Path $LOGF -Value $l -Encoding UTF8; Write-Host $l }
+function Log($s) { $l = (Get-Date -Format 'HH:mm:ss') + ' ' + $s; Add-Content -Path $LOGF -Value $l -Encoding UTF8; if (-not $script:icte) { Write-Host $l } }
 
-function Durum($base, $h) { $h.zaman = (Get-Date -Format 's'); ($h | ConvertTo-Json -Depth 5) | Set-Content -Path (Join-Path $K "sonuc\$base.json") -Encoding UTF8 }
+function Durum($base, $h) {
+  $h.zaman = (Get-Date -Format 's'); ($h | ConvertTo-Json -Depth 5) | Set-Content -Path (Join-Path $K "sonuc\$base.json") -Encoding UTF8
+  if ($script:icte) { try { $script:Uyg.IsDegisti($base) } catch {} }   # sayfa beklemeden yenilesin, pastallar hazirsa bildirim ciksin
+}
 
 # AccuMark .ctl dosyasindaki isimler (64 baytlik kayitlar)
 function CtlNames($area, $kind) {
@@ -600,17 +613,23 @@ Get-ChildItem -Path (Join-Path $K 'isleniyor') -Filter *.txt -ErrorAction Silent
 }
 
 $alanT = [datetime]::MinValue
-while ($true) {
-  if (((Get-Date) - $alanT).TotalMinutes -ge 2) { try { Alanlar } catch { Log ('klasor listesi yazilamadi: ' + $_.Exception.Message) }; $alanT = Get-Date }
-  try { SiradakileriYaz } catch {}
-  # yeni isler: suren bir isle cakismiyorsa hemen baslar (cakisiyorsa "sirada" bekler)
-  try {
-    foreach ($f in @(Get-ChildItem -Path (Join-Path $K 'gelen') -Filter *.txt -ErrorAction SilentlyContinue | Sort-Object LastWriteTime)) {
-      if (Cakisiyor $f) { continue }
-      Start-Sleep 1; if (Test-Path $f.FullName) { IsBasla $f }
-    }
-  } catch { Log ('HATA: ' + $_.Exception.Message) }
-  try { IslerAdim } catch { Log ('HATA: ' + $_.Exception.Message) }
-  try { BatchKapatGerekirse } catch { Log ('Batch kapatilamadi: ' + $_.Exception.Message) }
-  Start-Sleep 3
-}
+try {
+  while ($true) {
+    if (((Get-Date) - $alanT).TotalMinutes -ge 2) { try { Alanlar } catch { Log ('klasor listesi yazilamadi: ' + $_.Exception.Message) }; $alanT = Get-Date }
+    try { SiradakileriYaz } catch {}
+    # yeni isler: suren bir isle cakismiyorsa hemen baslar (cakisiyorsa "sirada" bekler)
+    try {
+      foreach ($f in @(Get-ChildItem -Path (Join-Path $K 'gelen') -Filter *.txt -ErrorAction SilentlyContinue | Sort-Object LastWriteTime)) {
+        if (Cakisiyor $f) { continue }
+        # program dosyayi tek seferde birakir; ayri kopru (eski yol) dosyanin yazilmasinin bitmesini bekler
+        if (-not $script:icte) { Start-Sleep 1 }
+        if (Test-Path $f.FullName) { IsBasla $f }
+      }
+    } catch { Log ('HATA: ' + $_.Exception.Message) }
+    try { IslerAdim } catch { Log ('HATA: ' + $_.Exception.Message) }
+    try { BatchKapatGerekirse } catch { Log ('Batch kapatilamadi: ' + $_.Exception.Message) }
+    # uygulamanin icinde: yeni siparis gelince hemen uyanir; uygulama kapanirken yarim is birakmadan cikar
+    if ($script:icte) { [void]$script:Uyg.Bekle(3000); if ($script:Uyg.Duruyor) { Log 'Gerber koprusu durdu (uygulama kapaniyor)'; break } }
+    else { Start-Sleep 3 }
+  }
+} finally { try { $mtx.ReleaseMutex() } catch {}; try { $mtx.Dispose() } catch {} }

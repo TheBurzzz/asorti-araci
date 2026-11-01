@@ -1,0 +1,15 @@
+﻿# Asorti Aracı - uygulama derlenirken kullanılan başvurular (her satır bir tane). Uygulama kendini güncellerken bu
+# listeyi okur: yeni bir sürüm yeni bir kitaplık isterse eski sürüm de onu bilir.
+#   Ad.dll           .NET Framework'ün kendi kitaplığı
+#   gac:Ad           Windows'un ortak kitaplığından (GAC) en yeni 4.x sürümü
+#   sistem:dosya     sistem klasöründeki dosya (.yeni varsa o)
+System.dll
+System.Core.dll
+System.Drawing.dll
+System.Windows.Forms.dll
+System.Management.dll
+System.IO.Compression.dll
+System.IO.Compression.FileSystem.dll
+gac:System.Management.Automation
+sistem:Microsoft.Web.WebView2.Core.dll
+sistem:Microsoft.Web.WebView2.WinForms.dll

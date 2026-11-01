@@ -98,17 +98,20 @@ namespace AsortiAraci
                 }
                 bool yeniden = Calistir(s);
                 s.Durdur();
-                if (EskiyeGecildi) { Kayit.Yaz("uygulama eski yoldan acilmak uzere kapandi"); return; }
-                // kapanış: köprü ve Gerber'in Batch programı da kapanır (pencere görünmezken yapılır)
-                s.Kopru.Etkin = false;
-                s.Kopru.Durdur();
-                Kopru.BatchKapat();
-                Kayit.Yaz("uygulama kapandi");
-                if (yeniden)
+                if (EskiyeGecildi) Kayit.Yaz("uygulama eski yoldan acilmak uzere kapandi");
+                else
                 {
-                    Derleyici.YeniDosyalariYerlestir();
-                    if (tek != null) { try { tek.ReleaseMutex(); } catch { } tek.Dispose(); tek = null; }
-                    Process.Start(Path.Combine(Yer.Sistem, Derleyici.ExeAd), "/bekle=" + Process.GetCurrentProcess().Id);
+                    // kapanış: köprü ve Gerber'in Batch programı da kapanır (pencere görünmezken yapılır)
+                    s.Kopru.Etkin = false;
+                    s.Kopru.Durdur();
+                    Kopru.BatchKapat();
+                    Kayit.Yaz("uygulama kapandi");
+                    if (yeniden)
+                    {
+                        Derleyici.YeniDosyalariYerlestir();
+                        if (tek != null) { try { tek.ReleaseMutex(); } catch { } tek.Dispose(); tek = null; }
+                        Process.Start(Path.Combine(Yer.Sistem, Derleyici.ExeAd), "/bekle=" + Process.GetCurrentProcess().Id);
+                    }
                 }
             }
             catch (Exception ex)
@@ -117,6 +120,8 @@ namespace AsortiAraci
                 try { EskiYol(); } catch { }
             }
             finally { if (tek != null) { try { tek.Dispose(); } catch { } } }
+            // arkada iş parçacığı kalsa bile program tamamen kapansın (bir sonraki açılış "zaten açık" sanmasın)
+            Environment.Exit(0);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

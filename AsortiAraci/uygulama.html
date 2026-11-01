@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Asorti Aracı</title>
+<script>try{if(window.asortiPencere&&asortiPencere.baslik)document.documentElement.classList.add('pencere')}catch(e){}</script>
 <link rel="icon" type="image/png" sizes="192x192" href="sistem/asorti.png?v=2"><link rel="icon" href="sistem/asorti.ico?v=2" sizes="16x16 20x20 24x24 32x32 40x40 48x48 64x64 128x128 256x256"><link rel="apple-touch-icon" href="sistem/asorti.png?v=2">
 <style>
 /* yazı tipi: Inter (SIL Open Font License, sistem/Inter-OFL.txt) — programla birlikte gelir, internet gerekmez */
@@ -59,6 +60,24 @@ html[data-theme=dark] #logo svg{filter:drop-shadow(0 1px 2px rgba(0,0,0,.55))}
 #ayar:hover,#ayar.acik{background:var(--tabh);color:var(--ink)}
 #ayar svg{width:19px;height:19px;pointer-events:none}
 /* görünüm menüsü */
+/* tek parça başlık (uygulamanın kendi penceresi): üst çubuk pencerenin başlığıdır; boş yerinden tutulup taşınır,
+   çift tıklayınca büyür / küçülür, sağ tıklayınca Windows menüsü; küçült / büyüt / kapat en sağda */
+#pk{display:none}
+html.pencere #bar{padding-right:0;app-region:drag;-webkit-app-region:drag}
+html.pencere #bar :is(.tab,button,a,input,select,textarea,#gun,#durum,#menu,#pk){app-region:no-drag;-webkit-app-region:no-drag}
+html.pencere #pk{display:flex;align-self:stretch;margin-left:4px}
+#pk button{width:46px;height:auto;padding:0;border:0;border-radius:0;background:transparent;color:var(--ink);display:grid;place-items:center;cursor:default;transition:background .12s,color .12s}
+#pk button:hover{background:rgba(0,0,0,.059)}
+#pk button:active{background:rgba(0,0,0,.102)}
+html[data-theme=dark] #pk button:hover{background:rgba(255,255,255,.078)}
+html[data-theme=dark] #pk button:active{background:rgba(255,255,255,.122)}
+#pk #pkK:hover{background:#c42b1c;color:#fff}
+#pk #pkK:active{background:#b0261a;color:#fff}
+#pk svg{width:10px;height:10px;stroke:currentColor;stroke-width:1;fill:none;shape-rendering:crispEdges}
+#pk .geri,html.tam #pk .buyut{display:none}
+html.tam #pk .geri{display:inline}
+html.pasif #pk button:not(:hover){color:var(--mut)}
+html.pencere #menu{right:150px}
 #menu{position:absolute;top:50px;right:10px;width:320px;max-height:calc(100vh - 62px);overflow-y:auto;overscroll-behavior:contain;padding:14px;border-radius:16px;background:var(--pop);backdrop-filter:saturate(180%) blur(24px);box-shadow:var(--psh);border:1px solid var(--line);opacity:0;transform:translateY(-6px) scale(.98);transform-origin:top right;pointer-events:none;transition:opacity .16s,transform .16s;z-index:20}
 #menu.on{opacity:1;transform:none;pointer-events:auto}
 #menu h4{margin:2px 2px 8px;font-size:11.5px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;color:var(--mut)}
@@ -140,6 +159,7 @@ html,body{overflow:hidden}
   <div id="durum" title="Gerber köprüsünün durumu"><i></i><span id="durumYazi">Bağlanıyor…</span></div>
   <button id="ayar" type="button" title="Ayarlar: görünüm, gece ışığı, Excel kayıt klasörü, güncelleme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
  </div>
+ <div id="pk" aria-label="Pencere"><button id="pkM" type="button" tabindex="-1" title="Simge durumuna küçült"><svg viewBox="0 0 10 10"><path d="M0 5.5H10"/></svg></button><button id="pkB" type="button" tabindex="-1" title="Ekranı kapla"><svg class="buyut" viewBox="0 0 10 10"><path d="M.5 .5H9.5V9.5H.5Z"/></svg><svg class="geri" viewBox="0 0 10 10"><path d="M2.5 2.5V.5H9.5V7.5H7.5M.5 2.5H7.5V9.5H.5Z"/></svg></button><button id="pkK" type="button" tabindex="-1" title="Kapat"><svg viewBox="0 0 10 10" style="shape-rendering:geometricPrecision"><path d="M.5 .5L9.5 9.5M9.5 .5L.5 9.5"/></svg></button></div>
  <div id="menu" role="dialog" aria-label="Ayarlar">
   <h4>Görünüm</h4>
   <div class="blok"><div class="seg" id="tmSeg"><button data-v="acik">☀ Açık</button><button data-v="koyu">☾ Koyu</button><button data-v="oto">Otomatik</button></div>
@@ -181,6 +201,9 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)yerelYedek(
 window.addEventListener('pagehide',()=>yerelYedek(true));
 setInterval(()=>yerelYedek(),20000);setTimeout(()=>yerelYedek(true),4000);
 const $=i=>document.getElementById(i),LS='asorti-sayfalar',LG='asorti-gorunum';
+/* uygulamanın kendi penceresi (AsortiAraci.exe): pencere düğmeleri, Gerber bildirimleri Windows'a, köprü haberleri sayfalara */
+const PW=window.chrome&&chrome.webview?chrome.webview:null;
+function pencereIs(is){try{if(PW)PW.postMessage({t:'pencere',is})}catch(e){}}
 let S=(()=>{try{return JSON.parse(localStorage.getItem(LS)||'null')}catch(e){return null}})()||{list:[],on:''};
 const info={};
 function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}yerelYedek()}
@@ -245,6 +268,14 @@ function kapat(id){const i=S.list.indexOf(id);if(i<0)return;const d=info[id]||{}
  save();ciz();if(f&&f!==gosterilen&&!f.classList.contains('on'))f.remove()}
 $('yeni').onclick=yeni;
 $('serit').addEventListener('dblclick',e=>{if(e.target===$('serit')||e.target===$('tabs'))yeni()});
+/* uygulamanın kendi penceresinde: küçült / büyüt / kapat; pencerenin durumu; bildirime tıklayınca o sayfa; köprüden iş haberi */
+if(PW){
+ $('pkM').onclick=()=>pencereIs('kucult');$('pkB').onclick=()=>pencereIs('buyut');$('pkK').onclick=()=>pencereIs('kapat');
+ PW.addEventListener('message',e=>{const d=e.data||{},h=document.documentElement;
+  if(d.t==='pencere'){h.classList.toggle('pencere',!!d.baslik);h.classList.toggle('tam',!!d.tam);h.classList.toggle('pasif',d.etkin===false);$('pkB').title=d.tam?'Önceki boyutuna getir':'Ekranı kapla';if(d.baslik)$('yeni').title='Yeni çalışma sayfası aç'}
+  if(d.t==='git'&&S.list.includes(d.id))ac(d.id);
+  if(d.t==='kopru')document.querySelectorAll('#sayfalar iframe').forEach(f=>{try{f.contentWindow.postMessage({t:'kopruDegisti',base:d.base},'*')}catch(x){}})});
+ pencereIs('durum')}
 $('tabs').addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){$('tabs').scrollLeft+=e.deltaY;e.preventDefault()}},{passive:false});
 window.addEventListener('message',e=>{const d=e.data||{};
  if(d.t==='exKlasor'){document.querySelectorAll('#sayfalar iframe').forEach(f=>{if(f.contentWindow!==e.source)try{f.contentWindow.postMessage(d,'*')}catch(x){}});if($('menu').classList.contains('on'))exGoster()}
@@ -276,6 +307,8 @@ function bildirim(o){const K=$('bildirimler');
  if(!AZ.matches)b.animate([{opacity:0,transform:'translateX(34px) scale(.98)'},{opacity:1,transform:'none'}],{duration:440,easing:'cubic-bezier(.2,.9,.25,1)'});
  kur()}
 function sayfaBildirimi(d){
+ /* pencere önde değilse (başka programdaysan ya da küçültülmüşse) Windows bildirimi de çıkar */
+ if(PW&&d.tur!=='excel')try{PW.postMessage({t:'bildirim',id:d.id,tur:d.tur||'',baslik:d.baslik||'',metin:d.metin||''})}catch(e){}
  if(d.tur==='excel')return bildirim({tur:'excel',baslik:d.baslik||'Excel\'e kaydedildi',metin:d.metin||d.ad||'',ipucu:'Açmak için tıkla',
   tik:d.ad?()=>fetch('/excel/ac?ad='+encodeURIComponent(d.ad)+'&nasil=dosya',{method:'POST',body:'{}'}).catch(()=>{}):null});
  bildirim({tur:d.tur==='hata'?'hata':'uygulama',baslik:d.baslik||'',metin:d.metin||'',ipucu:d.id!==S.on?'Sayfaya gitmek için tıkla':'',tik:d.id!==S.on?()=>ac(d.id):null,sure:d.tur==='hata'?7000:5000})}

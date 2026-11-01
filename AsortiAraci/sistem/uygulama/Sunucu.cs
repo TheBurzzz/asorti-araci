@@ -23,6 +23,7 @@ namespace AsortiAraci
         void Tema(string tema);             // "dark" | "light"
         string KlasorSec(string baslangic); // iptal: ""
         void Guncellendi(bool yenidenBaslat);
+        void KopruDegisti(string isAdi);   // köprü bir işin durumunu yazdı: sayfa beklemeden yenilesin
     }
 
     sealed partial class Sunucu
@@ -50,6 +51,7 @@ namespace AsortiAraci
             A = Ayarlar.Oku(Yer.Kok);
             Id = YeniId();
             Kopru.Etkin = A.Gerber;
+            Kopru.IsDegisti = delegate(string ad) { IPencere pn = Pencere; if (pn != null) { try { pn.KopruDegisti(ad); } catch { } } };
         }
 
         static string YeniId() { return Process.GetCurrentProcess().Id + "-" + DateTime.Now.Ticks; }
@@ -303,6 +305,7 @@ namespace AsortiAraci
                 File.WriteAllBytes(gecici, veri);
                 if (File.Exists(dosya)) File.Delete(dosya);
                 File.Move(gecici, dosya);
+                Kopru.Uyandir();   // köprü 3 sn beklemeden işe başlasın
                 Yanit(ctx, 200);
                 return;
             }

@@ -47,11 +47,22 @@ Inter, SIL Open Font License 1.1 ile dağıtılır: `AsortiAraci/sistem/Inter-OF
 Asorti Aracı kendi penceresinde açılır (`sistem\AsortiAraci.exe`). Paketin içinde hazır bir exe yoktur: uygulamanın kaynağı
 (`AsortiAraci/sistem/uygulama/*.cs`) her bilgisayarda o bilgisayarın .NET Framework derleyicisiyle (`csc.exe`) derlenir. Bunu kurulum ya da
 güncellemeden sonra program kendisi yapar, birkaç saniye sürer; derleme kaydı `kopru\log\uygulama_derleme.txt` dosyasına yazılır.
+Hangi kitaplıklara başvurulacağı `AsortiAraci/sistem/uygulama/derleme.txt` dosyasındadır (yeni bir sürüm yeni kitaplık isterse
+çalışan eski sürüm de onu bilir).
 
 - Pencerenin içi Windows'un içindeki Edge motorudur (Microsoft Edge WebView2); Windows 10 ve Windows 11'de hazır gelir.
 - 64 bit, 32 bit ve ARM bilgisayarlarda çalışır (her biri için yükleyici `AsortiAraci/sistem/wv2` klasöründe).
 - Açılış ekranı pencerenin kendisidir: simgeye tıklar tıklamaz pencere açılır, sayfa ekrana çizilince açılış ekranı yumuşakça solar.
+- Tek parça başlık: Windows'un başlık satırı yoktur; küçültme, büyütme ve kapatma uygulamanın üst çubuğundadır. Pencere üst çubuğun boş
+  yerinden tutulup taşınır, çift tıklayınca büyür / küçülür, sağ tıklayınca Windows menüsü açılır. Windows'un başlık satırı istenirse
+  kurulum klasöründeki `kullanici.json` dosyasına `"pencere_basligi": "windows"` yazılır.
+- Bildirim: pencere arkadayken ya da küçültülmüşken pastallar hazır olunca (ya da Gerber'de bir iş durunca) Windows bildirimi çıkar,
+  görev çubuğundaki düğme turuncu yanar; bildirime tıklayınca pencere öne gelir ve o sayfa açılır.
+- Gerber köprüsü (`kopru\kopru.ps1`) uygulamanın içinde, Windows'un PowerShell motoruyla çalışır: ayrı program açılmaz, yeni sipariş
+  beklemeden işlenir, bir işin durumu değişince sayfa hemen yeniler. Uygulama köprüyü izler, durursa yeniden başlatır; içeride
+  çalışamazsa eskisi gibi ayrı süreçte çalıştırır. Köprü eski yolda (Edge penceresiyle) de aynen çalışır.
 - Edge motoru yoksa ya da pencere açılamazsa uygulama eskisi gibi Edge penceresiyle açılır (`sistem\hizli_ac.vbs`); hiçbir şey kaybolmaz.
+  Edge motoru hiç kurulu değilse Microsoft'un resmi kurulumu (imzası denetlenerek) arka planda bir kez yapılır; sonraki açılış kendi penceresiyle olur.
 - Çalışma sayfaları ve ayarlar eski pencereden yeni pencereye kendiliğinden taşınır; sayfaların diskteki yedeği `yerel_kayit.json`.
 - Uygulamanın kaydı: `kopru\log\uygulama.txt`.
 

@@ -21,7 +21,16 @@ namespace AsortiAraci
         [DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr h, int ad, ref int deger, int boy);
         [DllImport("user32.dll")] static extern bool ShowWindow(IntPtr h, int k);
         [DllImport("user32.dll")] static extern bool IsIconic(IntPtr h);
+        [DllImport("user32.dll")] static extern bool IsZoomed(IntPtr h);
         [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr h);
+        [DllImport("user32.dll")] static extern int GetSystemMetrics(int i);
+        [DllImport("user32.dll")] static extern bool SetWindowPos(IntPtr h, IntPtr sonra, int x, int y, int g, int y2, uint b);
+        [DllImport("user32.dll")] static extern bool FlashWindowEx(ref FLASHWINFO f);
+        [StructLayout(LayoutKind.Sequential)] struct RECT { public int Sol, Ust, Sag, Alt; }
+        [StructLayout(LayoutKind.Sequential)] struct FLASHWINFO { public uint cbSize; public IntPtr hwnd; public uint dwFlags; public uint uCount; public uint dwTimeout; }
+
+        const int WM_NCCALCSIZE = 0x0083, WM_NCHITTEST = 0x0084;
+        const int HTCLIENT = 1, HTTOP = 12, HTTOPLEFT = 13, HTTOPRIGHT = 14;
 
         readonly Sunucu sunucu;
         readonly WebView2 wv;
@@ -30,15 +39,22 @@ namespace AsortiAraci
         readonly System.Windows.Forms.Timer denetci = new System.Windows.Forms.Timer();
         readonly Stopwatch sw = Stopwatch.StartNew();
         volatile bool acik = true;
-        bool kapatOnay, gezindi, hazir, yenilendi, hataYazildi;
+        bool kapatOnay, gezindi, hazir, yenilendi, hataYazildi, acilisBitti;
         double gezintiT = -1;
         int gezintiHata;
         public bool YenidenBaslatIstendi;
+        // tek parça başlık: Windows'un başlık satırı yok, küçült / büyüt / kapat uygulamanın üst çubuğunda
+        bool ozelBaslik, etkin = true;
+        Color seritRenk;
+        NotifyIcon bildirimSimge;
+        string bildirimSayfa;
 
         public Pencere(Sunucu s)
         {
             sunucu = s;
             cizim = new AcilisCizim(Kullanici.Al("tema") == "dark");
+            ozelBaslik = Kullanici.Al("pencere_basligi") != "windows";   // "windows": eski tip başlık satırı (gerekirse)
+            seritRenk = BarRengi(cizim.Koyu);
             Text = "Asorti Aracı";
             // simgenin bütün boyutları (16…256): başlıkta ve görev çubuğunda her ekran ölçeğinde keskin
             try { Icon = new Icon(Path.Combine(Yer.Sistem, "asorti.ico")); }
@@ -124,7 +140,178 @@ namespace AsortiAraci
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            try { cizim.Ciz(e.Graphics, e.ClipRectangle, false, null, 0); } catch { }
+            // açılışta pencerenin içi açılış ekranı; sonra sadece üstteki ince boyutlandırma şeridi görünür (üst çubuğun renginde)
+            if (!acilisBitti) { try { cizim.Ciz(e.Graphics, e.ClipRectangle, false, null, 0); return; } catch { } }
+            using (SolidBrush b = new SolidBrush(seritRenk)) e.Graphics.FillRectangle(b, e.ClipRectangle);
+        }
+
+        static Color BarRengi(bool koyu) { return koyu ? Color.FromArgb(26, 28, 35) : Color.FromArgb(245, 246, 249); }
+
+        // ---------- tek parça başlık ----------
+        // Windows'un başlık satırı kaldırılır; kenarlar, gölge, ekrana yapıştırma, küçültme / büyütme hareketleri olduğu gibi kalır.
+        // Pencere üst çubuğun boş yerinden tutulup taşınır, çift tıklayınca büyür / küçülür, sağ tıklayınca Windows menüsü açılır.
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            if (ozelBaslik) CerceveYenile();
+        }
+
+        void CerceveYenile()
+        {
+            try { SetWindowPos(Handle, IntPtr.Zero, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0004 | 0x0010 | 0x0020); } catch { }   // NOSIZE|NOMOVE|NOZORDER|NOACTIVATE|FRAMECHANGED
+            SeritAyarla();
+        }
+
+        int UstSerit { get { return Math.Max(2, (int)Math.Round(2 * cizim.Olcek)); } }
+
+        // pencere normal boyuttayken en üstte ince bir şerit kalır: oradan yukarı doğru boyutlandırılır
+        void SeritAyarla()
+        {
+            int s = ozelBaslik && WindowState == FormWindowState.Normal ? UstSerit : 0;
+            if (Padding.Top != s) Padding = new Padding(0, s, 0, 0);
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            if (ozelBaslik && m.Msg == WM_NCCALCSIZE && m.WParam != IntPtr.Zero)
+            {
+                RECT once = (RECT)Marshal.PtrToStructure(m.LParam, typeof(RECT));
+                base.WndProc(ref m);
+                RECT r = (RECT)Marshal.PtrToStructure(m.LParam, typeof(RECT));
+                // başlık satırı yok: iç alan pencerenin en üstünden başlar (ekranı kaplarken ekranın dışına taşan çerçeve kadar aşağıdan)
+                r.Ust = once.Ust + (IsZoomed(m.HWnd) ? GetSystemMetrics(33) + GetSystemMetrics(92) : 0);   // SM_CYFRAME + SM_CXPADDEDBORDER
+                Marshal.StructureToPtr(r, m.LParam, false);
+                m.Result = IntPtr.Zero;
+                return;
+            }
+            base.WndProc(ref m);
+            if (ozelBaslik && m.Msg == WM_NCHITTEST && m.Result.ToInt64() == HTCLIENT && WindowState == FormWindowState.Normal)
+            {
+                long lp = m.LParam.ToInt64();
+                Point p = PointToClient(new Point(unchecked((short)(lp & 0xFFFF)), unchecked((short)((lp >> 16) & 0xFFFF))));
+                if (p.Y < UstSerit)
+                {
+                    int k = (int)Math.Round(8 * cizim.Olcek);
+                    m.Result = (IntPtr)(p.X < k ? HTTOPLEFT : (p.X >= ClientSize.Width - k ? HTTOPRIGHT : HTTOP));
+                }
+            }
+        }
+
+        // Edge motoru üst çubuğu başlık gibi kullanamıyorsa (çok eski sürüm) Windows'un başlık satırına dönülür
+        void BaslikKapat()
+        {
+            if (!ozelBaslik) return;
+            ozelBaslik = false;
+            Kayit.Yaz("tek parca baslik kullanilamiyor, Windows basligina donuldu");
+            CerceveYenile();
+            if (katman != null) katman.Dugmeler = false;
+            DurumGonder();
+        }
+
+        // sayfaya pencerenin durumu: başlık sayfada mı, ekranı kaplıyor mu, önde mi
+        void DurumGonder()
+        {
+            try
+            {
+                if (wv == null || wv.CoreWebView2 == null) return;
+                wv.CoreWebView2.PostWebMessageAsJson(Json.Yaz(Json.H("t", "pencere", "baslik", ozelBaslik, "tam", WindowState == FormWindowState.Maximized, "etkin", etkin)));
+            }
+            catch { }
+        }
+
+        void SayfayaGonder(OrderedDictionary o)
+        {
+            try { if (wv != null && wv.CoreWebView2 != null) wv.CoreWebView2.PostWebMessageAsJson(Json.Yaz(o)); } catch { }
+        }
+
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+            etkin = true;
+            DurumGonder();
+            if (bildirimSimge != null) { try { bildirimSimge.Visible = false; } catch { } }   // kullanıcı geri döndü
+        }
+
+        protected override void OnDeactivate(EventArgs e)
+        {
+            base.OnDeactivate(e);
+            etkin = false;
+            DurumGonder();
+        }
+
+        protected override void OnSizeChanged(EventArgs e)
+        {
+            base.OnSizeChanged(e);
+            SeritAyarla();
+            DurumGonder();
+        }
+
+        // ---------- sayfadan gelen istekler ----------
+        void MesajGeldi(object s, CoreWebView2WebMessageReceivedEventArgs e)
+        {
+            object o;
+            try { o = Json.Oku(e.WebMessageAsJson); } catch { return; }
+            string t = Json.Str(o, "t");
+            if (t == "pencere")
+            {
+                string i = Json.Str(o, "is");
+                // Edge motorunun olayından çıktıktan sonra yapılır
+                UI(delegate
+                {
+                    if (i == "kucult") WindowState = FormWindowState.Minimized;
+                    else if (i == "buyut") WindowState = WindowState == FormWindowState.Maximized ? FormWindowState.Normal : FormWindowState.Maximized;
+                    else if (i == "kapat") Close();
+                    else DurumGonder();
+                });
+            }
+            else if (t == "bildirim")
+            {
+                string b = Json.Str(o, "baslik"), m = Json.Str(o, "metin"), id = Json.Str(o, "id");
+                bool hata = Json.Str(o, "tur") == "hata";
+                UI(delegate { Bildir(b, m, id, hata); });
+            }
+        }
+
+        // ---------- bildirim: pastallar hazır olunca (pencere öndeyse sayfadaki bildirim yeter) ----------
+        void Bildir(string baslik, string metin, string sayfa, bool hata)
+        {
+            if (etkin && WindowState != FormWindowState.Minimized) return;
+            try
+            {
+                if (bildirimSimge == null)
+                {
+                    bildirimSimge = new NotifyIcon();
+                    try { bildirimSimge.Icon = new Icon(Path.Combine(Yer.Sistem, "asorti.ico"), SystemInformation.SmallIconSize); }
+                    catch { bildirimSimge.Icon = Icon; }
+                    bildirimSimge.Text = "Asorti Aracı";
+                    bildirimSimge.BalloonTipClicked += delegate { BildirimeGit(); };
+                    bildirimSimge.MouseClick += delegate { BildirimeGit(); };
+                }
+                bildirimSayfa = sayfa;
+                string b = Kisalt(baslik, 63), m = Kisalt(metin, 255);
+                if (m.Length == 0) { m = b; b = "Asorti Aracı"; }
+                if (b.Length == 0) b = "Asorti Aracı";
+                bildirimSimge.Visible = true;
+                bildirimSimge.ShowBalloonTip(10000, b, m, hata ? ToolTipIcon.Warning : ToolTipIcon.None);
+                // görev çubuğundaki düğme de turuncu yanar (pencereye dönünce söner)
+                FLASHWINFO f = new FLASHWINFO();
+                f.cbSize = (uint)Marshal.SizeOf(typeof(FLASHWINFO));
+                f.hwnd = Handle;
+                f.dwFlags = 0x2 | 0xC;   // FLASHW_TRAY | FLASHW_TIMERNOFG
+                f.uCount = 3;
+                FlashWindowEx(ref f);
+                Kayit.Yaz("bildirim: " + baslik);
+            }
+            catch (Exception ex) { Kayit.Yaz("bildirim gosterilemedi: " + ex.Message); }
+        }
+
+        static string Kisalt(string s, int n) { s = (s ?? "").Trim(); return s.Length > n ? s.Substring(0, n - 1) + "…" : s; }
+
+        void BildirimeGit()
+        {
+            OneGetir();
+            string id = bildirimSayfa;
+            if (!string.IsNullOrEmpty(id)) UI(delegate { SayfayaGonder(Json.H("t", "git", "id", id)); });
         }
 
         protected override void OnShown(EventArgs e)
@@ -134,10 +321,11 @@ namespace AsortiAraci
             try
             {
                 katman = new AcilisKatmani(this, cizim);
-                katman.Bitti += delegate { katman = null; cizim.Dispose(); Invalidate(); };
+                katman.Dugmeler = ozelBaslik;
+                katman.Bitti += delegate { katman = null; acilisBitti = true; cizim.Dispose(); Invalidate(); };
                 katman.Goster();
             }
-            catch (Exception ex) { Kayit.Yaz("acilis ekrani gosterilemedi: " + ex.Message); katman = null; }
+            catch (Exception ex) { Kayit.Yaz("acilis ekrani gosterilemedi: " + ex.Message); katman = null; acilisBitti = true; }
             wv.Visible = true;
             denetci.Start();
             WebBaslat();
@@ -166,10 +354,19 @@ namespace AsortiAraci
                 st.IsGeneralAutofillEnabled = false;
                 st.IsPasswordAutosaveEnabled = false;
                 st.IsSwipeNavigationEnabled = false;
+                // tek parça başlık: sayfadaki üst çubuk pencerenin başlığı gibi davranır (app-region: drag)
+                if (ozelBaslik)
+                {
+                    try { st.IsNonClientRegionSupportEnabled = true; }
+                    catch (Exception ex) { Kayit.Yaz("Edge motoru ust cubugu baslik olarak kullanamiyor: " + ex.Message); BaslikKapat(); }
+                }
                 c.NewWindowRequested += YeniPencere;
                 c.PermissionRequested += Izin;
                 c.ProcessFailed += Coktu;
                 c.NavigationCompleted += Gezildi;
+                c.WebMessageReceived += MesajGeldi;
+                // sayfa ilk satırından itibaren pencerenin içinde olduğunu bilsin (düğmeler titremeden yerinde çizilsin)
+                await c.AddScriptToExecuteOnDocumentCreatedAsync("window.asortiPencere={baslik:" + (ozelBaslik ? "true" : "false") + "};");
                 double z;
                 string yk = Kullanici.Al("yakinlik");
                 if (yk.Length == 0) yk = EskiYakinlik();
@@ -243,7 +440,7 @@ namespace AsortiAraci
 
         void Gezildi(object s, CoreWebView2NavigationCompletedEventArgs e)
         {
-            if (e.IsSuccess) { if (!gezindi) { gezindi = true; gezintiT = sw.Elapsed.TotalMilliseconds; } return; }
+            if (e.IsSuccess) { DurumGonder(); if (!gezindi) { gezindi = true; gezintiT = sw.Elapsed.TotalMilliseconds; } return; }
             if (gezindi) return;
             gezintiHata++;
             Kayit.Yaz("sayfa yuklenemedi (" + e.WebErrorStatus + "), yeniden deneniyor");
@@ -397,7 +594,18 @@ namespace AsortiAraci
             });
         }
 
-        public void Tema(string t) { UI(delegate { KoyuBaslik(t == "dark"); }); }
+        public void Tema(string t)
+        {
+            UI(delegate
+            {
+                KoyuBaslik(t == "dark");
+                seritRenk = BarRengi(t == "dark");
+                if (acilisBitti) Invalidate(new Rectangle(0, 0, ClientSize.Width, Math.Max(UstSerit, 1)));
+            });
+        }
+
+        // köprü bir işin durumunu yazdı: o işi bekleyen sayfa beklemeden yenilesin
+        public void KopruDegisti(string isAdi) { UI(delegate { SayfayaGonder(Json.H("t", "kopru", "base", isAdi)); }); }
 
         public string KlasorSec(string baslangic)
         {
@@ -436,7 +644,11 @@ namespace AsortiAraci
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing) { try { denetci.Dispose(); } catch { } }
+            if (disposing)
+            {
+                try { denetci.Dispose(); } catch { }
+                if (bildirimSimge != null) { try { bildirimSimge.Visible = false; bildirimSimge.Dispose(); } catch { } bildirimSimge = null; }
+            }
             base.Dispose(disposing);
         }
     }
