@@ -115,6 +115,7 @@ namespace AsortiAraci
                 r = new Rectangle(calisma.X + (calisma.Width - gw) / 2, calisma.Y + (calisma.Height - gh) / 2, gw, gh);
                 tam = true;
             }
+            else r = EkranaSigdir(r);   // kaydedilen yer ekrandan taşıyorsa sığdır
             Bounds = r;
             if (tam) WindowState = FormWindowState.Maximized;
         }
