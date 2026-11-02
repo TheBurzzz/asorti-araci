@@ -48,6 +48,10 @@ namespace AsortiAraci
         Color seritRenk;
         NotifyIcon bildirimSimge;
         string bildirimSayfa;
+        // pencerenin normal boyuttaki yeri: ekranı kaplamaktan dönünce buraya döner (başlık satırı olmadığı için WinForms'un
+        // hatırladığı boy yanlış olabiliyor) ve kapanırken bu kaydedilir
+        Rectangle normalYer;
+        FormWindowState oncekiDurum = FormWindowState.Normal;
 
         public Pencere(Sunucu s)
         {
@@ -122,7 +126,7 @@ namespace AsortiAraci
         {
             try
             {
-                Rectangle r = WindowState == FormWindowState.Normal ? Bounds : RestoreBounds;
+                Rectangle r = WindowState == FormWindowState.Normal ? Bounds : (normalYer.Width > 0 ? normalYer : RestoreBounds);
                 bool tam = WindowState == FormWindowState.Maximized || (WindowState == FormWindowState.Minimized && Json.Str(Json.Al(Kullanici.Oku(), "pencere"), "tam") != "False");
                 Kullanici.Yaz("pencere", Json.H("x", r.X, "y", r.Y, "gen", r.Width, "yuk", r.Height, "tam", tam));
             }
@@ -242,8 +246,29 @@ namespace AsortiAraci
         protected override void OnSizeChanged(EventArgs e)
         {
             base.OnSizeChanged(e);
+            FormWindowState d = WindowState;
+            if (d == FormWindowState.Normal)
+            {
+                if (oncekiDurum != FormWindowState.Normal && normalYer.Width > 0 && Size != normalYer.Size)
+                {
+                    // ekranı kaplamaktan (ya da simge durumundan) dönüş: son normal boyuna, ekrana sığacak şekilde
+                    oncekiDurum = d;
+                    Bounds = EkranaSigdir(new Rectangle(Location, normalYer.Size));
+                    return;
+                }
+                normalYer = Bounds;
+            }
+            oncekiDurum = d;
             SeritAyarla();
             DurumGonder();
+        }
+
+        static Rectangle EkranaSigdir(Rectangle r)
+        {
+            Rectangle c = Screen.FromRectangle(r).WorkingArea;
+            int w = Math.Min(r.Width, c.Width), h = Math.Min(r.Height, c.Height);
+            int x = Math.Max(c.Left, Math.Min(r.X, c.Right - w)), y = Math.Max(c.Top, Math.Min(r.Y, c.Bottom - h));
+            return new Rectangle(x, y, w, h);
         }
 
         // ---------- sayfadan gelen istekler ----------
@@ -334,7 +359,12 @@ namespace AsortiAraci
         }
 
         protected override void OnResize(EventArgs e) { base.OnResize(e); if (katman != null) katman.Hizala(); }
-        protected override void OnMove(EventArgs e) { base.OnMove(e); if (katman != null) katman.Hizala(); }
+        protected override void OnMove(EventArgs e)
+        {
+            base.OnMove(e);
+            if (katman != null) katman.Hizala();
+            if (WindowState == FormWindowState.Normal && oncekiDurum == FormWindowState.Normal && normalYer.Width > 0) normalYer.Location = Location;
+        }
 
         async void WebBaslat()
         {
