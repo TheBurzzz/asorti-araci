@@ -1,8 +1,8 @@
 {
- "surum": "2.0.1",
+ "surum": "2.0.2",
  "tarih": "2026-11-02",
  "notlar": [
-  "Asorti Aracı artık kendi penceresinde: tarayıcı yok; küçültme, büyütme ve kapatma uygulamanın üst çubuğunda",
+  "Asorti Aracı artık kendi penceresinde: tarayıcı yok; küçültme, büyütme ve kapatma üst çubukta, uyarılar uygulamanın kendi görünümünde",
   "Açılış ekranı pencereyle tek parça; uygulama hazır olunca yumuşakça açılıyor",
   "Pastallar hazır olunca Windows bildirimi geliyor; bildirime tıklayınca o sayfa açılıyor",
   "Gerber bağlantısı uygulamanın içinde: sipariş beklemeden işleniyor, pastalların durumu anında sayfaya geliyor",

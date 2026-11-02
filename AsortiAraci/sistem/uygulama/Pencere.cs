@@ -26,6 +26,7 @@ namespace AsortiAraci
         [DllImport("user32.dll")] static extern int GetSystemMetrics(int i);
         [DllImport("user32.dll")] static extern bool SetWindowPos(IntPtr h, IntPtr sonra, int x, int y, int g, int y2, uint b);
         [DllImport("user32.dll")] static extern bool FlashWindowEx(ref FLASHWINFO f);
+        [DllImport("user32.dll")] static extern bool AllowSetForegroundWindow(int pid);
         [StructLayout(LayoutKind.Sequential)] struct RECT { public int Sol, Ust, Sag, Alt; }
         [StructLayout(LayoutKind.Sequential)] struct FLASHWINFO { public uint cbSize; public IntPtr hwnd; public uint dwFlags; public uint uCount; public uint dwTimeout; }
 
@@ -45,6 +46,7 @@ namespace AsortiAraci
         public bool YenidenBaslatIstendi;
         // tek parça başlık: Windows'un başlık satırı yok, küçült / büyüt / kapat uygulamanın üst çubuğunda
         bool ozelBaslik, etkin = true;
+        bool koyuTema;   // uyarı pencereleri sayfanın o anki görünümünde açılır
         Color seritRenk;
         NotifyIcon bildirimSimge;
         string bildirimSayfa;
@@ -57,6 +59,7 @@ namespace AsortiAraci
         {
             sunucu = s;
             cizim = new AcilisCizim(Kullanici.Al("tema") == "dark");
+            koyuTema = cizim.Koyu;
             ozelBaslik = Kullanici.Al("pencere_basligi") != "windows";   // "windows": eski tip başlık satırı (gerekirse)
             seritRenk = BarRengi(cizim.Koyu);
             Text = "Asorti Aracı";
@@ -396,6 +399,9 @@ namespace AsortiAraci
                 c.ProcessFailed += Coktu;
                 c.NavigationCompleted += Gezildi;
                 c.WebMessageReceived += MesajGeldi;
+                // sayfanın uyarı / onay kutuları Edge'in "localhost şunu diyor" kutusu yerine uygulamanın kendi penceresiyle
+                try { c.ScriptDialogOpening += DiyalogAciliyor; st.AreDefaultScriptDialogsEnabled = false; }
+                catch (Exception ex) { Kayit.Yaz("uyari kutulari Edge'in kendi kutusuyla acilacak: " + ex.Message); }
                 // sayfa ilk satırından itibaren pencerenin içinde olduğunu bilsin (düğmeler titremeden yerinde çizilsin)
                 await c.AddScriptToExecuteOnDocumentCreatedAsync("window.asortiPencere={baslik:" + (ozelBaslik ? "true" : "false") + "};");
                 double z;
@@ -467,6 +473,30 @@ namespace AsortiAraci
         void Git()
         {
             try { wv.CoreWebView2.Navigate("http://localhost:" + sunucu.A.Port + "/"); } catch (Exception ex) { Kayit.Yaz("sayfa acilamadi: " + ex.Message); }
+        }
+
+        // sayfa uyarı / onay kutusu açmak istedi: sayfa cevabı bekler, pencere Edge'in olayından çıktıktan sonra açılır
+        void DiyalogAciliyor(object s, CoreWebView2ScriptDialogOpeningEventArgs e)
+        {
+            CoreWebView2Deferral d;
+            try { d = e.GetDeferral(); } catch { return; }
+            MethodInvoker ac = delegate
+            {
+                try
+                {
+                    if (e.Kind == CoreWebView2ScriptDialogKind.Alert) { Uyari.Goster(this, e.Message, koyuTema); e.Accept(); }
+                    else if (e.Kind == CoreWebView2ScriptDialogKind.Confirm) { if (Uyari.Sor(this, e.Message, "Tamam", "İptal", koyuTema, false)) e.Accept(); }
+                    else if (e.Kind == CoreWebView2ScriptDialogKind.Beforeunload)
+                    {
+                        if (Uyari.Sor(this, "Sayfa yenilensin mi?\n\nGerber'e gönderilen pastalların takibi, sayfa yenilenince kaldığı yerden sürer.", "Yenile", "Vazgeç", koyuTema, false)) e.Accept();
+                    }
+                }
+                catch (Exception ex) { Kayit.Yaz("uyari penceresi acilamadi: " + ex.Message); }
+                finally { try { d.Complete(); } catch { } }
+            };
+            // pencere kapanıyorsa sayfa bekletilmez
+            try { if (IsHandleCreated && !IsDisposed) { BeginInvoke(ac); return; } } catch { }
+            try { d.Complete(); } catch { }
         }
 
         void Gezildi(object s, CoreWebView2NavigationCompletedEventArgs e)
@@ -596,7 +626,7 @@ namespace AsortiAraci
                 await wv.CoreWebView2.ExecuteScriptAsync("(function(){try{return window.yedekAl?window.yedekAl():false}catch(e){return false}})()");
             }
             catch { }
-            if (mesgul && MessageBox.Show(this, "Gerber'e gönderilen pastallar var. Pencere kapanırsa uygulama onları izlemeyi bırakır.\n\nYine de kapatılsın mı?", "Asorti Aracı", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+            if (mesgul && !Uyari.Sor(this, "Pencere kapatılsın mı?\n\nGerber'e gönderilen pastallar var. Pencere kapanırsa uygulama onları izlemeyi bırakır.", "Kapat", "Vazgeç", koyuTema, true)) return;
             kapatOnay = true;
             Close();
         }
@@ -629,8 +659,9 @@ namespace AsortiAraci
         {
             UI(delegate
             {
-                KoyuBaslik(t == "dark");
-                seritRenk = BarRengi(t == "dark");
+                koyuTema = t == "dark";
+                KoyuBaslik(koyuTema);
+                seritRenk = BarRengi(koyuTema);
                 if (acilisBitti) Invalidate(new Rectangle(0, 0, ClientSize.Width, Math.Max(UstSerit, 1)));
             });
         }
@@ -667,6 +698,8 @@ namespace AsortiAraci
             UI(delegate
             {
                 Kayit.Yaz("uygulama yeni surumle yeniden aciliyor");
+                // kullanıcı şu an bu penceredeyken izin verilir: yeni sürümün penceresi arkada kalmaz, ilk tıklama boşa gitmez
+                try { AllowSetForegroundWindow(-1); } catch { }
                 YenidenBaslatIstendi = true;
                 kapatOnay = true;
                 Close();

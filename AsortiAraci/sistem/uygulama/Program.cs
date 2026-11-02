@@ -18,14 +18,15 @@ using Microsoft.Web.WebView2.Core;
 [assembly: System.Reflection.AssemblyDescription("Asorti Aracı")]
 [assembly: System.Reflection.AssemblyCompany("Şamil Yeşil")]
 [assembly: System.Reflection.AssemblyCopyright("Created by Şamil Yeşil")]
-[assembly: System.Reflection.AssemblyVersion("2.0.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("2.0.0.0")]
+[assembly: System.Reflection.AssemblyVersion("2.0.2.0")]
+[assembly: System.Reflection.AssemblyFileVersion("2.0.2.0")]
 
 namespace AsortiAraci
 {
     static class Program
     {
         [DllImport("user32.dll")] static extern bool SetProcessDPIAware();
+        [DllImport("user32.dll")] static extern bool AllowSetForegroundWindow(int pid);
         [DllImport("user32.dll")] static extern bool ShowWindow(IntPtr h, int k);
         [DllImport("user32.dll")] static extern bool IsIconic(IntPtr h);
         [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr h);
@@ -66,7 +67,7 @@ namespace AsortiAraci
                         tek.ReleaseMutex();
                         tek.Dispose();
                         tek = null;
-                        Process.Start(Path.Combine(Yer.Sistem, Derleyici.ExeAd), "/bekle=" + Process.GetCurrentProcess().Id);
+                        YeniSurumuAc();
                         return;
                     }
                     // yerine konamadı: şimdiki haliyle açılır (bir sonraki açılışta yine denenir)
@@ -110,7 +111,7 @@ namespace AsortiAraci
                     {
                         Derleyici.YeniDosyalariYerlestir();
                         if (tek != null) { try { tek.ReleaseMutex(); } catch { } tek.Dispose(); tek = null; }
-                        Process.Start(Path.Combine(Yer.Sistem, Derleyici.ExeAd), "/bekle=" + Process.GetCurrentProcess().Id);
+                        YeniSurumuAc();
                     }
                 }
             }
@@ -122,6 +123,13 @@ namespace AsortiAraci
             finally { if (tek != null) { try { tek.Dispose(); } catch { } } }
             // arkada iş parçacığı kalsa bile program tamamen kapansın (bir sonraki açılış "zaten açık" sanmasın)
             Environment.Exit(0);
+        }
+
+        // uygulamanın yeni hali: bu süreç kapanınca açılır; penceresi öne gelebilsin diye izin verilir (arkada kalıp ilk tıklamayı yutmasın)
+        static void YeniSurumuAc()
+        {
+            try { AllowSetForegroundWindow(-1); } catch { }
+            Process.Start(Path.Combine(Yer.Sistem, Derleyici.ExeAd), "/bekle=" + Process.GetCurrentProcess().Id);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

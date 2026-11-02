@@ -56,6 +56,8 @@ Hangi kitaplıklara başvurulacağı `AsortiAraci/sistem/uygulama/derleme.txt` d
 - Tek parça başlık: Windows'un başlık satırı yoktur; küçültme, büyütme ve kapatma uygulamanın üst çubuğundadır. Pencere üst çubuğun boş
   yerinden tutulup taşınır, çift tıklayınca büyür / küçülür, sağ tıklayınca Windows menüsü açılır. Windows'un başlık satırı istenirse
   kurulum klasöründeki `kullanici.json` dosyasına `"pencere_basligi": "windows"` yazılır.
+- Uyarı ve onay kutuları uygulamanın kendi görünümündedir (açık / koyu, uygulamanın simgesiyle); Edge'in "localhost şunu diyor"
+  kutusu çıkmaz. Kutudaki yazı Ctrl+C ile kopyalanır.
 - Bildirim: pencere arkadayken ya da küçültülmüşken pastallar hazır olunca (ya da Gerber'de bir iş durunca) Windows bildirimi çıkar,
   görev çubuğundaki düğme turuncu yanar; bildirime tıklayınca pencere öne gelir ve o sayfa açılır.
 - Gerber köprüsü (`kopru\kopru.ps1`) uygulamanın içinde, Windows'un PowerShell motoruyla çalışır: ayrı program açılmaz, yeni sipariş

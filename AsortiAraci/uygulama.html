@@ -467,8 +467,11 @@ async function nabiz(){if(yenileniyor)return;
   else if(Date.now()-kopukBas<25000)durumYaz('bekle','Yeniden bağlanıyor…','Arka plandaki programa ulaşılamadı, tekrar deneniyor. Gelince sayfa kendiliğinden yenilenir.');
   else durumYaz('bad','Bağlantı kurulamadı: pencereyi kapatıp yeniden aç','Arka plandaki program 25 saniyedir cevap vermiyor. Pencereyi kapatıp masaüstündeki Asorti Aracı simgesinden aç. Çalışma sayfaların kayıtlı.');
   clearTimeout(hizliT);hizliT=setTimeout(nabiz,1000)}}
-/* güncellemeden sonra sayfa açılınca kısa bir "güncellendi" yazısı */
-try{const g=sessionStorage.getItem('asorti-guncellendi');if(g){sessionStorage.removeItem('asorti-guncellendi');yaziKilit=Date.now()+6000;durumYaz('ok','v'+g+' sürümüne güncellendi');setTimeout(nabiz,6100)}}catch(e){}
+/* güncellemeden sonra sayfa açılınca kısa bir "güncellendi" yazısı. Uygulama yeni haliyle yeniden açıldıysa
+   sayfanın oturumu da yenidir: hedef sürüm diskte (localStorage) tutulur, açılan sürüm o ise yazılır */
+function guncellendiYaz(g){yaziKilit=Date.now()+6000;durumYaz('ok','v'+g+' sürümüne güncellendi');setTimeout(nabiz,6100)}
+try{const g=sessionStorage.getItem('asorti-guncellendi');if(g){sessionStorage.removeItem('asorti-guncellendi');try{localStorage.removeItem('asorti_guncelleme')}catch(e){}guncellendiYaz(g)}}catch(e){}
+try{const h=localStorage.getItem('asorti_guncelleme');if(h){localStorage.removeItem('asorti_guncelleme');fetch('/surum',{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j&&j.surum===h)guncellendiYaz(h)}).catch(()=>{})}}catch(e){}
 nabiz();setInterval(nabiz,5000);
 window.addEventListener('pagehide',()=>{try{navigator.sendBeacon('/kapaniyor','x')}catch(e){}});
 window.addEventListener('beforeunload',e=>{if(yenileniyor)return;if(Object.values(info).some(d=>d.busy)){e.preventDefault();e.returnValue=''}});
@@ -484,10 +487,11 @@ $('gunBtn').onclick=async()=>{if(!G)return;
   if(Object.values(info).some(d=>d.busy)){alert('Gerber\'e gönderilen pastallar var. Onlar bitince güncelle.');return}
   if(!confirm('Asorti Aracı v'+G.yeni+' sürümüne güncellensin mi?\n\nÇalışma sayfaların ve ayarların korunur. Pencere birkaç saniye içinde kendiliğinden yenilenir, kapatıp açman gerekmez.'))return;
   const b=$('gunBtn'),hedef=G.yeni,eskiId=sunucuId;
-  const birak=m=>{guncelleniyor=false;b.disabled=false;b.textContent='Güncelle';nabiz();if(m)alert(m)};
+  const birak=m=>{try{localStorage.removeItem('asorti_guncelleme')}catch(e){}guncelleniyor=false;b.disabled=false;b.textContent='Güncelle';nabiz();if(m)alert(m)};
   b.disabled=true;b.textContent='Güncelleniyor…';guncelleniyor=true;durumYaz('bekle','Güncelleniyor…');
   sayfalarKaydetsin();
   let hata=null;
+  try{localStorage.setItem('asorti_guncelleme',hedef)}catch(e){}
   try{const j=await (await fetch('/guncelle',{method:'POST',body:'{}',cache:'no-store'})).json();if(!j.ok)hata=j.hata||'bilinmeyen hata'}
   catch(e){/* cevap yolda kaybolduysa güncelleme yine de olmuş olabilir: aşağıda yeni programın açılmasına bakılır */}
   if(hata){birak(/^Güncellenemedi/.test(hata)?hata:'Güncellenemedi: '+hata);return}
