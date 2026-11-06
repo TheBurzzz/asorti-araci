@@ -270,7 +270,7 @@ html[data-theme=dark] .kart{border-color:rgba(255,255,255,.12);background:linear
 .anaAlt{margin-top:auto;padding-top:40px;text-align:center;font-size:12px;color:var(--mut);letter-spacing:.2px}
 .anaAlt b{font-weight:600;color:var(--ink)}
 .anaAlt span:not(:empty)::before{content:' · '}
-</style></head><body>
+</style><link rel="stylesheet" href="sistem/eleman_cam.css"></head><body>
 <svg id="ikonlar" width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
  <linearGradient id="lgA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5AACFF"/><stop offset="1" stop-color="#0068DA"/></linearGradient>
  <radialGradient id="lgH" cx=".5" cy="0" r=".95"><stop offset="0" stop-color="#fff" stop-opacity=".26"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></radialGradient>
@@ -364,7 +364,7 @@ const T=$('tabs'),AZ=matchMedia('(prefers-reduced-motion: reduce)'),YUMUSAK='cub
 const xIk='<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2.3 2.3l5.4 5.4M7.7 2.3L2.3 7.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
 let giris=null,gosterilen=null,sonAktif=null;
 function frame(id){let f=document.querySelector('#sayfalar iframe[data-id="'+id+'"]');
- if(!f){f=document.createElement('iframe');f.dataset.id=id;f.addEventListener('load',()=>{f.dataset.hazir='1'});
+ if(!f){f=document.createElement('iframe');f.dataset.id=id;f.addEventListener('load',()=>{f.dataset.hazir='1'});camEkle(f);f.addEventListener('load',()=>camEkle(f));
   f.src='asorti_araci.html?sayfa='+encodeURIComponent(id);$('sayfalar').appendChild(f)}
  return f}
 function sekme(id){let b=T.querySelector('.tab[data-id="'+id+'"]');
@@ -669,6 +669,11 @@ $('gunBtn').onclick=async()=>{if(!G)return;
 surumYaz().then(j=>{if(j&&j.guncelleme){setTimeout(()=>gunKontrol(false),6000);setInterval(()=>gunKontrol(false),2*3600*1000)}});
 
 
+/* Asorti Aracı sayfasına Eleman'ın açık cam görünümü (sistem/eleman_cam.css): sayfa çizilmeden eklenir, asorti_araci.html değişmez */
+function camEkle(f){let n=0;const dene=()=>{let d=null;try{d=f.contentDocument}catch(e){}
+  if(d&&d.head&&d.URL&&d.URL!=='about:blank'){if(!d.getElementById('elemanCam')){d.documentElement.setAttribute('data-eleman','asorti');
+    const l=d.createElement('link');l.id='elemanCam';l.rel='stylesheet';l.href='sistem/eleman_cam.css';d.head.appendChild(l)}return true}return false};
+  if(dene())return;const t=setInterval(()=>{if(dene()||++n>300)clearInterval(t)},8)}
 /* ================= Eleman: ana sayfa, menü, Ölçü Tablosu sekmeleri, açılış =================
    Asorti'nin sekmeleri (#tabs, #sayfalar) olduğu gibi çalışır. Ölçü Tablosu'nun sekmeleri ayrı kapta (#tabsO, #sayfalarO),
    ayrı kayıtta (eleman-olcu-sayfalar). İki uygulama birbirinin sayfasına, kaydına, haberine dokunmaz. */

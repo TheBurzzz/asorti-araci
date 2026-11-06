@@ -153,6 +153,16 @@ istiyor). **Program deposu herkese açık kalır.** Karar:
     %5 payla sığar. Desenli zemine (Deerberg) dokunulmaz. Müşteri döşemelerinde de kırpılmış logo. JSZip'e
     `createFolders:false` (çıktıda klasör girdisi kalmasın). LibreOffice ile 7 müşteri denendi.
 
+- 2026-11-06 gece: **Eleman 3.0.7** (yalnız `eleman`): açık görünüm "Liquid Glass" (kullanıcı: "gece modu çok güzel, açık
+  tema da hayran bıraksın"). Tek dosya: `AsortiAraci/sistem/eleman_cam.css`, yalnız `html:not([data-theme=dark])`:
+  kabuk (`[data-uyg]`, kabuk_yap.py `</style></head>`'e <link> ekler), Asorti sayfaları (kabuk iframe'e `camEkle(f)` ile
+  <link> ekler ve `data-eleman="asorti"` yapar; **asorti_araci.html değişmedi**), Ölçü (src.html `data-eleman="olcu"` + <link>).
+  Değişkenler (--bg #e2e7f0, --glass daha saydam, --gb/--hi parlak kenar, --sh ince çizgi + derinlik, --btn cam kapsül,
+  --bl1..5 canlı lekeler); bileşen kuralları `:where()` ile (sayfanın temel kuralı kadar özgül; .btn.pri, .btn.duz,
+  button.exb gibi özellere dokunmaz). Kartlarda backdrop-filter yalnız saturate (blur yok: zemin yumuşak, kaydırmada pahalı).
+  Yerel açılış zemini (Acilis.cs) açıkta 226,231,240 (yeni --bg ile aynı, geçişte renk atlamasın). Koyu görünüm piksel
+  piksel aynı kaldı (karşılaştırıldı). **Asorti sohbeti:** açık temada renk değişkenlerini değiştirirse eleman_cam.css'e de bakmalı.
+
 ## Sıradaki işler
 
 1. ✓ Müşteri şablonları gizli `eleman-hafiza` deposunda: `olcu-tablosu/veri/sablonlar.json` (2026-11-06, 7 müşteri).

@@ -84,9 +84,18 @@ html[data-theme=dark] .kart{border-color:rgba(255,255,255,.12);background:linear
 .anaAlt span:not(:empty)::before{content:' · '}'''
 
 # ---------- açılış katmanı (sayfanın ilk karesinden itibaren görünür; yerel açılış ekranıyla birebir aynı) ----------
+# ---------- açık görünümde Liquid Glass (sistem/eleman_cam.css): kabuk, Asorti ve Ölçü sayfaları ----------
+r("createElement('iframe');f.dataset.id=id;f.addEventListener('load',()=>{f.dataset.hazir='1'});",
+  "createElement('iframe');f.dataset.id=id;f.addEventListener('load',()=>{f.dataset.hazir='1'});camEkle(f);f.addEventListener('load',()=>camEkle(f));")
+
 ACILIS_HTML = '<div id="acilis" aria-hidden="true"><svg class="aIk"><use href="#ikEleman"/></svg><canvas></canvas></div>\n'
 
 JS = r'''
+/* Asorti Aracı sayfasına Eleman'ın açık cam görünümü (sistem/eleman_cam.css): sayfa çizilmeden eklenir, asorti_araci.html değişmez */
+function camEkle(f){let n=0;const dene=()=>{let d=null;try{d=f.contentDocument}catch(e){}
+  if(d&&d.head&&d.URL&&d.URL!=='about:blank'){if(!d.getElementById('elemanCam')){d.documentElement.setAttribute('data-eleman','asorti');
+    const l=d.createElement('link');l.id='elemanCam';l.rel='stylesheet';l.href='sistem/eleman_cam.css';d.head.appendChild(l)}return true}return false};
+  if(dene())return;const t=setInterval(()=>{if(dene()||++n>300)clearInterval(t)},8)}
 /* ================= Eleman: ana sayfa, menü, Ölçü Tablosu sekmeleri, açılış =================
    Asorti'nin sekmeleri (#tabs, #sayfalar) olduğu gibi çalışır. Ölçü Tablosu'nun sekmeleri ayrı kapta (#tabsO, #sayfalarO),
    ayrı kayıtta (eleman-olcu-sayfalar). İki uygulama birbirinin sayfasına, kaydına, haberine dokunmaz. */
@@ -457,5 +466,7 @@ r(" const gonder=()=>{if(gitti)return;gitti=true;fetch('/hazir',{method:'POST',b
   " const gonder=()=>{if(gitti)return;gitti=true;fetch('/hazir',{method:'POST',body:'{}'}).catch(()=>{});acilisBekle()},")
 r(" if(!f)return bildir();", " if(!f)return Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,800))]).then(()=>setTimeout(bildir,40),bildir);")
 r("/* açılışta önce görünen sayfa yüklenir, diğerleri hemen ardından", JS + "/* açılışta önce görünen sayfa yüklenir, diğerleri hemen ardından")
+# açık cam dosyası en sonda: kabuğun kendi stilinden sonra gelsin
+r("</style></head>", '</style><link rel="stylesheet" href="sistem/eleman_cam.css"></head>')
 open(out, "w", encoding="utf-8", newline="\n").write(s)
 print("Eleman kabuğu:", out, len(s))

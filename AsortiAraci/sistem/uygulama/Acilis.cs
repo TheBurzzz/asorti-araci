@@ -27,7 +27,7 @@ namespace AsortiAraci
         public AcilisCizim(bool koyu)
         {
             Koyu = koyu;
-            Zemin = koyu ? Color.FromArgb(10, 12, 19) : Color.FromArgb(238, 240, 246);
+            Zemin = koyu ? Color.FromArgb(10, 12, 19) : Color.FromArgb(226, 231, 240);   // açık: sistem/eleman_cam.css --bg (#e2e7f0)
             soluk = koyu ? Color.FromArgb(161, 161, 166) : Color.FromArgb(110, 110, 115);
         }
 
@@ -98,7 +98,7 @@ namespace AsortiAraci
         {
             const int K = 2;
             int bw = Math.Max(1, (w + K - 1) / K), bh = Math.Max(1, (h + K - 1) / K);
-            double[] zemin = koyu ? new double[] { 10, 12, 19 } : new double[] { 238, 240, 246 };
+            double[] zemin = koyu ? new double[] { 10, 12, 19 } : new double[] { 226, 231, 240 };
             double[][] leke = koyu
                 ? new double[][] { new double[] { .10, .06, 55, 48, 28, 47, 112 }, new double[] { .92, .10, 50, 44, 59, 34, 102 }, new double[] { .78, .98, 56, 50, 23, 63, 82 }, new double[] { .06, .92, 46, 42, 74, 42, 58 } }
                 : new double[][] { new double[] { .10, .06, 55, 48, 201, 220, 255 }, new double[] { .92, .10, 50, 44, 228, 214, 255 }, new double[] { .78, .98, 56, 50, 255, 226, 210 }, new double[] { .06, .92, 46, 42, 205, 238, 229 } };
