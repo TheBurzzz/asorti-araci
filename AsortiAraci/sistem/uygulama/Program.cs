@@ -18,8 +18,8 @@ using Microsoft.Web.WebView2.Core;
 [assembly: System.Reflection.AssemblyDescription("Asorti Aracı")]
 [assembly: System.Reflection.AssemblyCompany("Şamil Yeşil")]
 [assembly: System.Reflection.AssemblyCopyright("Created by Şamil Yeşil")]
-[assembly: System.Reflection.AssemblyVersion("2.0.3.0")]
-[assembly: System.Reflection.AssemblyFileVersion("2.0.3.0")]
+[assembly: System.Reflection.AssemblyVersion("2.0.4.0")]
+[assembly: System.Reflection.AssemblyFileVersion("2.0.4.0")]
 
 namespace AsortiAraci
 {

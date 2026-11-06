@@ -133,10 +133,23 @@ function ReadShared($path) {
   return $null
 }
 
-function EngineCount { if (-not (Test-Path $ENGQ)) { return 0 }; $x = ReadShared $ENGQ; if ($null -eq $x) { return 0 }; $t = $enc.GetString($x); return ([regex]::Matches($t, 'amordprc')).Count }
+# Batch'in is listesi (engine.que): Batch bu dosyayi kendine ayirarak acip yazar; tam o anda baska bir program dosyayi
+# acmissa Batch "sharing violation ... engine.que" uyarisi verip bekler. Bu yuzden dosya seyrek okunur: butun pastallar icin
+# tek okuma, en fazla 6 sn'de bir; dosya degismediyse (tarih ve boy ayni) hic acilmaz.
+$script:engMetin = $null; $script:engT = [datetime]::MinValue; $script:engImza = ''
+function EngineMetin([switch]$Taze) {
+  if (-not (Test-Path -LiteralPath $ENGQ)) { return $null }
+  $simdi = Get-Date
+  if (-not $Taze -and $null -ne $script:engMetin -and ($simdi - $script:engT).TotalSeconds -lt 6) { return $script:engMetin }
+  $imza = ''; try { $fi = Get-Item -LiteralPath $ENGQ; $imza = '' + $fi.LastWriteTimeUtc.Ticks + '/' + $fi.Length } catch {}
+  if ($null -ne $script:engMetin -and $imza -and $imza -eq $script:engImza) { $script:engT = $simdi; return $script:engMetin }
+  $x = ReadShared $ENGQ
+  if ($null -ne $x) { $script:engMetin = $tr.GetString($x); $script:engImza = $imza; $script:engT = $simdi }
+  return $script:engMetin
+}
+function EngineCount { $t = EngineMetin -Taze; if ($null -eq $t) { return 0 }; return ([regex]::Matches($t, 'amordprc')).Count }
 function EngineStatus($skip, $order) {
-  if (-not (Test-Path $ENGQ)) { return '' }
-  $x = ReadShared $ENGQ; if ($null -eq $x) { return '' }; $t = $tr.GetString($x); $parts = $t -split 'amordprc'
+  $t = EngineMetin; if ($null -eq $t) { return '' }; $parts = $t -split 'amordprc'
   for ($i = $parts.Count - 1; $i -ge 1 + $skip; $i--) {
     if ($parts[$i] -match ('\s' + [regex]::Escape($order) + '\s')) {
       if ($parts[$i] -match 'TAMAMLANDI|COMPLETED') { return 'ok' }
