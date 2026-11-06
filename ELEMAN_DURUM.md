@@ -118,8 +118,10 @@ istiyor). **Program deposu herkese açık kalır.** Karar:
   zipball (302 → codeload, 10 MB, `TheBurzzz-asorti-araci-<sha>/AsortiAraci/...`). (Gizli depo planı sonra iptal edildi.)
 - 2026-11-06 gece: **Eleman 3.0.3** (yalnız `eleman`): salt-okur hafıza (yukarıda "Anahtarlar"). Kullanıcının `eleman-okuma`
   anahtarı `OKUMA`'da karışık yazılı (düz hâli yalnız Eleman sohbetinin çalışma alanında, depoda yok). Okuma izni
-  raw.githubusercontent ile doğrulandı (sahte anahtar 404, bu anahtar 200); yazma izni yokluğu buradan denenemiyor (vekil
-  api.github.com ve github.com'a kendi kimliğini koyuyor), kullanıcıya token sayfasından bakması söylendi. mono + Playwright (GitHub taklit) ile denendi:
+  raw.githubusercontent ile doğrulandı (sahte anahtar 404, bu anahtar 200); yazma izni yokluğu token sayfasının ekran görüntüsüyle
+  doğrulandı: yalnız `TheBurzzz/eleman-hafiza`, Contents Read-only, Metadata Read-only, süresiz. (Buradan api.github.com /
+  github.com denemesi olmaz: vekil kendi kimliğini koyuyor.) Anahtar değişecekse: önce yeni salt-okur token → `OKUMA`
+  yeniden karışık yazılır → yeni sürüm yayınlanır → kurulumlar güncellenince eskisi silinir (önce silinirse yeni kurulumlar müşterisiz kalır). mono + Playwright (GitHub taklit) ile denendi:
   okuma anahtarıyla yalnız GET (hafiza.json, sablonlar), PUT/DELETE hiç yok; yerel öğrenilen, eklenen ve silinen
   müşteri yerelde kalıyor; `anahtar.txt` varken `salt:false`, okur-yazar anahtar.
 
