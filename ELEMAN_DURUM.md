@@ -72,8 +72,10 @@ Her sohbet işe başlamadan önce bunu okur, iş bitince "Son durum" bölümün�
 
 ## Sıradaki işler
 
-1. Müşteri şablonları: `olcu_sablonlar.json` kurulumla gelsin (anahtar.txt gibi elden) ve gizli `eleman-hafiza`'ya da yüklensin.
-   Bunun için Claude'un GitHub uygulamasına `eleman-hafiza` deposunun da eklenmesi gerekiyor (kullanıcı yapacak).
+1. ✓ Müşteri şablonları gizli `eleman-hafiza` deposunda: `olcu-tablosu/veri/sablonlar.json` (2026-11-06, 7 müşteri).
+   Eleman ilk açılışta `anahtar.txt` ile oradan indirip `olcu_sablonlar.json` olarak saklar, 6 saatte bir arka planda tazeler
+   (SunucuOlcu.cs: OlcuSablonIndir). Bu klasör çalışan Ölçü Tablosu'nun okuduğu `olcu-tablosu/sablonlar/` değildir, ona karışmaz.
+   Claude'un GitHub uygulaması artık `eleman-hafiza`'ya da erişebiliyor.
 2. Masaüstü kısayolunun adı ve simgesi "Eleman"; Kurulum.ps1 ve Kaldir.bat'ta görünen ad.
 3. Ölçü: birden çok sekme açıkken ortak hafıza eşitlemesini tek sekme yapsın.
 4. ⚙ menüsünde Ölçü'nün ayarları (şimdilik düğme Ölçü'nün kendi ayar penceresini açıyor).

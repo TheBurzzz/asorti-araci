@@ -95,11 +95,16 @@ namespace AsortiAraci
         }
 
         // ---------- müşteri şablonları: <kurulum>\olcu_sablonlar.json (kurulumla elden gelir; güncelleme dokunmaz, GitHub'a konmaz) ----------
+        // ilk açılışta (dosya yoksa) gizli ortak hafızadan indirilir; sonra en fazla 6 saatte bir arka planda tazelenir
+        static DateTime olcuSablonDenendi = DateTime.MinValue;
+        static readonly object olcuSablonKilit = new object();
         static byte[] OlcuSablonlar()
         {
             try
             {
                 string f = Yer.Yol("olcu_sablonlar.json");
+                if (!File.Exists(f)) { olcuSablonDenendi = DateTime.Now; OlcuSablonIndir(15000); }
+                else if ((DateTime.Now - olcuSablonDenendi).TotalHours >= 6) { olcuSablonDenendi = DateTime.Now; ThreadPool.QueueUserWorkItem(delegate { OlcuSablonIndir(30000); }); }
                 if (File.Exists(f))
                 {
                     byte[] b = File.ReadAllBytes(f);
@@ -113,6 +118,36 @@ namespace AsortiAraci
             }
             catch { }
             return Encoding.ASCII.GetBytes("[]");
+        }
+
+        // gizli ortak hafıza deposundan (eleman-hafiza: olcu-tablosu/veri/sablonlar.json) indirir. Anahtar ya da internet yoksa sessizce vazgeçer.
+        static bool OlcuSablonIndir(int zamanAsimi)
+        {
+            string anahtar = OlcuAnahtar();
+            if (anahtar.Length == 0) return false;
+            lock (olcuSablonKilit)
+            {
+                try
+                {
+                    Web.Hazirla();
+                    HttpWebRequest r = (HttpWebRequest)WebRequest.Create("https://api.github.com/repos/TheBurzzz/eleman-hafiza/contents/olcu-tablosu/veri/sablonlar.json");
+                    r.Timeout = zamanAsimi;
+                    r.ReadWriteTimeout = zamanAsimi;
+                    r.UserAgent = "Eleman";
+                    r.Accept = "application/vnd.github.raw";
+                    r.Headers["Authorization"] = "Bearer " + anahtar;
+                    byte[] b;
+                    using (WebResponse y = r.GetResponse())
+                    using (Stream st = y.GetResponseStream())
+                    using (MemoryStream ms = new MemoryStream()) { st.CopyTo(ms); b = ms.ToArray(); }
+                    if (b.Length < 2 || b[0] != (byte)'[') return false;
+                    string f = Yer.Yol("olcu_sablonlar.json"), g = f + ".gecici";
+                    File.WriteAllBytes(g, b);
+                    Dosya.Degistir(g, f);
+                    return true;
+                }
+                catch (Exception ex) { Kayit.Yaz("olcu sablonlari indirilemedi: " + ex.Message); return false; }
+            }
         }
 
         // ---------- müşteriye göre kayıt klasörü ----------
