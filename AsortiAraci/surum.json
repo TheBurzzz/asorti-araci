@@ -1,12 +1,12 @@
 {
- "surum": "2.0.2",
- "tarih": "2026-11-02",
+ "surum": "2.0.3",
+ "tarih": "2026-11-06",
  "notlar": [
-  "Asorti Aracı artık kendi penceresinde: tarayıcı yok; küçültme, büyütme ve kapatma üst çubukta, uyarılar uygulamanın kendi görünümünde",
-  "Açılış ekranı pencereyle tek parça; uygulama hazır olunca yumuşakça açılıyor",
-  "Pastallar hazır olunca Windows bildirimi geliyor; bildirime tıklayınca o sayfa açılıyor",
-  "Gerber bağlantısı uygulamanın içinde: sipariş beklemeden işleniyor, pastalların durumu anında sayfaya geliyor",
-  "Windows 10 ve Windows 11'de çalışıyor (64 bit, 32 bit ve ARM); görev çubuğuna sabitlenebiliyor",
-  "Çalışma sayfaları ve ayarlar yeni pencereye kendiliğinden taşınıyor; bir sorun olursa uygulama eskisi gibi açılıyor"
+  "Gerber'e gönderilen iş artık \"Sırada\"da takılı kalmıyor; \"Hepsini durdur\" sıradaki ve yarım kalan işleri de durduruyor",
+  "Uyarı kutularından sonra (Sıfırla, sekme kapatma…) yazı alanlarına hemen yazılabiliyor; Gerber'e gönderince sayfa en üste kaymıyor",
+  "Görünümde Açık, Koyu ve Otomatik arasında hızlıca geçilebiliyor; ayarlar kapanmıyor",
+  "Alt-üst takım işaretlenince iki satır (üstte ÜST, altta ALT) ve ÜST / ALT artikel alanları hemen geliyor",
+  "Çizgili üründe ek asorti tabloları da Gerber'e gönderilebiliyor",
+  "Kayıtlı Excel'i aç yumuşak yeşil, Sıfırla kırmızı yazılı; \"Pastallar hazır\" bildirimi bir kez geliyor"
  ]
 }

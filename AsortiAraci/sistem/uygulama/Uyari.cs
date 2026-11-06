@@ -27,7 +27,12 @@ namespace AsortiAraci
         public static bool Sor(IWin32Window sahip, string metin, string evet, string hayir, bool koyu, bool hayirVarsayilan)
         {
             using (Uyari u = new Uyari(metin, evet, hayir, koyu, hayirVarsayilan))
+            {
+                // pencere simge durumundaysa kutu ekranın ortasında açılır
+                Form f = sahip as Form;
+                if (f == null || !f.Visible || f.WindowState == FormWindowState.Minimized) u.StartPosition = FormStartPosition.CenterScreen;
                 return u.ShowDialog(sahip) == DialogResult.OK;
+            }
         }
 
         public static void Goster(IWin32Window sahip, string metin, bool koyu)

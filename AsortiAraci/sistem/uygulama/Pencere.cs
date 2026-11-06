@@ -6,6 +6,7 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
+using System.Reflection;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -54,6 +55,9 @@ namespace AsortiAraci
         // hatırladığı boy yanlış olabiliyor) ve kapanırken bu kaydedilir
         Rectangle normalYer;
         FormWindowState oncekiDurum = FormWindowState.Normal;
+        // Edge motorunun denetçisi ve "odak neden geliyor" bilgisi (WebView2 denetiminin iç alanları; bulunamazsa WinForms odağı kullanılır)
+        static readonly FieldInfo fDenetci = typeof(WebView2).GetField("_coreWebView2Controller", BindingFlags.Instance | BindingFlags.NonPublic);
+        static readonly FieldInfo fOdakSebebi = typeof(WebView2).GetField("_lastMoveFocusReason", BindingFlags.Instance | BindingFlags.NonPublic);
 
         public Pencere(Sunucu s)
         {
@@ -356,6 +360,7 @@ namespace AsortiAraci
             }
             catch (Exception ex) { Kayit.Yaz("acilis ekrani gosterilemedi: " + ex.Message); katman = null; acilisBitti = true; }
             wv.Visible = true;
+            OdakHazirla();   // pencerenin etkin denetimi baştan sayfa: yeniden etkinleşince odak sayfada kaldığı yere döner
             denetci.Start();
             WebBaslat();
             sunucu.ArkaPlanBaslat();
@@ -484,6 +489,7 @@ namespace AsortiAraci
             {
                 try
                 {
+                    OdakHazirla();
                     if (e.Kind == CoreWebView2ScriptDialogKind.Alert) { Uyari.Goster(this, e.Message, koyuTema); e.Accept(); }
                     else if (e.Kind == CoreWebView2ScriptDialogKind.Confirm) { if (Uyari.Sor(this, e.Message, "Tamam", "İptal", koyuTema, false)) e.Accept(); }
                     else if (e.Kind == CoreWebView2ScriptDialogKind.Beforeunload)
@@ -492,7 +498,7 @@ namespace AsortiAraci
                     }
                 }
                 catch (Exception ex) { Kayit.Yaz("uyari penceresi acilamadi: " + ex.Message); }
-                finally { try { d.Complete(); } catch { } }
+                finally { try { d.Complete(); } catch { } OdagiGeriVer(); }
             };
             // pencere kapanıyorsa sayfa bekletilmez
             try { if (IsHandleCreated && !IsDisposed) { BeginInvoke(ac); return; } } catch { }
@@ -626,7 +632,11 @@ namespace AsortiAraci
                 await wv.CoreWebView2.ExecuteScriptAsync("(function(){try{return window.yedekAl?window.yedekAl():false}catch(e){return false}})()");
             }
             catch { }
-            if (mesgul && !Uyari.Sor(this, "Pencere kapatılsın mı?\n\nGerber'e gönderilen pastallar var. Pencere kapanırsa uygulama onları izlemeyi bırakır.", "Kapat", "Vazgeç", koyuTema, true)) return;
+            if (mesgul)
+            {
+                OdakHazirla();
+                if (!Uyari.Sor(this, "Pencere kapatılsın mı?\n\nGerber'e gönderilen pastallar var. Pencere kapanırsa uygulama onları izlemeyi bırakır.", "Kapat", "Vazgeç", koyuTema, true)) { OdagiGeriVer(); return; }
+            }
             kapatOnay = true;
             Close();
         }
@@ -666,6 +676,44 @@ namespace AsortiAraci
             });
         }
 
+        // ---------- klavye odağı hep sayfada ----------
+        // Pencere yeniden etkinleşince (kendi uyarı kutularımız kapanınca, başka programdan dönünce) WinForms odağı "sıradaki
+        // denetime" verirse Edge motoru sayfadaki ilk düğmeye atlıyordu (sayfa en üste kayıyordu) ya da odak sayfadan çıkıyordu
+        // (yazı alanlarına yazılamıyor, ancak başka programa geçip dönünce düzeliyordu). Etkin denetim hep sayfadır ve odak
+        // sayfaya "en son kalınan yer" olarak döner.
+        void OdakHazirla()
+        {
+            try
+            {
+                if (wv == null || wv.IsDisposed) return;
+                if (fOdakSebebi != null) fOdakSebebi.SetValue(wv, CoreWebView2MoveFocusReason.Programmatic);
+                if (ActiveControl != wv) ActiveControl = wv;
+            }
+            catch { }
+        }
+
+        // pencerenin kendi kutusu kapandıktan hemen sonra: odak sayfaya, en son kalınan yere (pencere hâlâ öndeyse)
+        void OdagiGeriVer()
+        {
+            OdakHazirla();
+            System.Windows.Forms.Timer t = new System.Windows.Forms.Timer();
+            t.Interval = 40;
+            t.Tick += delegate
+            {
+                t.Stop();
+                t.Dispose();
+                try
+                {
+                    if (!acik || wv.IsDisposed || wv.CoreWebView2 == null || Form.ActiveForm != this) return;
+                    CoreWebView2Controller k = fDenetci != null ? fDenetci.GetValue(wv) as CoreWebView2Controller : null;
+                    if (k != null) k.MoveFocus(CoreWebView2MoveFocusReason.Programmatic);
+                    else wv.Focus();
+                }
+                catch (Exception ex) { Kayit.Yaz("odak sayfaya verilemedi: " + ex.Message); }
+            };
+            t.Start();
+        }
+
         // köprü bir işin durumunu yazdı: o işi bekleyen sayfa beklemeden yenilesin
         public void KopruDegisti(string isAdi) { UI(delegate { SayfayaGonder(Json.H("t", "kopru", "base", isAdi)); }); }
 
@@ -679,6 +727,7 @@ namespace AsortiAraci
                 {
                     if (IsIconic(Handle)) ShowWindow(Handle, 9);
                     Activate();
+                    OdakHazirla();
                     using (FolderBrowserDialog d = new FolderBrowserDialog())
                     {
                         d.Description = "Excel dosyalarının kaydedileceği klasörü seç";
@@ -688,6 +737,7 @@ namespace AsortiAraci
                     }
                 }
                 catch (Exception ex) { Kayit.Yaz("klasor secme penceresi: " + ex.Message); }
+                OdagiGeriVer();
             });
             return sonuc;
         }

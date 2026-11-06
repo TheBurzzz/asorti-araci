@@ -50,8 +50,25 @@ $LOGF = Join-Path $K ('log\kopru_' + (Get-Date -Format 'yyyy-MM-dd') + '.txt')
 function Yerel([scriptblock]$b) { $ErrorActionPreference = 'Continue'; Push-Location $AM; try { (& $b 2>&1 | ForEach-Object { "$_" }) -join "`r`n" } finally { Pop-Location } }
 function Log($s) { $l = (Get-Date -Format 'HH:mm:ss') + ' ' + $s; Add-Content -Path $LOGF -Value $l -Encoding UTF8; if (-not $script:icte) { Write-Host $l } }
 
+# dosyayi once gecici dosyaya yazar, sonra tek hamlede yerine koyar. Sayfa durumu okurken (ya da Windows dosyaya bakarken)
+# dogrudan yazmak "dosya baska bir islem tarafindan kullaniliyor" hatasi verip isi yarida birakiyordu; sayfa da yarim dosya gormez
+function DosyaYaz($yol, $metin) {
+  $tmp = $yol + '.' + [guid]::NewGuid().ToString('N').Substring(0, 8) + '.tmp'
+  $u8 = New-Object System.Text.UTF8Encoding $true
+  # yedek dosya adi: gercek null ($null PowerShell'de bos metne donusur ve Replace hata verir)
+  for ($i = 0; $i -lt 40; $i++) {
+    try {
+      [IO.File]::WriteAllText($tmp, $metin, $u8)
+      if ([IO.File]::Exists($yol)) { [IO.File]::Replace($tmp, $yol, [System.Management.Automation.Language.NullString]::Value) } else { [IO.File]::Move($tmp, $yol) }
+      return $true
+    } catch { Start-Sleep -Milliseconds 50 }
+  }
+  try { if ([IO.File]::Exists($tmp)) { [IO.File]::Delete($tmp) } } catch {}
+  return $false
+}
 function Durum($base, $h) {
-  $h.zaman = (Get-Date -Format 's'); ($h | ConvertTo-Json -Depth 5) | Set-Content -Path (Join-Path $K "sonuc\$base.json") -Encoding UTF8
+  $h.zaman = (Get-Date -Format 's')
+  if (-not (DosyaYaz (Join-Path $K "sonuc\$base.json") ($h | ConvertTo-Json -Depth 5))) { Log "$base : durum dosyasi yazilamadi (2 sn boyunca kullanimdaydi)" }
   if ($script:icte) { try { $script:Uyg.IsDegisti($base) } catch {} }   # sayfa beklemeden yenilesin, pastallar hazirsa bildirim ciksin
 }
 
@@ -172,7 +189,7 @@ function Alanlar {
   }
   $L = @($L | Sort-Object son -Descending)
   $o = [pscustomobject]@{ zaman = (Get-Date -Format 's'); alanlar = $L }
-  ($o | ConvertTo-Json -Depth 5 -Compress) | Set-Content -Path (Join-Path $K 'alanlar.json') -Encoding UTF8
+  [void](DosyaYaz (Join-Path $K 'alanlar.json') ($o | ConvertTo-Json -Depth 5 -Compress))
 }
 
 # ---------- isler ----------
@@ -256,12 +273,29 @@ function IsKapat($j) {
   $script:isBitti = Get-Date; IptalTemizle $j.base
   if ($script:isler.Contains($j.base)) { $script:isler.Remove($j.base) }
 }
-function IsHata($j, $msg) { $j.res.asama = 'hata'; $j.res.mesaj = $msg; Durum $j.base $j.res; Log "$($j.base) : HATA $msg"; IsKapat $j }
+function IsHata($j, $msg) { $j.res.asama = 'hata'; $j.res.mesaj = $msg; try { Durum $j.base $j.res } catch {}; Log "$($j.base) : HATA $msg"; IsKapat $j }
+# durdurma istegi gelen ama koprunun surdurmedigi isler (siradakiler, yarim kalanlar): sayfa "Sirada"da beklemesin, hemen durdurulur
+function SahipsizIptaller {
+  foreach ($f in @(Get-ChildItem -Path (Join-Path $K 'iptal') -File -ErrorAction SilentlyContinue)) {
+    $b = ($f.Name -split '__')[0]
+    if ($script:isler.Contains($b)) { continue }   # suren is: kendi adiminda durdurulur
+    $g = Join-Path $K "gelen\$b.txt"; $w = Join-Path $K "isleniyor\$b.txt"; $js = Join-Path $K "sonuc\$b.json"
+    if ($f.Name -ne $b) { if (-not (Test-Path $g) -and -not (Test-Path $w)) { Remove-Item -Force $f.FullName -ErrorAction SilentlyContinue }; continue }
+    $res = @{ asama = 'iptal'; iptal = $true; mesaj = ''; pastallar = @() }
+    try { if (Test-Path $js) { (Get-Content $js -Raw -Encoding UTF8 | ConvertFrom-Json).PSObject.Properties | ForEach-Object { if ($_.Name -ne 'asama') { $res[$_.Name] = $_.Value } } } } catch {}
+    $son = $false; try { $son = (Test-Path $js) -and ((Get-Content $js -Raw -Encoding UTF8 | ConvertFrom-Json).asama -in @('bitti', 'hata', 'iptal')) } catch {}
+    if (Test-Path $g) { Remove-Item -Force $g -ErrorAction SilentlyContinue; Log "$b : siradayken durduruldu" }
+    elseif (Test-Path $w) { try { Move-Item -Force $w (Join-Path $K "bitti\$b.txt") } catch {}; Log "$b : yarim kalmis is durduruldu" }
+    if (-not $son) { $res.asama = 'iptal'; Durum $b $res }
+    IptalTemizle $b
+  }
+}
 
 function IsBasla($file) {
   $base = [IO.Path]::GetFileNameWithoutExtension($file.Name)
   $work = Join-Path $K "isleniyor\$($file.Name)"; Move-Item -Force $file.FullName $work
-  $lines = Get-Content -Path $work -Encoding Default
+  try { $lines = Get-Content -Path $work -Encoding Default }
+  catch { IsHata @{ base = $base; work = $work; dosya = $file.Name; res = @{ dosya = $file.Name; asama = 'basladi'; mesaj = ''; pastallar = @() } } ('Siparis dosyasi okunamadi: ' + $_.Exception.Message); return }
   $area = ''; $over = $false; $orders = @(); $mods = @(); $temiz = $false; $nq = @(); $kopya = [ordered]@{}; $wOf = @{}; $cur = ''
   foreach ($l in $lines) {
     if ($l -match '^#\s*alan\s*:\s*(\S+)') { $area = $matches[1].ToUpperInvariant() }
@@ -617,6 +651,7 @@ try {
   while ($true) {
     if (((Get-Date) - $alanT).TotalMinutes -ge 2) { try { Alanlar } catch { Log ('klasor listesi yazilamadi: ' + $_.Exception.Message) }; $alanT = Get-Date }
     try { SiradakileriYaz } catch {}
+    try { SahipsizIptaller } catch { Log ('durdurma istegi islenemedi: ' + $_.Exception.Message) }
     # yeni isler: suren bir isle cakismiyorsa hemen baslar (cakisiyorsa "sirada" bekler)
     try {
       foreach ($f in @(Get-ChildItem -Path (Join-Path $K 'gelen') -Filter *.txt -ErrorAction SilentlyContinue | Sort-Object LastWriteTime)) {
