@@ -1,0 +1,5 @@
+# Anahtarlar ve müşteri şablonları herkese açık depoya girmez (ELEMAN_DURUM.md: "Asla herkese açık olmayacaklar")
+anahtar.txt
+guncelleme_anahtari.txt
+sablonlar.json
+olcu_sablonlar.json

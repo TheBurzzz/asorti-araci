@@ -26,7 +26,14 @@ namespace AsortiAraci
             if (a.Guncelleme.Length == 0) return null;
             if (!taze && uzak != null && (DateTime.Now - uzakZaman).TotalMinutes < 10) return uzak;
             Web.Hazirla();
-            string metin = Web.Metin("https://raw.githubusercontent.com/" + a.Guncelleme + "/" + a.Dal + "/AsortiAraci/surum.json?t=" + DateTime.UtcNow.Ticks, 8000);
+            string metin = null, k = GuncellemeAnahtari();
+            if (k.Length > 0)
+            {
+                // gizli depo: anahtarla (depo herkese açıkken de çalışır); olmazsa herkese açık yol
+                try { metin = Web.MetinAnahtarla("https://api.github.com/repos/" + a.Guncelleme + "/contents/AsortiAraci/surum.json?ref=" + Uri.EscapeDataString(a.Dal), 8000, k); }
+                catch (Exception ex) { AnahtarReddedildiyse(ex); Kayit.Yaz("guncelleme (anahtarla) okunamadi, herkese acik yol deneniyor: " + ex.Message); }
+            }
+            if (metin == null) metin = Web.Metin("https://raw.githubusercontent.com/" + a.Guncelleme + "/" + a.Dal + "/AsortiAraci/surum.json?t=" + DateTime.UtcNow.Ticks, 8000);
             uzak = Json.Oku(metin);
             uzakZaman = DateTime.Now;
             return uzak;
@@ -83,7 +90,14 @@ namespace AsortiAraci
             try
             {
                 string zip = Path.Combine(tmp, "paket.zip");
-                Web.Indir("https://codeload.github.com/" + a.Guncelleme + "/zip/refs/heads/" + a.Dal, zip, 120000);
+                bool indi = false;
+                string k = GuncellemeAnahtari();
+                if (k.Length > 0)
+                {
+                    try { Web.IndirAnahtarla("https://api.github.com/repos/" + a.Guncelleme + "/zipball/" + a.Dal, zip, 120000, k); indi = true; }
+                    catch (Exception ex) { AnahtarReddedildiyse(ex); Kayit.Yaz("guncelleme (anahtarla) indirilemedi, herkese acik yol deneniyor: " + ex.Message); }
+                }
+                if (!indi) Web.Indir("https://codeload.github.com/" + a.Guncelleme + "/zip/refs/heads/" + a.Dal, zip, 120000);
                 string ac = Path.Combine(tmp, "ac");
                 System.IO.Compression.ZipFile.ExtractToDirectory(zip, ac);
                 string[] ici = Directory.GetDirectories(ac);
@@ -118,6 +132,50 @@ namespace AsortiAraci
             finally { try { Directory.Delete(tmp, true); } catch { } }
         }
 
+        // Güncelleme anahtarı (program deposunu yalnız okuyabilir, değiştiremez): <kök>\guncelleme_anahtari.txt.
+        // Yoksa ortak hafıza anahtarıyla gizli eleman-hafiza deposundan (guncelleme/anahtar.txt) bir kez alınır.
+        // Program deposu herkese açıkken gerekmez; depo gizli yapılınca güncellemeler bu anahtarla gelir.
+        static DateTime guncAnahtarDenendi = DateTime.MinValue;
+        static string GuncellemeAnahtari()
+        {
+            string f = Yer.Yol("guncelleme_anahtari.txt");
+            try { if (File.Exists(f)) { string t = File.ReadAllText(f, Encoding.UTF8).Trim(); if (AnahtarGecerli(t)) return t; } } catch { }
+            string m = OlcuAnahtar();
+            if (m.Length == 0 || (DateTime.Now - guncAnahtarDenendi).TotalMinutes < 30) return "";
+            guncAnahtarDenendi = DateTime.Now;
+            try
+            {
+                Web.Hazirla();
+                string t = Web.MetinAnahtarla("https://api.github.com/repos/TheBurzzz/eleman-hafiza/contents/guncelleme/anahtar.txt", 8000, m).Trim();
+                if (AnahtarGecerli(t)) { File.WriteAllText(f, t, Encoding.ASCII); Kayit.Yaz("guncelleme anahtari ortak hafizadan alindi"); return t; }
+            }
+            catch (WebException ex)
+            {
+                HttpWebResponse y = ex.Response as HttpWebResponse;
+                if (y == null || (int)y.StatusCode != 404) Kayit.Yaz("guncelleme anahtari alinamadi: " + ex.Message);
+            }
+            catch (Exception ex) { Kayit.Yaz("guncelleme anahtari alinamadi: " + ex.Message); }
+            return "";
+        }
+
+        // GitHub anahtarı tanımadıysa (süresi doldu / iptal edildi: 401) yereldekini bırak; bir sonraki denemede
+        // ortak hafızadaki yenisi alınır. Anahtar değiştirilecekse önce yenisi hafızaya konur, sonra eskisi silinir.
+        static void AnahtarReddedildiyse(Exception ex)
+        {
+            WebException w = ex as WebException;
+            HttpWebResponse y = w == null ? null : w.Response as HttpWebResponse;
+            if (y == null || (int)y.StatusCode != 401) return;
+            try
+            {
+                string f = Yer.Yol("guncelleme_anahtari.txt");
+                if (File.Exists(f)) { File.Delete(f); Kayit.Yaz("guncelleme anahtari GitHub'da gecersiz, birakildi"); }
+            }
+            catch { }
+            guncAnahtarDenendi = DateTime.MinValue;
+        }
+
+        static bool AnahtarGecerli(string t) { return System.Text.RegularExpressions.Regex.IsMatch(t ?? "", "^(github_pat_|ghp_)[A-Za-z0-9_]{20,}$"); }
+
         // geri dönebilmek için şimdiki sürümü yedekle (sadece program dosyaları)
         static void Yedekle()
         {
@@ -125,7 +183,7 @@ namespace AsortiAraci
             try { if (Directory.Exists(yd)) Directory.Delete(yd, true); } catch { }
             Directory.CreateDirectory(Path.Combine(yd, "sistem"));
             Directory.CreateDirectory(Path.Combine(yd, "kopru"));
-            foreach (string f in new string[] { "uygulama.html", "asorti_araci.html", "surum.json" })
+            foreach (string f in new string[] { "uygulama.html", "asorti_araci.html", "olcu_tablosu_araci.html", "surum.json" })
             {
                 string k = Yer.Yol(f);
                 if (File.Exists(k)) File.Copy(k, Path.Combine(yd, f), true);

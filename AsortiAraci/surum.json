@@ -1,12 +1,8 @@
 {
- "surum": "3.0.1",
+ "surum": "3.0.2",
  "tarih": "2026-11-06",
  "notlar": [
-  "Açılışta Eleman simgesi küçülüp büyüyerek uygulamayı açıyor; masaüstü simgesi ve görev çubuğu Eleman",
-  "Sol üstteki Eleman simgesine basınca Ana sayfa, Asorti Aracı ve Ölçü Tablosu menüsü; geçişler yumuşak",
-  "Sayfa kendiliğinden açılmıyor; açık sayfa yokken boş ekranda Yeni sayfa düğmesi",
-  "Çok sayfa açıkken hızlı: uzun süredir bakılmayan sayfalar uyuyor, tıklayınca kaldığı yerden açılıyor",
-  "Ölçü Tablosu: müşteriler logolarıyla ve sırayla (Sorgenfri, Lykka, Deerberg, Heiter…), Sıfırla üstte, bağlı tarayıcının adı, taranan kağıt yan yana, belirgin Onayla düğmesi",
-  "Ana sayfada sürüm yazmıyor (⚙ Ayarlar'da)"
+  "Güncellemeler artık anahtarla da indirilebiliyor: program deposu ileride gizli yapılınca güncellemeler kesilmeyecek, anahtarı olmayan kimse dosyaları göremeyecek",
+  "Ölçü Tablosu dosyası da güncellemeden önce yedekleniyor (geri dönülebilsin)"
  ]
 }

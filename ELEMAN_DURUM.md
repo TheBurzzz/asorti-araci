@@ -25,6 +25,29 @@ Her sohbet işe başlamadan önce bunu okur, iş bitince "Son durum" bölümün�
 - Ortak hafıza anahtarı (`github_pat_…`) → Eleman'da `C:\AsortiAraci\anahtar.txt` (kurulumla elden verilir).
 - Müşteri şablonları (`sablonlar.json`: müşteri adları, logolar), müşteri kağıtları/taramaları, KESİM RAPORLARI,
   deneme verileri (`base.json`). Bunlar gizli `eleman-hafiza` deposunda ya da Eleman sohbetinin çalışma alanında durur.
+- Kök `.gitignore`: `anahtar.txt`, `guncelleme_anahtari.txt`, `sablonlar.json`, `olcu_sablonlar.json` yanlışlıkla eklenmesin.
+
+## Gizli depo ve anahtarlar (kullanıcının kararı, 6 Kasım 2026 gece)
+
+Kullanıcı: "uygulamayı indirdiğim an kendinden anahtarlı olsun; müşteri bilgileri çok gizli değil, ama GitHub'da dosyaları
+gören bir kurnaz anahtarı alıp bilgilerime erişmesin." Çözüm: program deposu `asorti-araci` **gizli** olacak, anahtarlar
+programın içinde gelecek. İki anahtar:
+- `anahtar.txt` = ortak hafıza anahtarı (yalnız `eleman-hafiza`, Contents okuma-yazma). Ölçü şablonları / hafıza.
+- `guncelleme_anahtari.txt` = güncelleme anahtarı (yalnız `asorti-araci`, Contents **salt okur**). Sızsa bile kimse
+  programa kötü kod gönderemez; yalnız okuyabilir. Kullanıcı GitHub'da "eleman-guncelleme" adıyla oluşturacak.
+Aşamalar (sırası önemli, kurulu programlar güncellemesiz kalmasın):
+1. ✓ 3.0.2 (`eleman`): güncelleyici anahtarla okur/indirir (api.github.com contents + zipball → codeload yönlendirmesi,
+   anahtar yönlendirilen adrese gitmez); anahtar yoksa ya da tutmazsa eski herkese açık yol. `guncelleme_anahtari.txt`
+   yoksa `anahtar.txt` ile `eleman-hafiza/guncelleme/anahtar.txt`'den bir kez alınır (30 dk'da bir dener); 401 gelirse
+   yereldeki bırakılır, hafızadaki yenisi alınır. Eski PowerShell sunucusu (sunucu.ps1, yedek yol) da anahtarı kullanır.
+   Kurulum.bat yanında `guncelleme_anahtari.txt` varsa kurulum onu da koyar.
+2. Kullanıcı salt-okur anahtarı oluşturur → Claude `eleman-hafiza/guncelleme/anahtar.txt`'ye koyar.
+3. Eleman onaylanınca `eleman` → `main` (depo hâlâ herkese açık; iş bilgisayarı 2.0.4'ten güncellenir). İş bilgisayarına
+   `C:\AsortiAraci\anahtar.txt` köprüyle konur (güncelleme anahtarını kendisi hafızadan alır). Bütün kurulumların
+   `guncelleme_anahtari.txt` aldığı Ayarlar/kayıttan doğrulanır.
+4. Kullanıcı depoyu gizli yapar (Settings → Danger Zone → Change visibility). Sonra iki anahtar `AsortiAraci/` içine
+   `git add -f` ile eklenir: GitHub'dan indirilen her paket ve her güncelleme anahtarlı gelir. Arkadaşa zip elden verilir.
+   **Depo bir daha herkese açık yapılmaz** (geçmişte anahtar var). Anahtar değişecekse: önce yenisi hafızaya/depoya, sonra eskisi silinir.
 
 ## Tasarım kararları (6 Kasım 2026, kullanıcı)
 
@@ -93,6 +116,10 @@ Her sohbet işe başlamadan önce bunu okur, iş bitince "Son durum" bölümün�
     "＋ Müşteri ekle" ve "Sıfırla" (AA'daki gibi; Kaydet'teki "Yeni tablo" kalktı), Tara'da bağlı tarayıcının adı ya da
     "Tarayıcı bağlı değil", "Kağıdı yanda aç": taranan kağıt solda, seçili satırın kağıttaki yeri işaretli (satırlarda yer:{pg,a,b}),
     "✓ Onayla" düğmesi. Eleman sekmesinde tablo kaydedilse de sekmede durur, program açılınca sessizce geri gelir.
+
+- 2026-11-06 gece: **Eleman 3.0.2** (yalnız `eleman`): anahtarlı güncelleme (yukarıdaki "Gizli depo" 1. aşama),
+  güncelleme yedeğine `olcu_tablosu_araci.html` de girdi, kök `.gitignore`. Linux'ta mono ile denendi: anahtarla surum.json,
+  zipball (302 → codeload, 10 MB, `TheBurzzz-asorti-araci-<sha>/AsortiAraci/...`), hafızada anahtar yokken sessiz 404.
 
 ## Sıradaki işler
 

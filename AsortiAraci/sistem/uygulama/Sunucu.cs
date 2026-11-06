@@ -648,6 +648,53 @@ namespace AsortiAraci
             using (StreamReader sr = new StreamReader(s, Encoding.UTF8)) return sr.ReadToEnd();
         }
 
+        // gizli depodan okuma (GitHub anahtarıyla, dosyanın kendisi)
+        public static string MetinAnahtarla(string url, int zamanAsimi, string anahtar)
+        {
+            HttpWebRequest r = (HttpWebRequest)WebRequest.Create(url);
+            r.Timeout = zamanAsimi;
+            r.ReadWriteTimeout = zamanAsimi;
+            r.UserAgent = "Eleman";
+            r.Accept = "application/vnd.github.raw";
+            r.Headers["Authorization"] = "Bearer " + anahtar;
+            using (WebResponse y = r.GetResponse())
+            using (Stream s = y.GetResponseStream())
+            using (StreamReader sr = new StreamReader(s, Encoding.UTF8)) return sr.ReadToEnd();
+        }
+
+        // gizli deponun zip'i: GitHub kısa ömürlü bir indirme adresine yönlendirir; anahtar o adrese gönderilmez
+        public static void IndirAnahtarla(string url, string hedef, int zamanAsimi, string anahtar)
+        {
+            HttpWebRequest r = (HttpWebRequest)WebRequest.Create(url);
+            r.Timeout = zamanAsimi;
+            r.ReadWriteTimeout = zamanAsimi;
+            r.UserAgent = "Eleman";
+            r.Accept = "application/vnd.github+json";
+            r.Headers["Authorization"] = "Bearer " + anahtar;
+            r.AllowAutoRedirect = false;
+            string yer = null;
+            HttpWebResponse cevap;
+            try { cevap = (HttpWebResponse)r.GetResponse(); }
+            catch (WebException ex)
+            {
+                cevap = ex.Response as HttpWebResponse;
+                if (cevap == null || (int)cevap.StatusCode < 300 || (int)cevap.StatusCode >= 400) throw;
+            }
+            using (HttpWebResponse y = cevap)
+            {
+                int k = (int)y.StatusCode;
+                if (k >= 300 && k < 400) yer = y.Headers["Location"];
+                else
+                {
+                    using (Stream s = y.GetResponseStream())
+                    using (FileStream fs = File.Create(hedef)) s.CopyTo(fs);
+                    return;
+                }
+            }
+            if (string.IsNullOrEmpty(yer)) throw new Exception("GitHub indirme adresi vermedi");
+            Indir(yer, hedef, zamanAsimi);
+        }
+
         public static void Indir(string url, string hedef, int zamanAsimi)
         {
             HttpWebRequest r = (HttpWebRequest)WebRequest.Create(url);

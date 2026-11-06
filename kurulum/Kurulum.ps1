@@ -332,6 +332,9 @@ function Kur {
     # GitHub'daki pakette anahtar yoktur; önceki kurulumdaki anahtar.txt korunur (üzerine yazılmaz, silinmez).
     $an = Join-Path $PAKET 'anahtar.txt'
     if (Test-Path -LiteralPath $an) { Copy-Item -LiteralPath $an -Destination (Join-Path $hedef 'anahtar.txt') -Force; Adim '     ortak hafıza anahtarı kondu (Ölçü Tablosu)' }
+    # program deposu gizliyken güncellemeleri indirecek salt-okur anahtar (elden verildiyse)
+    $ga = Join-Path $PAKET 'guncelleme_anahtari.txt'
+    if (Test-Path -LiteralPath $ga) { Copy-Item -LiteralPath $ga -Destination (Join-Path $hedef 'guncelleme_anahtari.txt') -Force; Adim '     güncelleme anahtarı kondu' }
     # paket internetten (ZIP) indirildiyse dosyalardaki "internetten geldi" isareti kaldirilir (Edge motorunun dosyalari engelsiz yuklensin)
     try { @(Get-ChildItem -LiteralPath (Join-Path $hedef 'sistem') -Recurse -File -ErrorAction SilentlyContinue) + @(Get-ChildItem -LiteralPath (Join-Path $hedef 'kopru') -Filter *.ps1 -File -ErrorAction SilentlyContinue) | Unblock-File -ErrorAction SilentlyContinue } catch {}
     foreach ($d in 'gelen', 'isleniyor', 'bitti', 'sonuc', 'log', 'iptal') { New-Item -ItemType Directory -Force -Path (Join-Path $hedef "kopru\$d") | Out-Null }

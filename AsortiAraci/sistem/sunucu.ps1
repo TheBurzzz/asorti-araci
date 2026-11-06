@@ -185,12 +185,16 @@ $script:uzak = $null; $script:uzakZaman = [datetime]::MinValue
 function Web { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 }
 # yeni surumlerin geldigi dal (ayarlar.json "dal"; yoksa main). Uygulamanin kendisi (Ayarlar.Dal) ayni kurali kullanir.
 function Dal { $d = "$($A.dal)".Trim(); if ($d -match '^[A-Za-z0-9._/-]+$' -and $d -notmatch '\.\.') { return $d }; return 'main' }
+# gizli depo icin guncelleme anahtari (yalniz okur): <kok>\guncelleme_anahtari.txt; yoksa herkese acik yol
+function GuncAnahtar { $f = Join-Path $Root 'guncelleme_anahtari.txt'; try { $t = "$(Get-Content -LiteralPath $f -Raw -ErrorAction Stop)".Trim(); if ($t -match '^(github_pat_|ghp_)[A-Za-z0-9_]{20,}$') { return $t } } catch { }; return '' }
 function SurumNo($v) { try { return [version]("$v".Trim()) } catch { return [version]'0.0' } }
 function UzakSurum([bool]$taze) {
   if (-not $A.guncelleme) { return $null }
   if (-not $taze -and $script:uzak -and ((Get-Date) - $script:uzakZaman).TotalMinutes -lt 10) { return $script:uzak }
   Web
-  $r = Invoke-WebRequest -UseBasicParsing -TimeoutSec 8 -Uri ("https://raw.githubusercontent.com/$($A.guncelleme)/$(Dal)/AsortiAraci/surum.json?t=" + [DateTime]::UtcNow.Ticks)
+  $r = $null; $k = GuncAnahtar
+  if ($k) { try { $r = Invoke-WebRequest -UseBasicParsing -TimeoutSec 8 -Headers @{ Authorization = "Bearer $k"; Accept = 'application/vnd.github.raw' } -Uri ("https://api.github.com/repos/$($A.guncelleme)/contents/AsortiAraci/surum.json?ref=" + (Dal)) } catch { $r = $null } }
+  if (-not $r) { $r = Invoke-WebRequest -UseBasicParsing -TimeoutSec 8 -Uri ("https://raw.githubusercontent.com/$($A.guncelleme)/$(Dal)/AsortiAraci/surum.json?t=" + [DateTime]::UtcNow.Ticks) }
   $metin = [Text.Encoding]::UTF8.GetString($r.RawContentStream.ToArray()).TrimStart([char]0xFEFF)
   $script:uzak = $metin | ConvertFrom-Json; $script:uzakZaman = Get-Date
   return $script:uzak
@@ -299,7 +303,9 @@ function Guncelle {
   $tmp = Join-Path ([IO.Path]::GetTempPath()) ('asorti_guncelleme_' + [guid]::NewGuid().ToString('N').Substring(0, 8)); New-Item -ItemType Directory -Force -Path $tmp | Out-Null
   try {
     $zip = Join-Path $tmp 'paket.zip'
-    Invoke-WebRequest -UseBasicParsing -TimeoutSec 120 -Uri "https://codeload.github.com/$($A.guncelleme)/zip/refs/heads/$(Dal)" -OutFile $zip
+    $indi = $false; $k = GuncAnahtar
+    if ($k) { try { Invoke-WebRequest -UseBasicParsing -TimeoutSec 120 -Headers @{ Authorization = "Bearer $k" } -Uri "https://api.github.com/repos/$($A.guncelleme)/zipball/$(Dal)" -OutFile $zip; $indi = $true } catch { } }
+    if (-not $indi) { Invoke-WebRequest -UseBasicParsing -TimeoutSec 120 -Uri "https://codeload.github.com/$($A.guncelleme)/zip/refs/heads/$(Dal)" -OutFile $zip }
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     [IO.Compression.ZipFile]::ExtractToDirectory($zip, (Join-Path $tmp 'ac'))
     $ic = Get-ChildItem (Join-Path $tmp 'ac') -Directory | Select-Object -First 1
