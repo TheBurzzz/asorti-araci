@@ -33,15 +33,19 @@ Her sohbet işe başlamadan önce bunu okur, iş bitince "Son durum" bölümün�
 Kullanıcı: "uygulamayı indirdiğim an kendinden anahtarlı olsun; müşteri bilgileri çok gizli değil." Önce gizli depo
 düşünüldü; kullanıcı istemedi (başka bilgisayarda adını yazıp programı gösterebilmek, hesabına girmeden indirebilmek
 istiyor). **Program deposu herkese açık kalır.** Karar:
-- `anahtar.txt` = okur-yazar ortak hafıza anahtarı (yalnız `eleman-hafiza`, Contents RW). **Depoya asla girmez**; yalnız
-  kullanıcının kendi bilgisayarlarında durur (ev: var; iş: Eleman'a geçince köprüyle konur). Bu bilgisayarlar ortak
-  hafızayı eskisi gibi eşitler (öğrenilenler, eklenen/silinen müşteriler, el yazısı örnekleri).
-- **Salt-okur anahtar** (`eleman-okuma`: yalnız `eleman-hafiza`, Contents Read-only) programın içinde:
-  `SunucuOlcu.cs` → `OKUMA` (ters + "eleman-okuma" ile XOR + base64). Düz yazılmaz çünkü GitHub herkese açık depoda gördüğü
-  anahtarı iptal eder; gizleme değildir, kurcalayan çözebilir, yalnız okuyabilir (kullanıcı bunu kabul etti).
-  `anahtar.txt` olmayan her kurulum müşterileri ve ortak hafızayı **okur**, hiçbir şey yazmaz (Ölçü: `SYNC.salt`,
-  durum "Ortak hafıza (okuma)"): orada öğrenilen / eklenen / silinen o bilgisayarda kalır, kullanıcınınkine dokunmaz,
-  el yazısı örneği toplanmaz. `eleman-hafiza`'ya müşteri / ölçü hafızası dışında gizli bir şey konmaz (okuma anahtarı görür).
+- **Güncel karar (6 Kasım 2026, 22:58):** "her pc hem öğrensin hem öğretsin; 1 yıl sonra başka bir bilgisayara geçtiğimde
+  sana 'bu benim bilgisayarım' demek zorunda kalmayayım." Asıl kullanım iş bilgisayarı, ev deneme. Bu yüzden **programın
+  içindeki anahtar** (`SunucuOlcu.cs` → `OKUMA`, ters + "eleman-okuma" ile XOR + base64; GitHub'daki adı `eleman-okuma`,
+  yalnız `eleman-hafiza`) her kurulumda kullanılır ve kullanıcı onu GitHub'da **Contents: Read and write** yapar.
+  Düz yazılmaz çünkü GitHub herkese açık depoda gördüğü anahtarı iptal eder; gizleme değildir, kurcalayan çözebilir
+  (kullanıcı kabul etti: müşteriler gizli değil, başkası kullanmıyor). Başkası da kullanırsa öğrendikleri ortak olur.
+- Sunucu `salt` hep false. Ölçü Tablosu yazmayı dener; GitHub 403 derse (anahtar yalnız okuyorsa) kendiliğinden yalnız
+  okumaya geçer (`SYNC.salt`, "Ortak hafıza (okuma)"), bir sonraki açılışta yine dener.
+- Koruma: ortak hafıza silinir ya da bilgisayarın bildiğinin yarısından azı kalırsa (`saves`, en az 20) o bilgisayardaki
+  kopya geri yüklenir. Müşterilerden yarısı ya da fazlası (en az 2) birden kaybolursa yeniden gönderilir; tek tük kaybolan
+  başka bilgisayarda silinmiştir, burada da silinir (yeni gönderilen 2 dk sayılmaz). GitHub her sürümü saklar.
+- `anahtar.txt` (ayrı okur-yazar anahtar) artık şart değil; evde var, kalabilir (programdaki anahtar iptal edilse de o
+  bilgisayar yazmaya devam eder). İş bilgisayarına konması gerekmiyor.
 - Güncellemeler herkese açık yoldan, eskisi gibi. 3.0.2'deki `guncelleme_anahtari.txt` desteği boşta bekler (dosya yoksa
   hiçbir şey yapmaz); depo bir gün gizli yapılırsa işe yarar.
 
@@ -134,6 +138,10 @@ istiyor). **Program deposu herkese açık kalır.** Karar:
     yazılanlar `ota_beden_son`, elle yaz). Dizideki bir bedene basınca kağıttan araya giren beden geri alınır. Müşteri
     değişince / boş tabloda şablondakine döner; taramadan sonra elle seçilen dizi kalır. Az bedenli dizide yazdırma alanı
     şablonun genişliğinde kalır (Development başlığı kesilmesin).
+
+- 2026-11-06 gece: **Eleman 3.0.5** (yalnız `eleman`): her kurulum ortak hafızaya yazar (yukarıda "Anahtarlar"), 403'te
+  yalnız okumaya geçer, silinen / bozulan hafıza ve müşteriler geri yüklenir. Playwright + GitHub taklidiyle 6 durum denendi
+  (yazabilen, 403, hafıza 404, hafıza küçülmüş, 3 müşteriden 2'si kayıp, 1'i silinmiş).
 
 ## Sıradaki işler
 

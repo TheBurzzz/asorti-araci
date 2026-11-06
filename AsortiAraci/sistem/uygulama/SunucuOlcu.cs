@@ -87,21 +87,20 @@ namespace AsortiAraci
         }
 
         // ---------- ortak hafıza anahtarı: C:\Eleman\anahtar.txt (kurulumla gelir, güncelleme dokunmaz, GitHub'a konmaz) ----------
-        // Ortak hafıza anahtarı. anahtar.txt (okur-yazar) yalnız kullanıcının kendi bilgisayarlarında durur, elle konur.
-        // Yoksa programın içindeki salt-okur anahtar: herkes müşterileri ve öğrenilenleri alır, kimse bir şey değiştiremez.
+        // Ortak hafıza anahtarı: anahtar.txt varsa o, yoksa programın içindeki anahtar. Kullanıcının kararı (6 Kasım 2026 gece):
+        // her bilgisayar hem öğrensin hem öğretsin, kimseye "bu benim bilgisayarım" demek gerekmesin. Programın içindeki anahtar
+        // GitHub'da okur-yazar yapılınca her kurulum ortak hafızaya yazar; yalnız okuyabiliyorsa Ölçü Tablosu bunu GitHub'ın
+        // cevabından (403) anlar ve kendiliğinden yalnız okumaya geçer. salt hep false: karar Ölçü Tablosu'nda.
         static string HafizaAnahtari(out bool salt)
         {
             string k = OlcuAnahtar();
             salt = false;
             if (k.Length > 0) return k;
-            k = OkumaAnahtari();
-            salt = k.Length > 0;
-            return k;
+            return OkumaAnahtari();
         }
 
-        // Salt-okur anahtar (yalnız eleman-hafiza, Contents: Read-only; kullanıcının kararı 6 Kasım 2026: depo herkese açık
-        // kalsın, program kendinden anahtarlı gelsin, müşterilerin görünmesi sorun değil). Karışık yazılır, çünkü GitHub herkese
-        // açık depoda düz duran anahtarı hemen iptal eder; bu bir gizleme değildir, kurcalayan çözebilir, yalnız okuyabilir.
+        // Programın içindeki anahtar (GitHub'daki adı "eleman-okuma"; yalnız eleman-hafiza). Karışık yazılır, çünkü GitHub herkese
+        // açık depoda düz duran anahtarı hemen iptal eder; bu bir gizleme değildir, kurcalayan çözebilir (kullanıcı kabul etti).
         const string OKUMA = "LQUpAy4nRgo9Pzg3JyZSWwYgXwAAOAciKTgzXgclHx8YITQUM1lSBgQXSR5ZJzwUMVsOOA45SzcDIiU+KV8jBSIoXyxfDTsHVSU0JTYseSxaRDIVBBw6DxQGWQYM";
         static string OkumaAnahtari()
         {

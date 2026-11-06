@@ -1,9 +1,8 @@
 {
- "surum": "3.0.4",
+ "surum": "3.0.5",
  "tarih": "2026-11-06",
  "notlar": [
-  "Ölçü Tablosu: müşteri logosu Excel'de kendi kutusuna sığıyor, taşmıyor (oranı bozulmadan ortalanır)",
-  "Ölçü Tablosu: her müşteride istediğin beden dizisi: \"Beden dizisi\" düğmesinden harf, numara ya da kendin yaz",
-  "Ölçü Tablosu: kağıttaki beden yanlışsa doğru bedene tıkla, araya giren beden geri alınır (ör. M yerine 38: 40 geri gelir)"
+  "Ölçü Tablosu: her bilgisayar ortak hafızadan hem öğrenir hem ona öğretir; yeni bir bilgisayarda ayrıca bir şey yapmak gerekmez",
+  "Ortak hafıza ya da müşteriler silinir veya bozulursa bilgisayardaki kopyayla kendiliğinden geri yüklenir"
  ]
 }

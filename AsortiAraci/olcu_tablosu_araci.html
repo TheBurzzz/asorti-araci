@@ -491,8 +491,9 @@ function memSave(){LS.set(MEM_KEY,MEM)}
 /* ---------------- ortak hafıza (GitHub): her bilgisayar aynı hafızayı kullanır ---------------- */
 /* Eleman ortak veri deposu (gizli): her uygulama kendi klasörünü kullanır — olcu-tablosu/, asorti/ … */
 const SYNC={owner:"TheBurzzz",repo:"eleman-hafiza",dir:"olcu-tablosu",path:"olcu-tablosu/hafiza.json",token:"/*__TOKEN__*/",salt:false};
-/* salt: programın içindeki salt-okur anahtar (anahtar.txt olmayan bilgisayarlar). Ortak hafıza ve müşteriler okunur,
-   bu bilgisayarda öğrenilen / eklenen / silinen her şey bu bilgisayarda kalır; ortak hafızaya hiçbir şey yazılmaz. */
+/* salt: anahtar yazamıyorsa (GitHub 403) kendiliğinden yalnız okumaya geçilir: ortak hafıza ve müşteriler okunur,
+   bu bilgisayarda öğrenilen / eklenen / silinen bu bilgisayarda kalır. Program bir sonraki açılışta yine yazmayı dener. */
+const yazamaz=r=>{if(r&&r.status===403){SYNC.salt=true;return true}return false};
 function deltaBirlestir(q){const m=memNorm({});for(const d of q)applyDelta(m,d);return {names:m.names,tr:m.tr,qual:m.qual,extra:m.extra,typ:m.typ,fibers:m.fibers,ignore:m.ignore,saves:m.saves||0}}
 const syncOn=()=>SYNC.token&&!/__TOKEN__/.test(SYNC.token);
 let SYNC_STATE="off";
@@ -506,7 +507,7 @@ async function ghGet(){
 async function ghPut(mem,sha){
   const r=await fetch(`https://api.github.com/repos/${SYNC.owner}/${SYNC.repo}/contents/${SYNC.path}`,{method:"PUT",headers:{Authorization:"Bearer "+SYNC.token,Accept:"application/vnd.github+json","Content-Type":"application/json"},
     body:JSON.stringify({message:"hafıza güncellendi ("+mem.saves+")",content:b64e(JSON.stringify(mem)),...(sha?{sha}:{})})});
-  if(r.status===409||r.status===422)return false;if(!r.ok)throw new Error("GitHub "+r.status);return true;
+  if(r.status===409||r.status===422)return false;if(yazamaz(r)){const e=new Error("GitHub 403: anahtar yazamıyor, yalnız okunuyor");e.salt=true;throw e}if(!r.ok)throw new Error("GitHub "+r.status);return true;
 }
 function applyDelta(m,d){
   for(const k of ["names","tr","qual"])Object.assign(m[k],d[k]||{});
@@ -533,10 +534,14 @@ async function syncNow(){
       LS.set("ota_seeded",true);memSave();memApply();SYNC_STATE="salt";
       sablonEsitle().catch(e=>console.warn(e));
     }else{
-    let done=false;
+    let done=false,geri=null;
     for(let tries=0;tries<4&&!done;tries++){
       const {mem,sha}=await ghGet();
-      if(!q.length){for(const d of pending())applyDelta(mem,d);MEM=mem;done=true;break}
+      // ortak hafıza silinmiş ya da bozulmuşsa (bu bilgisayarın bildiğinin yarısından azı kalmışsa) bu bilgisayardaki kopyayla geri yüklenir
+      const bil=(MEM.saves||0)-q.reduce((s,d)=>s+(d.saves||0),0),uzak=mem.saves||0;
+      if(!geri&&bil>=20&&uzak<bil/2){geri={names:MEM.names,tr:MEM.tr,qual:MEM.qual,extra:MEM.extra,typ:MEM.typ,fibers:MEM.fibers,ignore:MEM.ignore,saves:bil-uzak};console.warn("ortak hafıza bu bilgisayardaki kopyayla geri yükleniyor",uzak,bil)}
+      if(!q.length&&!geri){for(const d of pending())applyDelta(mem,d);MEM=mem;done=true;break}
+      if(geri)applyDelta(mem,geri);
       for(const d of q)applyDelta(mem,d);
       if(await ghPut(mem,sha)){
         // bu arada yeni kayıt geldiyse onu yerel hafızaya da işle (sırada kalır, bir sonraki turda gider)
@@ -548,7 +553,7 @@ async function syncNow(){
     LS.set("ota_seeded",true);memSave();memApply();SYNC_STATE="ok";syncSamples();
     sablonEsitle().catch(e=>console.warn(e));
     }
-  }catch(e){console.warn(e);SYNC_STATE="err"}
+  }catch(e){console.warn(e);if(e&&e.salt)SYNC_AGAIN=true;else SYNC_STATE="err"}
   finally{SYNC_BUSY=false}
   memInfo();
   if(SYNC_AGAIN||(SYNC_STATE==="ok"&&pending().length)){SYNC_AGAIN=false;setTimeout(syncNow,300)}
@@ -562,7 +567,7 @@ async function syncSamples(){if(!syncOn()||HW_BUSY||SYNC.salt)return;HW_BUSY=tru
   try{let q=await HWQ.get();HW_WAIT=q.length;
     while(q.length){const smp=q[0];const d=new Date(smp.t);const path=`${SYNC.dir}/el_yazisi/${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}/${smp.t}_${smp.id}.json`;
       const r=await fetch(`https://api.github.com/repos/${SYNC.owner}/${SYNC.repo}/contents/${path}`,{method:"PUT",headers:{Authorization:"Bearer "+SYNC.token,Accept:"application/vnd.github+json","Content-Type":"application/json"},body:JSON.stringify({message:"el yazısı örneği",content:b64e(JSON.stringify(smp))})});
-      if(!r.ok&&r.status!==422)throw new Error("GitHub "+r.status);
+      if(yazamaz(r))break;if(!r.ok&&r.status!==422)throw new Error("GitHub "+r.status);
       q.shift();await HWQ.set(q);HW_WAIT=q.length;LS.set("ota_hw_gonderilen",LS.get("ota_hw_gonderilen",0)+1)}
   }catch(e){console.warn(e)}finally{HW_BUSY=false;memInfo()}}
 function hiCrop(src,y0,y1,x1){const pad=Math.max(6,(y1-y0)*.25);const sy=Math.max(0,y0-pad),sh=Math.min(src.height-sy,(y1-y0)+pad*2);const sx=Math.round(src.width*.04),sw=Math.min(src.width-sx,Math.round(x1-sx));
@@ -784,27 +789,31 @@ async function sablonKaldir(name){
 /* ortak hafızadaki şablonlarla eşitle: bekleyen ekleme/kaldırmaları gönder, başka bilgisayarda eklenenleri al */
 async function gh(method,path,body){return fetch(`https://api.github.com/repos/${SYNC.owner}/${SYNC.repo}/contents/${path}`+(method==="GET"?`?t=${Date.now()}`:""),{method,cache:"no-store",headers:{Authorization:"Bearer "+SYNC.token,Accept:"application/vnd.github+json",...(body?{"Content-Type":"application/json"}:{})},body:body?JSON.stringify(body):undefined})}
 let SAB_BUSY=false;
+/* ortak hafızadan kaybolan müşteriler: tek tük ise başka bilgisayarda silinmiştir, burada da silinir. Yarısı ya da daha
+   fazlası (en az 2) birden kaybolduysa hafıza silinmiş / bozulmuştur: bu bilgisayardakiler yeniden gönderilir. */
+function sablonKayip(yok){const esit=CUSTOM.filter(c=>!c.bekliyor&&c.sha),kayip=esit.filter(c=>yok(c)&&!(c.gonderildi&&Date.now()-c.gonderildi<120000));if(!kayip.length)return false; // yeni gönderilen 2 dk görünmeyebilir
+  if(!SYNC.salt&&kayip.length>=2&&kayip.length*2>=esit.length){for(const c of kayip){c.sha=null;c.bekliyor=true}console.warn("ortak hafızadaki müşteriler geri gönderiliyor",kayip.map(c=>c.name));setTimeout(()=>sablonEsitle().catch(e=>console.warn(e)),500);return true}
+  CUSTOM=CUSTOM.filter(c=>!kayip.includes(c));return true}
 async function sablonEsitle(){
   if(!syncOn()||SAB_BUSY)return;SAB_BUSY=true;
   try{
     const dir=SYNC.dir+"/sablonlar";let degisti=false;
     for(const c of CUSTOM.filter(x=>x.bekliyor&&!SYNC.salt)){
       const path=`${dir}/${c.slug}.json`;
-      if(c.silindi){if(c.sha){const r=await gh("DELETE",path,{message:"şablon kaldırıldı: "+c.name,sha:c.sha});if(!r.ok&&![404,409,422].includes(r.status))throw new Error("GitHub "+r.status)}CUSTOM=CUSTOM.filter(x=>x!==c);degisti=true;continue}
+      if(c.silindi){if(c.sha){const r=await gh("DELETE",path,{message:"şablon kaldırıldı: "+c.name,sha:c.sha});if(yazamaz(r))break;if(!r.ok&&![404,409,422].includes(r.status))throw new Error("GitHub "+r.status)}CUSTOM=CUSTOM.filter(x=>x!==c);degisti=true;continue}
       const body=sha=>({message:"şablon: "+c.name,content:b64e(JSON.stringify({name:c.name,prefix:c.prefix,b64:c.b64,t:c.t})),...(sha?{sha}:{})});
       let r=await gh("PUT",path,body(c.sha));
       if(r.status===409||r.status===422){const g=await gh("GET",path);if(g.ok){const j=await g.json();r=await gh("PUT",path,body(j.sha))}}
-      if(!r.ok)throw new Error("GitHub "+r.status);
-      const j=await r.json();c.sha=(j.content&&j.content.sha)||c.sha;c.bekliyor=false;degisti=true}
+      if(yazamaz(r))break;if(!r.ok)throw new Error("GitHub "+r.status);
+      const j=await r.json();c.sha=(j.content&&j.content.sha)||c.sha;c.bekliyor=false;c.gonderildi=Date.now();degisti=true}
     const r=await gh("GET",dir);
     if(r.ok){const list=(await r.json()).filter(f=>f.type==="file"&&/\.json$/.test(f.name));
       for(const f of list){const k=f.name.replace(/\.json$/,"");const l=CUSTOM.find(c=>c.slug===k);if(l&&(l.sha===f.sha||l.bekliyor))continue;
         const g=await gh("GET",f.path);if(!g.ok)continue;let o=null;try{o=JSON.parse(b64d((await g.json()).content))}catch(e){}
         if(!o||!o.name||!o.b64)continue;
         CUSTOM=CUSTOM.filter(c=>c.slug!==k).concat({name:o.name,prefix:o.prefix||"",b64:o.b64,t:o.t||0,slug:k,sha:f.sha,bekliyor:false});degisti=true}
-      const var_=new Set(list.map(f=>f.name.replace(/\.json$/,"")));const n0=CUSTOM.length;
-      CUSTOM=CUSTOM.filter(c=>c.bekliyor||!c.sha||var_.has(c.slug));if(CUSTOM.length!==n0)degisti=true}
-    else if(r.status===404){const n0=CUSTOM.length;CUSTOM=CUSTOM.filter(c=>c.bekliyor||!c.sha);if(CUSTOM.length!==n0)degisti=true}
+      const var_=new Set(list.map(f=>f.name.replace(/\.json$/,"")));degisti=sablonKayip(c=>!var_.has(c.slug))||degisti}
+    else if(r.status===404)degisti=sablonKayip(()=>true)||degisti;
     if(degisti){await customKaydet();custsYenile();ayarCiz()}
   }finally{SAB_BUSY=false}
 }
