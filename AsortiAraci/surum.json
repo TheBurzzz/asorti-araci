@@ -1,13 +1,10 @@
 {
- "surum": "2.0.4",
+ "surum": "3.0.0",
  "tarih": "2026-11-06",
  "notlar": [
-  "Gerber bağlantısı, Batch programının iş listesine (engine.que) çok daha seyrek bakıyor; Batch'in \"sharing violation\" uyarısı verme ihtimali azaldı",
-  "Gerber'e gönderilen iş artık \"Sırada\"da takılı kalmıyor; \"Hepsini durdur\" sıradaki ve yarım kalan işleri de durduruyor",
-  "Uyarı kutularından sonra (Sıfırla, sekme kapatma…) yazı alanlarına hemen yazılabiliyor; Gerber'e gönderince sayfa en üste kaymıyor",
-  "Görünümde Açık, Koyu ve Otomatik arasında hızlıca geçilebiliyor; ayarlar kapanmıyor",
-  "Alt-üst takım işaretlenince iki satır (üstte ÜST, altta ALT) ve ÜST / ALT artikel alanları hemen geliyor",
-  "Çizgili üründe ek asorti tabloları da Gerber'e gönderilebiliyor",
-  "Kayıtlı Excel'i aç yumuşak yeşil, Sıfırla kırmızı yazılı; \"Pastallar hazır\" bildirimi bir kez geliyor"
+  "Eleman: Asorti Aracı ve Ölçü Tablosu Aracı tek programda",
+  "Açılışta ana sayfa; üst çubukta Asorti Aracı / Ölçü Tablosu düğmeleri",
+  "Ölçü Tablosu: yeşil tema, sekmeler (Sayfa 1, Yeni sayfa), internetsiz kağıt okuma, tek tuşla tarama, Excel'e kaydet",
+  "Görünüm (açık / koyu / otomatik) ve gece ışığı ⚙ Ayarlar'da, üç uygulamada birlikte"
  ]
 }

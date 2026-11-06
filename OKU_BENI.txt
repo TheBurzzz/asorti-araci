@@ -1,5 +1,5 @@
-﻿ASORTİ ARACI - KURULUM PAKETİ
-=============================
+﻿ELEMAN - KURULUM PAKETİ (Asorti Aracı + Ölçü Tablosu Aracı)
+===========================================================
 
 Kurmak için: Kurulum.bat dosyasına çift tıkla. Sihirbaz adım adım kurar.
 
@@ -7,8 +7,9 @@ Klasörler
   Kurulum.bat          sihirbazı açar
   kurulum\             sihirbaz ve paket denetimi
   AsortiAraci\         uygulamanın kendisi (kurulum bunu C:\AsortiAraci'ye kopyalar)
-    uygulama.html        sekmeli ana pencere
+    uygulama.html        Eleman: ana sayfa ve sekmeli pencere
     asorti_araci.html    asorti hesabı (her sekme bir çalışma sayfası)
+    olcu_tablosu_araci.html  ölçü tablosu (kağıt okuma, tarama, Excel)
     sistem\              uygulamanın penceresi (kurulumda bu bilgisayarda derlenir: AsortiAraci.exe),
                          yerel sunucu, ayarlar, simge, Batch şablonu
     kopru\               Gerber köprüsü (sipariş → Batch → OTOPASTAL → sonuç)
@@ -26,3 +27,4 @@ Yeni bilgisayara kurarken
 
 Güncelleme: yeni paketi aynı şekilde kur; ayarların ve çalışma sayfaların korunur.
 Kaldırma : C:\AsortiAraci\Kaldir.bat
+Ölçü Tablosu ortak hafıza anahtarı: anahtar.txt (elden verilir, Kurulum.bat'ın yanına konur; GitHub'a konmaz)

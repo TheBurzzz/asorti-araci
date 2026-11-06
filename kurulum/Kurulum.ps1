@@ -1,4 +1,4 @@
-﻿# Asorti Aracı - kurulum sihirbazı
+﻿# Eleman (Asorti Aracı + Ölçü Tablosu Aracı) - kurulum sihirbazı
 # Paket yapısı:  Kurulum.bat | kurulum\Kurulum.ps1 | AsortiAraci\ (uygulama dosyaları)
 # Bilgisayarı kendisi tarar (AccuMark, müşteri klasörleri, OTOPASTAL, sürücü harfi) ve ona göre kurar; soru sormaz.
 # İsteyen "Ayarları elle değiştir" ile bulunanları değiştirebilir.
@@ -10,7 +10,7 @@ try {
   Add-Type -Name Pencere -Namespace Asorti -MemberDefinition '[DllImport("kernel32.dll")] public static extern IntPtr GetConsoleWindow(); [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int n);'
   [void][Asorti.Pencere]::ShowWindow([Asorti.Pencere]::GetConsoleWindow(), 0)
 } catch {}
-trap { try { [Windows.Forms.MessageBox]::Show("Kurulum sihirbazında beklenmeyen hata:`r`n" + $_.Exception.Message + "`r`n(satır " + $_.InvocationInfo.ScriptLineNumber + ")", 'Asorti Aracı') | Out-Null } catch {}; exit 1 }
+trap { try { [Windows.Forms.MessageBox]::Show("Kurulum sihirbazında beklenmeyen hata:`r`n" + $_.Exception.Message + "`r`n(satır " + $_.InvocationInfo.ScriptLineNumber + ")", 'Eleman') | Out-Null } catch {}; exit 1 }
 
 $PAKET  = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $KAYNAK = Join-Path $PAKET 'AsortiAraci'
@@ -107,9 +107,9 @@ if (Test-Path (Join-Path $VARSAYILAN_HEDEF 'ayarlar.json')) { try { $eskiAyar = 
 
 # ---------- pencere ----------
 $F = New-Object Windows.Forms.Form
-$F.Text = 'Asorti Aracı - Kurulum'; $F.Size = New-Object Drawing.Size(720, 540); $F.StartPosition = 'CenterScreen'
+$F.Text = 'Eleman - Kurulum'; $F.Size = New-Object Drawing.Size(720, 540); $F.StartPosition = 'CenterScreen'
 $F.FormBorderStyle = 'FixedDialog'; $F.MaximizeBox = $false; $F.Font = New-Object Drawing.Font('Segoe UI', 9.5)
-$ikon = Join-Path $KAYNAK 'sistem\asorti.ico'; if (Test-Path $ikon) { $F.Icon = New-Object Drawing.Icon($ikon) }
+$ikon = Join-Path $KAYNAK 'sistem\eleman.ico'; if (-not (Test-Path $ikon)) { $ikon = Join-Path $KAYNAK 'sistem\asorti.ico' }; if (Test-Path $ikon) { $F.Icon = New-Object Drawing.Icon($ikon) }
 
 $ust = New-Object Windows.Forms.Panel; $ust.Dock = 'Top'; $ust.Height = 64; $ust.BackColor = [Drawing.Color]::FromArgb(47, 124, 246)
 $baslik = New-Object Windows.Forms.Label; $baslik.ForeColor = 'White'; $baslik.Font = New-Object Drawing.Font('Segoe UI', 14, [Drawing.FontStyle]::Bold)
@@ -130,15 +130,16 @@ function Kutu($metin, $x, $y, $w) { $t = New-Object Windows.Forms.TextBox; $t.Te
 
 # ---- sayfa 1: hoş geldin ----
 $s1 = New-Object Windows.Forms.Panel; $s1.Dock = 'Fill'
-$s1.Controls.Add((Yazi ("Bu sihirbaz Asorti Aracı'nı bu bilgisayara kurar:`r`n`r`n" +
-  "  •  Asorti Aracı uygulaması (çalışma sayfaları, Excel, yazdırma)`r`n" +
+$s1.Controls.Add((Yazi ("Bu sihirbaz Eleman'ı bu bilgisayara kurar:`r`n`r`n" +
+  "  •  Asorti Aracı (çalışma sayfaları, Excel, yazdırma)`r`n" +
+  "  •  Ölçü Tablosu Aracı (kağıdı tara ya da PDF'ten oku, Excel'e kaydet)`r`n" +
   "  •  Gerber köprüsü: siparişleri Gerber'e alır, Batch ile pastal hazırlar,`r`n" +
   "     OTOPASTAL kuyruğuna gönderir ve sonuçları geri getirir`r`n" +
   "  •  Masaüstü ve Başlat menüsü kısayolu`r`n`r`n" +
   "Ayarları kendisi bulur: Gerber AccuMark nerede, müşteri klasörleri nerede, OTOPASTAL`r`n" +
   "bu bilgisayarda mı başka bir bilgisayarda mı, OTOPASTAL pastallara hangi harfle ulaşıyor.`r`n" +
   "Gerber yoksa sadece asorti kurulur.`r`n`r`n" +
-  "Devam etmeden önce açık bir Asorti Aracı penceresi varsa kapat.") 0 0 660 320))
+  "Devam etmeden önce açık bir Asorti Aracı ya da Eleman penceresi varsa kapat.") 0 0 660 320))
 
 # ---- sayfa 2: tarama ve özet ----
 $s2 = New-Object Windows.Forms.Panel; $s2.Dock = 'Fill'
@@ -178,10 +179,10 @@ $adimlar = New-Object Windows.Forms.ListBox; $adimlar.Location = New-Object Draw
 $s5 = New-Object Windows.Forms.Panel; $s5.Dock = 'Fill'
 $lBitti = Yazi '' 0 0 660 270; $s5.Controls.Add($lBitti)
 $bOtoKopya = New-Object Windows.Forms.Button; $bOtoKopya.Text = 'OTOPASTAL komutunu kopyala'; $bOtoKopya.Location = New-Object Drawing.Point(0, 276); $bOtoKopya.Size = New-Object Drawing.Size(230, 30); $s5.Controls.Add($bOtoKopya)
-$cAc = New-Object Windows.Forms.CheckBox; $cAc.Text = "Asorti Aracı'nı şimdi aç"; $cAc.Checked = $true; $cAc.Location = New-Object Drawing.Point(0, 318); $cAc.AutoSize = $true; $s5.Controls.Add($cAc)
+$cAc = New-Object Windows.Forms.CheckBox; $cAc.Text = "Eleman'ı şimdi aç"; $cAc.Checked = $true; $cAc.Location = New-Object Drawing.Point(0, 318); $cAc.AutoSize = $true; $s5.Controls.Add($cAc)
 
 $sayfalar = @($s1, $s2, $s3, $s4, $s5)
-$basliklar = @(@('Hoş geldin', 'Asorti Aracı kurulumu'), @('Bu bilgisayar', 'Gerber ve OTOPASTAL kendiliğinden bulunuyor'), @('Ayarlar', 'Bulunanları değiştirmek istersen'), @('Kuruluyor', 'Adım adım kuruluyor…'), @('Bitti', 'Kurulum tamamlandı'))
+$basliklar = @(@('Hoş geldin', 'Eleman kurulumu'), @('Bu bilgisayar', 'Gerber ve OTOPASTAL kendiliğinden bulunuyor'), @('Ayarlar', 'Bulunanları değiştirmek istersen'), @('Kuruluyor', 'Adım adım kuruluyor…'), @('Bitti', 'Kurulum tamamlandı'))
 $script:sira = 0; $script:kuruldu = $false; $script:otoKomut = ''; $script:elle = $false
 
 # ---------- tarama (ayrı süreçte; pencere donmasın) ----------
@@ -316,7 +317,7 @@ function Kur {
   $ilerleme.Maximum = 10; $ilerleme.Value = 0
   $script:sonNot = New-Object System.Collections.ArrayList
   try {
-    Adim '1/10  Açık Asorti Aracı süreçleri kapatılıyor'
+    Adim '1/10  Açık Eleman / Asorti Aracı pencereleri kapatılıyor'
     $uyg = @(Get-Process -Name AsortiAraci -ErrorAction SilentlyContinue)
     foreach ($p in $uyg) { try { [void]$p.CloseMainWindow() } catch {} }
     for ($i = 0; $i -lt 30 -and @($uyg | Where-Object { -not $_.HasExited }).Count; $i++) { Start-Sleep -Milliseconds 100 }
@@ -327,6 +328,10 @@ function Kur {
     Adim "2/10  Dosyalar kopyalanıyor → $hedef"
     New-Item -ItemType Directory -Force -Path $hedef | Out-Null
     Copy-Item -Path (Join-Path $KAYNAK '*') -Destination $hedef -Recurse -Force
+    # Ölçü Tablosu'nun ortak hafıza anahtarı: paketle elden verildiyse (Kurulum.bat'ın yanında anahtar.txt) kurulum klasörüne konur.
+    # GitHub'daki pakette anahtar yoktur; önceki kurulumdaki anahtar.txt korunur (üzerine yazılmaz, silinmez).
+    $an = Join-Path $PAKET 'anahtar.txt'
+    if (Test-Path -LiteralPath $an) { Copy-Item -LiteralPath $an -Destination (Join-Path $hedef 'anahtar.txt') -Force; Adim '     ortak hafıza anahtarı kondu (Ölçü Tablosu)' }
     # paket internetten (ZIP) indirildiyse dosyalardaki "internetten geldi" isareti kaldirilir (Edge motorunun dosyalari engelsiz yuklensin)
     try { @(Get-ChildItem -LiteralPath (Join-Path $hedef 'sistem') -Recurse -File -ErrorAction SilentlyContinue) + @(Get-ChildItem -LiteralPath (Join-Path $hedef 'kopru') -Filter *.ps1 -File -ErrorAction SilentlyContinue) | Unblock-File -ErrorAction SilentlyContinue } catch {}
     foreach ($d in 'gelen', 'isleniyor', 'bitti', 'sonuc', 'log', 'iptal') { New-Item -ItemType Directory -Force -Path (Join-Path $hedef "kopru\$d") | Out-Null }
@@ -352,6 +357,9 @@ function Kur {
     $ayar['port'] = $port
     foreach ($k in $S.Keys) { $ayar[$k] = $S[$k] }
     if (-not $ayar.Contains('tarayici')) { $ayar['tarayici'] = '' }
+    # paket GitHub'daki bir daldan indirildiyse (klasör adı asorti-araci-<dal>) güncellemeler de o daldan gelir; main ise varsayılan
+    $pk = Split-Path -Leaf $PAKET
+    if ($pk -match '^asorti-araci-([A-Za-z0-9._-]+)$') { if ($Matches[1] -eq 'main') { if ($ayar.Contains('dal')) { $ayar.Remove('dal') } } else { $ayar['dal'] = $Matches[1]; Adim "     güncellemeler '$($Matches[1])' dalından gelecek" } }
     [IO.File]::WriteAllText($af, ($ayar | ConvertTo-Json), (New-Object Text.UTF8Encoding($true)))
     Adim ('     ' + $(if (-not $S.gerber) { 'sadece asorti' } else { "Gerber: $($S.accumark) · OTOPASTAL: $($S.otopastal)" + $(if ($S.otopastal -ne 'yok') { " · $($S.surucu.ToUpperInvariant())" } else { '' }) }))
     if ($r) { try { ($r | ConvertTo-Json -Depth 7) | Set-Content -Path (Join-Path $hedef 'kopru\log\tarama_kurulum.json') -Encoding UTF8 } catch {} }
@@ -417,22 +425,23 @@ function Kur {
 
     Adim '7/10  Kısayollar oluşturuluyor'
     $w = New-Object -ComObject WScript.Shell
-    $vbs = Join-Path $hedef 'sistem\baslat.vbs'; $ico = Join-Path $hedef 'sistem\asorti.ico'
+    $vbs = Join-Path $hedef 'sistem\baslat.vbs'; $ico = Join-Path $hedef 'sistem\eleman.ico'; if (-not (Test-Path $ico)) { $ico = Join-Path $hedef 'sistem\asorti.ico' }
     # kisayol uygulamanin kendisini acar (gorev cubuguna sabitlenince ayni dugmede birlesir); derlenemediyse eskisi gibi baslat.vbs'yi
     function KisayolYaz([string]$l) {
       $k = $w.CreateShortcut($l)
       if ($exeVar) { $k.TargetPath = $exe; $k.Arguments = ''; $k.WorkingDirectory = (Join-Path $hedef 'sistem'); $k.IconLocation = "$exe,0" }
       else { $k.TargetPath = "$env:WINDIR\System32\wscript.exe"; $k.Arguments = "`"$vbs`""; $k.WorkingDirectory = $hedef; $k.IconLocation = "$ico,0" }
-      $k.Description = 'Asorti Aracı'; $k.Save()
+      $k.Description = 'Eleman'; $k.Save()
     }
     $masa = @([Environment]::GetFolderPath('Desktop'), (Join-Path $env:USERPROFILE 'Desktop')); if ($env:OneDrive) { $masa += (Join-Path $env:OneDrive 'Desktop') }
-    foreach ($m in ($masa | Select-Object -Unique)) { $l = Join-Path $m 'Asorti Araci.lnk'; if (Test-Path $l) { Remove-Item -Force $l -ErrorAction SilentlyContinue } }
     $yerler = @([Environment]::GetFolderPath('Desktop'), (Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'))
+    # eski "Asorti Araci" kısayolları kaldırılır, yerine "Eleman" gelir
+    foreach ($m in (@($masa) + @($yerler) + @($hedef) | Select-Object -Unique)) { $l = Join-Path $m 'Asorti Araci.lnk'; if (Test-Path $l) { Remove-Item -Force $l -ErrorAction SilentlyContinue } }
     foreach ($y in $yerler) {
       if (-not (Test-Path $y)) { continue }
-      KisayolYaz (Join-Path $y 'Asorti Araci.lnk'); Adim "     $y"
+      KisayolYaz (Join-Path $y 'Eleman.lnk'); Adim "     $y"
     }
-    KisayolYaz (Join-Path $hedef 'Asorti Araci.lnk')
+    KisayolYaz (Join-Path $hedef 'Eleman.lnk')
     $ilerleme.Value = 7
 
     Adim '8/10  Eski otomatik başlatma kaldırılıyor'
@@ -449,13 +458,13 @@ function Kur {
 
     Adim '10/10  Kaldırma dosyası yazılıyor'
     $kal = @'
-# Asorti Araci'ni kaldirir
+# Eleman'i kaldirir
 $hedef = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 Add-Type -AssemblyName System.Windows.Forms
-if ([Windows.Forms.MessageBox]::Show("Asorti Araci kaldirilsin mi?`r`n$hedef klasoru ve kisayollar silinecek (Excel dosyalarina dokunulmaz).", 'Asorti Araci', 'YesNo', 'Question') -ne 'Yes') { exit }
+if ([Windows.Forms.MessageBox]::Show("Eleman kaldirilsin mi?`r`n$hedef klasoru ve kisayollar silinecek (Excel dosyalarina dokunulmaz).", 'Eleman', 'YesNo', 'Question') -ne 'Yes') { exit }
 Get-CimInstance Win32_Process | Where-Object { ($_.Name -eq 'powershell.exe' -and $_.CommandLine -match '(sunucu|kopru)\.ps1') -or ($_.Name -match '^(AsortiAraci|AsortiAcilis)\.exe$') -or ($_.Name -match '^(msedge|chrome|msedgewebview2)\.exe$' -and $_.CommandLine -match 'AsortiAraci\\profil') } | ForEach-Object { try { Stop-Process -Id $_.ProcessId -Force } catch {} }
 Start-Sleep -Milliseconds 800
-foreach ($y in @([Environment]::GetFolderPath('Desktop'), (Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'))) { $l = Join-Path $y 'Asorti Araci.lnk'; if (Test-Path $l) { Remove-Item -Force $l } }
+foreach ($y in @([Environment]::GetFolderPath('Desktop'), (Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'))) { foreach ($ad in 'Eleman.lnk', 'Asorti Araci.lnk') { $l = Join-Path $y $ad; if (Test-Path $l) { Remove-Item -Force $l } } }
 Start-Process cmd.exe -WindowStyle Hidden -ArgumentList "/c timeout /t 2 >nul & rmdir /s /q `"$hedef`""
 '@
     $kal | Set-Content -Path (Join-Path $hedef 'sistem\kaldir.ps1') -Encoding UTF8
@@ -465,10 +474,10 @@ Start-Process cmd.exe -WindowStyle Hidden -ArgumentList "/c timeout /t 2 >nul & 
     $script:kuruldu = $true
   } catch {
     Adim ('HATA: ' + $_.Exception.Message)
-    [Windows.Forms.MessageBox]::Show("Kurulum yarıda kaldı:`r`n" + $_.Exception.Message, 'Asorti Aracı') | Out-Null
+    [Windows.Forms.MessageBox]::Show("Kurulum yarıda kaldı:`r`n" + $_.Exception.Message, 'Eleman') | Out-Null
   }
   try { $script:logSatir | Set-Content -Path (Join-Path $hedef 'kurulum_log.txt') -Encoding UTF8 } catch {}
-  $metin = "Asorti Aracı $hedef klasörüne kuruldu. Açmak için masaüstündeki 'Asorti Araci' simgesine çift tıkla.`r`n`r`n"
+  $metin = "Eleman $hedef klasörüne kuruldu. Açmak için masaüstündeki 'Eleman' simgesine çift tıkla.`r`n`r`n"
   if (-not $S.gerber) { $metin += "Bu bilgisayara sadece asorti kuruldu: asorti hesabı, Excel'e kaydetme ve yazdırma çalışır.`r`nAccuMark sonradan kurulursa uygulamada ⚙ → Gerber bağlantısı → Otomatik bul yeterli.`r`n" }
   else {
     $metin += "Gerber: $($S.accumark)`r`n"
@@ -494,8 +503,8 @@ function Goster {
 }
 $bIleri.Add_Click({
   if ($script:sira -in 1, 2) {
-    if (-not $tHedef.Text) { [Windows.Forms.MessageBox]::Show('Kurulum klasörünü yaz.', 'Asorti Aracı') | Out-Null; return }
-    $pn = 0; if (-not [int]::TryParse($tPort.Text, [ref]$pn) -or $pn -lt 1024 -or $pn -gt 65535) { [Windows.Forms.MessageBox]::Show('Bağlantı noktası 1024 ile 65535 arasında bir sayı olmalı (8642 bırakabilirsin).', 'Asorti Aracı') | Out-Null; return }
+    if (-not $tHedef.Text) { [Windows.Forms.MessageBox]::Show('Kurulum klasörünü yaz.', 'Eleman') | Out-Null; return }
+    $pn = 0; if (-not [int]::TryParse($tPort.Text, [ref]$pn) -or $pn -lt 1024 -or $pn -gt 65535) { [Windows.Forms.MessageBox]::Show('Bağlantı noktası 1024 ile 65535 arasında bir sayı olmalı (8642 bırakabilirsin).', 'Eleman') | Out-Null; return }
     if ($script:sira -eq 2) { Ozet; if (-not $script:zorunluTamam) { $script:sira = 1; Goster; return } }
     $script:sira = 3; Goster; return
   }

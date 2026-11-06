@@ -1,5 +1,5 @@
 @echo off
-title Asorti Araci - Kurulum
+title Eleman - Kurulum
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0kurulum\kontrol.ps1"
 if errorlevel 1 (
   echo.
