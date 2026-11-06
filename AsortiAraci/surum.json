@@ -1,8 +1,9 @@
 {
- "surum": "3.0.3",
+ "surum": "3.0.4",
  "tarih": "2026-11-06",
  "notlar": [
-  "Ortak hafıza anahtarı programın içinde geliyor: yeni kurulan her Eleman'da müşteriler kendiliğinden görünür",
-  "Kendi anahtarı olmayan bilgisayarlar ortak hafızayı yalnız okur; orada öğrenilen, eklenen ya da silinen o bilgisayarda kalır, kimseninkine dokunmaz"
+  "Ölçü Tablosu: müşteri logosu Excel'de kendi kutusuna sığıyor, taşmıyor (oranı bozulmadan ortalanır)",
+  "Ölçü Tablosu: her müşteride istediğin beden dizisi: \"Beden dizisi\" düğmesinden harf, numara ya da kendin yaz",
+  "Ölçü Tablosu: kağıttaki beden yanlışsa doğru bedene tıkla, araya giren beden geri alınır (ör. M yerine 38: 40 geri gelir)"
  ]
 }

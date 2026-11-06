@@ -125,6 +125,19 @@ select option{background:var(--card);color:var(--ink)}
 .szchips span:hover{background:var(--hov)}
 .szchips span.on{background:linear-gradient(180deg,var(--acct),var(--acc));color:#fff;box-shadow:0 3px 10px rgba(var(--accrgb),.3)}
 .szchips.mchk{box-shadow:0 0 0 2px var(--warnln);background:var(--warnbg)}
+.szdz{position:relative}
+.card:has(.szmenu:not(.hidden)){position:relative;z-index:60} /* açık menü alttaki kartın altında kalmasın */
+#szDizi{display:inline-flex;align-items:center;gap:6px}
+.szmenu{position:absolute;left:0;top:calc(100% + 6px);z-index:45;min-width:290px;padding:6px;border-radius:14px;background:var(--card);box-shadow:0 14px 36px rgba(0,0,0,.2),0 0 0 1px var(--line);animation:szAc .16s ease-out}
+@keyframes szAc{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
+.szmenu>button{display:flex;width:100%;align-items:center;gap:10px;padding:8px 10px;border:0;border-radius:9px;background:none;color:var(--ink);font:inherit;font-size:13px;text-align:left;cursor:pointer}
+.szmenu>button:hover{background:rgba(var(--accrgb),.1)}
+.szmenu>button .ad{font-weight:600;min-width:92px;color:var(--mut);font-size:12px}
+.szmenu>button .dz{font-weight:600;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.szmenu>button.on::after{content:"✓";margin-left:auto;color:var(--acc);font-weight:700}
+.szmenu .ayr{height:1px;background:var(--line);margin:5px 8px}
+.szmenu .elle{display:flex;gap:6px;padding:4px 4px 2px}
+.szmenu .elle input{flex:1;min-width:0;padding:7px 10px;font-size:13px}
 .sznote{font-size:12.5px;color:var(--mut)}.sznote.uy{color:#9a6a00;font-weight:550}html[data-theme=dark] .sznote.uy{color:var(--chk)}
 /* ölçü tablosu */
 .legend{display:flex;gap:8px 16px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin:0 0 12px}
@@ -339,6 +352,8 @@ html.yanyana .card{padding-left:20px;padding-right:20px}
       <div class="sizes">
         <span class="lb">Numune bedeni</span>
         <div class="szchips" id="szChips"></div>
+        <div class="szdz"><button class="btn sm duz" id="szDizi" type="button" title="Bu modelin beden dizisini değiştir (harf, numara ya da kendin yaz)">Beden dizisi<svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="szmenu hidden" id="szMenu"></div></div>
         <span class="sznote" id="szNote"></span>
       </div>
     </section>
@@ -721,7 +736,7 @@ async function custSec(name){
   let info,buf;try{buf=b64buf(t.b64);info=await parseTemplate(buf)}catch(e){console.error(e);toast(name+" şablonu açılamadı: "+e.message,6000);return}
   CUSTN=name;document.querySelectorAll("#cust .chip").forEach(b=>b.classList.toggle("on",b.dataset.n===name));
   CUR={...t,buf,...info};setTemplateRows(info.rows);
-  pickSize(LAST_SIZE);
+  pickSize(LAST_SIZE,true);
   $("#qualBox").classList.toggle("hidden",!info.hasQual);
   autoName();await showDir();
   if(ROWS.length){renderTable();taslakZamanla()}
@@ -796,7 +811,11 @@ async function sablonEsitle(){
 
 let LAST_SIZE=null; // kağıttan okunan numune bedeni
 const nSz=x=>String(x||"").toUpperCase().replace(/\s/g,"").replace(/^XXXL$/,"3XL").replace(/^2XL$/,"XXL").replace(/^XXXXL$/,"4XL").replace(/^X(\d)L$/,"$1XL");
-let SZ={list:[],sample:""};
+let SZ={list:[],sample:"",base:[],elle:false}; // base: seçili beden dizisi (kağıttan eklenen beden olmadan), elle: şablondakinden başka dizi seçildi
+const tplSizes=()=>CUR?CUR.sizes.map(z=>String(z.label).trim()):[];
+const dzEsit=(a,b)=>!!a&&!!b&&a.length===b.length&&a.every((x,i)=>nSz(x)===nSz(b[i]));
+/* her müşteri her beden dizisiyle çalışabilir: şablondaki, hazır diziler, son kullanılanlar ya da elle yazılan */
+const DIZILER=[["XS","S","M","L","XL","XXL","3XL"],["XXS","XS","S","M","L","XL","XXL"],["S","M","L","XL","XXL"],["32","34","36","38","40","42","44"],["34","36","38","40","42","44","46"],["36","38","40","42","44","46","48"],["38","40","42","44","46","48","50"]];
 function renderSizes(){
   if(!SZ.list.includes(SZ.sample))SZ.sample=SZ.list.includes("M")?"M":SZ.list[Math.floor((SZ.list.length-1)/2)]||"";
   $("#szChips").innerHTML=SZ.list.map(x=>`<span class="${x===SZ.sample?"on":""}">${esc(x)}</span>`).join("");
@@ -805,14 +824,41 @@ function renderSizes(){
 function sizeNote(t,uyari){$("#szNote").textContent=t||"";$("#szNote").classList.toggle("uy",!!uyari);$("#szChips").classList.toggle("mchk",!!uyari)}
 /* bedenler her zaman müşterinin şablonundaki gibi; numune bedeni kağıtta ne görülüyorsa o.
    Kağıttaki beden şablonda yoksa (ör. Sorgenfri şablonunda 38) M'nin (yoksa ortadakinin) yerine o yazılır ve sarıyla işaretlenir. */
-function pickSize(lbl){if(!CUR)return;
-  const list=CUR.sizes.map(z=>String(z.label).trim());const s=lbl?nSz(lbl):null;
+function pickSize(lbl,sifirla){if(!CUR)return;
+  if(sifirla||!SZ.elle||!SZ.base||!SZ.base.length){SZ.base=tplSizes();SZ.elle=false}
+  const base=SZ.base.slice(),list=base.slice();const s=lbl?nSz(lbl):null;
   let i=s?list.findIndex(x=>nSz(x)===s):-1;let note="";
-  if(s&&i<0){i=list.findIndex(x=>nSz(x)==="M");if(i<0)i=Math.floor((list.length-1)/2);list[i]=s;note="Kağıttaki beden ("+s+") şablonda yok, bu sütuna yazıldı. Kontrol et."}
-  SZ={list,sample:i>=0?list[i]:""};renderSizes();
+  if(s&&i<0){i=list.findIndex(x=>nSz(x)==="M");if(i<0)i=Math.floor((list.length-1)/2);list[i]=s;note="Kağıttaki beden ("+s+") bu dizide yok, bu sütuna yazıldı. Yanlışsa doğru bedene tıkla ya da beden dizisini değiştir."}
+  SZ={list,sample:i>=0?list[i]:"",base,elle:SZ.elle};renderSizes();
   const found=i>=0&&!note;
   sizeNote(note||(found?"kağıttan okundu":(LAST_SCANNED?"Kağıtta numune bedeni okunamadı: doğru bedene tıkla":"")),!found&&LAST_SCANNED)}
-$("#szChips").onclick=e=>{const t=e.target.closest("span");if(!t)return;SZ.sample=t.textContent;sizeNote("");renderSizes();taslakZamanla()};
+$("#szChips").onclick=e=>{const t=e.target.closest("span");if(!t)return;const v=t.textContent;
+  // dizideki bir bedene basılınca kağıttan eklenen beden geri alınır (ör. M yerine 38 seçildi: 40 geri gelir)
+  if(SZ.base&&SZ.base.length&&SZ.base.includes(v)&&!dzEsit(SZ.list,SZ.base))SZ.list=SZ.base.slice();
+  SZ.sample=v;sizeNote("");renderSizes();taslakZamanla()};
+function szMenuCiz(){const tpl=tplSizes();const gor=[];
+  const satir=(ad,d)=>{gor.push(d);return `<button type="button" data-d="${esc(JSON.stringify(d))}" class="${dzEsit(d,SZ.base)?"on":""}"><span class="ad">${esc(ad)}</span><span class="dz">${esc(d.join("  "))}</span></button>`};
+  let h=tpl.length?satir("Şablondaki",tpl):"";
+  for(const d of LS.get("ota_beden_son",[]))if(Array.isArray(d)&&d.length&&!gor.some(g=>dzEsit(g,d)))h+=satir("Son yazılan",d);
+  h+='<div class="ayr"></div>';
+  for(const d of DIZILER)if(!gor.some(g=>dzEsit(g,d)))h+=satir(/\d/.test(d[0])?"Numara":"Harf",d);
+  h+='<div class="ayr"></div><div class="elle"><input type="text" id="szElle" placeholder="Kendin yaz: 36 38 40 42" spellcheck="false" autocomplete="off"><button type="button" class="btn sm" id="szElleOk">Tamam</button></div>';
+  $("#szMenu").innerHTML=h}
+function szMenu(ac){const m=$("#szMenu");if(ac==null)ac=m.classList.contains("hidden");if(ac)szMenuCiz();m.classList.toggle("hidden",!ac)}
+function diziSec(d){d=(d||[]).map(x=>String(x).trim().toUpperCase()).filter((x,i,a)=>x&&a.indexOf(x)===i).slice(0,15);if(!d.length)return;
+  SZ.base=d.slice();SZ.elle=!dzEsit(d,tplSizes());
+  if(SZ.elle&&!DIZILER.some(x=>dzEsit(x,d))){const son=LS.get("ota_beden_son",[]).filter(x=>!dzEsit(x,d));son.unshift(d);LS.set("ota_beden_son",son.slice(0,4))}
+  const s=LAST_SIZE?nSz(LAST_SIZE):null,list=d.slice();
+  let i=s?list.findIndex(x=>nSz(x)===s):-1;if(i<0&&SZ.sample)i=list.findIndex(x=>nSz(x)===nSz(SZ.sample));
+  SZ.list=list;SZ.sample=i>=0?list[i]:"";renderSizes();
+  const yok=!!s&&!list.some(x=>nSz(x)===s);sizeNote(yok?`Kağıtta ${s} yazıyor, bu dizide yok: numune bedenine tıkla`:"",yok);
+  szMenu(false);degisti()}
+$("#szDizi").onclick=e=>{e.stopPropagation();szMenu()};
+$("#szMenu").onclick=e=>{e.stopPropagation();const b=e.target.closest("button[data-d]");if(b){try{diziSec(JSON.parse(b.dataset.d))}catch(x){}return}
+  if(e.target.id==="szElleOk")diziSec($("#szElle").value.split(/[\s,;\/]+/))};
+$("#szMenu").addEventListener("keydown",e=>{if(e.target.id==="szElle"&&e.key==="Enter"){e.preventDefault();diziSec(e.target.value.split(/[\s,;\/]+/))}});
+document.addEventListener("click",()=>{if(!$("#szMenu").classList.contains("hidden"))szMenu(false)});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#szMenu").classList.contains("hidden"))szMenu(false)});
 let LAST_SCANNED=false,LAST_QUAL_RAW="",DELETED_UNREAD=[];
 /* ---------------- kağıt okuma ---------------- */
 const drop=$("#drop");
@@ -1226,7 +1272,7 @@ function orderRows0(rows){
 }
 $("#blankBtn").onclick=async()=>{if(needCust())return;
   if(DEGISTI&&ROWS.length&&!(await ask("Kaydedilmemiş bir tablo açık. Boş tabloyla başlanırsa bu tablo kapanır. Devam edilsin mi?","Boş tabloyla başla")))return;
-  LAST_SCANNED=false;LAST_SIZE=null;LAST_QUAL_RAW="";pickSize(null);nameEdited=false;
+  LAST_SCANNED=false;LAST_SIZE=null;LAST_QUAL_RAW="";pickSize(null,true);nameEdited=false;
   ROWS=TPL.map((t,i)=>newRow({en:t.en,tr:trFor(t.en,t.tr),grp:t.grp||"",status:"ok",paperIdx:i}));PAGES=[];
   $("#fArt").value="";$("#fQual").value="";$("#fDate").value=today();$("#saveInfo").innerHTML="";$("#ocrMsg").textContent="";$("#prog").classList.add("hidden");
   openEdit();DEGISTI=false;taslakSil()};
@@ -1392,6 +1438,36 @@ function sheetData(){return {art:artUp($("#fArt").value.trim()),qual:$("#fQual")
 function xmlEsc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
 function colN(c){let n=0;for(const ch of c)n=n*26+ch.charCodeAt(0)-64;return n}
 function colL(n){let s="";while(n>0){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s}
+/* Excel sütun genişliği -> piksel (Calibri 11: en geniş rakam 7 px; genişlik iç boşluğu da içerir) */
+const xlPx=w=>Math.trunc((256*w+18)/256*7);
+/* müşteri logosu: merkezinin düştüğü boş birleşik hücreye sığdırılır (oran korunur, ortalanır, kenarda pay bırakılır).
+   Şablonlarda logo kutudan taşabiliyor (ör. Lykka F7:I10'un üstüne/altına, Strikkeby yanlara). */
+async function logoSigdir(zip,sheetPath,mergeRefs,colPx,rowPx,bosMu){
+  let dp=null;const rf=zip.file(sheetPath.replace("worksheets/","worksheets/_rels/")+".rels");
+  if(rf){const r=await rf.async("string");const m=r.match(/<Relationship [^>]*Type="[^"]*\/drawing"[^>]*>/);const tg=m&&(m[0].match(/Target="([^"]+)"/)||[])[1];if(tg)dp="xl/"+tg.replace(/^\.\.\//,"").replace(/^\/?xl\//,"")}
+  if(!dp||!zip.file(dp))dp=Object.keys(zip.files).find(f=>/^xl\/drawings\/drawing\d+\.xml$/.test(f));
+  if(!dp)return 0;
+  const X=c=>{let s=0;for(let i=1;i<c;i++)s+=colPx(i);return s},Y=r=>{let s=0;for(let i=1;i<r;i++)s+=rowPx(i);return s};
+  const kutular=mergeRefs.map(ref=>{const m=ref.match(/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/);return m&&{c1:colN(m[1]),r1:+m[2],c2:colN(m[3]),r2:+m[4]}}).filter(k=>k&&bosMu(k));
+  if(!kutular.length)return 0;
+  const yer=t=>{const m=t.match(/<xdr:col>(\d+)<\/xdr:col>\s*<xdr:colOff>(-?\d+)<\/xdr:colOff>\s*<xdr:row>(\d+)<\/xdr:row>\s*<xdr:rowOff>(-?\d+)<\/xdr:rowOff>/);return m&&{x:X(+m[1]+1)+(+m[2])/9525,y:Y(+m[3]+1)+(+m[4])/9525}};
+  let n=0;const dx=(await zip.file(dp).async("string")).replace(/<xdr:(twoCellAnchor|oneCellAnchor)\b[^>]*>([\s\S]*?)<\/xdr:\1>/g,(tum,tur,ic)=>{
+    if(!/<xdr:pic\b/.test(ic))return tum;
+    const f=yer((ic.match(/<xdr:from>([\s\S]*?)<\/xdr:from>/)||[])[1]||"");if(!f)return tum;
+    const ext=ic.match(/<a:ext cx="(\d+)" cy="(\d+)"\s*\/>/);const t=tur==="twoCellAnchor"?yer((ic.match(/<xdr:to>([\s\S]*?)<\/xdr:to>/)||[])[1]||""):null;
+    const x2=t?t.x:ext?f.x+ext[1]/9525:null,y2=t?t.y:ext?f.y+ext[2]/9525:null;if(x2==null)return tum;
+    const cx=(f.x+x2)/2,cy=(f.y+y2)/2;
+    const k=kutular.find(k=>cx>=X(k.c1)&&cx<=X(k.c2+1)&&cy>=Y(k.r1)&&cy<=Y(k.r2+1));if(!k)return tum;
+    const bx=X(k.c1),by=Y(k.r1),bw=X(k.c2+1)-bx,bh=Y(k.r2+1)-by,pay=Math.max(5,Math.round(Math.min(bw,bh)*.09));
+    const ow=ext?+ext[1]:(x2-f.x)*9525,oh=ext?+ext[2]:(y2-f.y)*9525;if(!(ow>0&&oh>0)||bw-2*pay<10||bh-2*pay<10)return tum;
+    const o=Math.min((bw-2*pay)*9525/ow,(bh-2*pay)*9525/oh),w=Math.round(ow*o),h=Math.round(oh*o);
+    const px=bx+(bw-w/9525)/2,py=by+(bh-h/9525)/2;
+    let c=k.c1;while(c<k.c2&&X(c+1)<=px)c++;let r=k.r1;while(r<k.r2&&Y(r+1)<=py)r++;
+    let pic=(ic.match(/<xdr:pic\b[\s\S]*?<\/xdr:pic>/)||[])[0];if(!pic)return tum;
+    pic=pic.replace(/<a:off x="-?\d+" y="-?\d+"\s*\/>/,`<a:off x="${Math.round(px*9525)}" y="${Math.round(py*9525)}"/>`).replace(/<a:ext cx="\d+" cy="\d+"\s*\/>/,`<a:ext cx="${w}" cy="${h}"/>`);
+    const cd=(ic.match(/<xdr:clientData[^>]*\/>|<xdr:clientData[^>]*>[\s\S]*?<\/xdr:clientData>/)||["<xdr:clientData/>"])[0];n++;
+    return `<xdr:oneCellAnchor><xdr:from><xdr:col>${c-1}</xdr:col><xdr:colOff>${Math.round((px-X(c))*9525)}</xdr:colOff><xdr:row>${r-1}</xdr:row><xdr:rowOff>${Math.round((py-Y(r))*9525)}</xdr:rowOff></xdr:from><xdr:ext cx="${w}" cy="${h}"/>${pic}${cd}</xdr:oneCellAnchor>`});
+  if(n)zip.file(dp,dx);return n}
 async function buildXlsx(buf,{art,qual,date,rows,sizes,sample}){
   const zip=await JSZip.loadAsync(buf);
   const wbx=await zip.file("xl/workbook.xml").async("string");
@@ -1467,7 +1543,7 @@ async function buildXlsx(buf,{art,qual,date,rows,sizes,sample}){
   blocks.forEach(b=>merges.push(`B${first+b.start}:C${first+b.end}`));
   const mx=merges.length?`<mergeCells count="${merges.length}">${merges.map(m=>`<mergeCell ref="${m}"/>`).join("")}</mergeCells>`:"";
   if(/<mergeCells/.test(sx))sx=sx.replace(/<mergeCells[^>]*>[\s\S]*?<\/mergeCells>/,mx);else sx=sx.replace("</sheetData>","</sheetData>"+mx);
-  sx=sx.replace(/<dimension ref="[^"]*"\/>/,`<dimension ref="B1:${colL(lastCol)}${Math.max(last,hdr)}"/>`);
+  sx=sx.replace(/<dimension ref="[^"]*"\/>/,`<dimension ref="B1:${colL(Math.max(lastCol,tplLast))}${Math.max(last,hdr)}"/>`);
   sx=sx.replace(/<selection [^>]*\/>/,'<selection activeCell="E7" sqref="E7"/>');
   // sütun genişlikleri: kumaş, ölçü adları ve Türkçe sığsın
   const cw=c=>{const m=sx.match(new RegExp(`<col min="(\\d+)" max="(\\d+)" width="([\\d.]+)"[^>]*/>`,"g"))||[];for(const x of m){const [_,a,b,w]=x.match(/min="(\d+)" max="(\d+)" width="([\d.]+)"/);if(c>=+a&&c<=+b)return +w}return 9.14};
@@ -1476,9 +1552,13 @@ async function buildXlsx(buf,{art,qual,date,rows,sizes,sample}){
   const colsXml=[];const wL=cw(tplLast);
   for(let c=1;c<=Math.max(lastCol,tplLast);c++){const w=c===4?needD:c===5?needE:(c>tplLast?wL:cw(c));colsXml.push(`<col min="${c}" max="${c}" width="${Math.round(w*100)/100}" customWidth="1"/>`)}
   if(/<cols>[\s\S]*?<\/cols>/.test(sx))sx=sx.replace(/<cols>[\s\S]*?<\/cols>/,"<cols>"+colsXml.join("")+"</cols>");else sx=sx.replace("<sheetData","<cols>"+colsXml.join("")+"</cols><sheetData");
+  // müşteri logosu kendi kutusuna (boş birleşik hücre, ör. F7:I10) sığsın, taşmasın
+  {const rh={};for(const m of sx.matchAll(/<row r="(\d+)"([^>]*?)(?:\/>|>)/g)){const h=(m[2].match(/ ht="([\d.]+)"/)||[])[1];if(h)rh[+m[1]]=+h}
+   const dH=+((sx.match(/defaultRowHeight="([\d.]+)"/)||[])[1]||15);
+   try{await logoSigdir(zip,sheetPath,merges.filter(m=>+m.match(/\d+/)[0]<=hdr),c=>xlPx(cw(c)),r=>(rh[r]!=null?rh[r]:dH)*4/3,k=>!String(cellVal(colL(k.c1)+k.r1)||"").trim())}catch(e){console.warn("logo",e)}}
   zip.file(sheetPath,sx);zip.file("xl/styles.xml",st);
   // yazdırma alanı
-  let wb2=wbx;const pa=`<definedName name="_xlnm.Print_Area" localSheetId="0">'${sheetName.replace(/'/g,"''")}'!$B$1:$${colL(lastCol)}$${last}</definedName>`;
+  let wb2=wbx;const pa=`<definedName name="_xlnm.Print_Area" localSheetId="0">'${sheetName.replace(/'/g,"''")}'!$B$1:$${colL(Math.max(lastCol,tplLast))}$${last}</definedName>`; // az bedenli dizide de başlığın tamamı (Development) sayfada kalsın
   if(/_xlnm\.Print_Area/.test(wb2))wb2=wb2.replace(/<definedName name="_xlnm\.Print_Area"[^>]*>[\s\S]*?<\/definedName>/,pa);
   else if(/<definedNames>/.test(wb2))wb2=wb2.replace("<definedNames>","<definedNames>"+pa);
   else wb2=wb2.replace("</sheets>","</sheets><definedNames>"+pa+"</definedNames>");
@@ -1519,7 +1599,8 @@ async function renderXlsx(buf){
     for(const c of (m[3]||"").matchAll(/<c r="([A-Z]+)(\d+)"([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)){const s0=+((c[3].match(/ s="(\d+)"/)||[])[1]||0);const t=(c[3].match(/ t="(\w+)"/)||[])[1];const inner=c[4]||"";
       let v=null;if(t==="s"){const vi=(inner.match(/<v>(\d+)<\/v>/)||[])[1];v=vi!=null?unx(ss[+vi]):null}else if(t==="inlineStr"){v=unx([...inner.matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map(x=>x[1]).join(""))}else{const vv=(inner.match(/<v>([^<]*)<\/v>/)||[])[1];v=vv!=null?(t==="str"?unx(vv):+vv):null}
       cells.push({c:colN(c[1]),r,s:s0,v})}}
-  const colPx=c=>Math.round((cw[c]!=null?cw[c]:defW)*7+5),rowPx=r=>Math.round((rh[r]!=null?rh[r]:defH)*96/72);
+  const dCW=/defaultColWidth="[\d.]+"/.test(sx);
+  const colPx=c=>cw[c]!=null?xlPx(cw[c]):dCW?xlPx(defW):64,rowPx=r=>Math.round((rh[r]!=null?rh[r]:defH)*96/72);
   const X=[0],Y=[0];for(let c=1;c<=60;c++)X[c]=X[c-1]+colPx(c);for(let r=1;r<=400;r++)Y[r]=Y[r-1]+rowPx(r); // X[c] = c. sütunun sağ kenarı
   const xL=c=>X[c-1],yT=r=>Y[r-1];
   const merges=[...sx.matchAll(/<mergeCell ref="([A-Z]+)(\d+):([A-Z]+)(\d+)"\/>/g)].map(m=>({c1:colN(m[1]),r1:+m[2],c2:colN(m[3]),r2:+m[4]}));
@@ -1616,7 +1697,7 @@ async function taslakAc(d,sessiz){
   ROWS=[];await custSec(d.cust);if(!CUR)return;
   nextId=Math.max(nextId,...d.rows.map(r=>(r.id||0)+1));
   ROWS=d.rows;PAGES=d.pages||[];
-  if(d.sz&&d.sz.list&&d.sz.list.length){SZ={list:d.sz.list.slice(),sample:d.sz.sample};renderSizes();sizeNote("")}
+  if(d.sz&&d.sz.list&&d.sz.list.length){SZ={list:d.sz.list.slice(),sample:d.sz.sample,base:(d.sz.base&&d.sz.base.length?d.sz.base:d.sz.list).slice(),elle:!!d.sz.elle};renderSizes();sizeNote("")}
   $("#fArt").value=d.art||"";$("#fQual").value=d.qual||"";$("#fDate").value=d.date||today();
   nameEdited=!!d.nameEdited;$("#fnameIn").value=d.fname||"";if(!nameEdited)autoName();
   $("#taslakBar").innerHTML="";$("#saveInfo").innerHTML="";DEGISTI=sessiz?d.degisti!==false:true;openEdit(sessiz);durumBildir();if(!sessiz)toast("Tablo kaldığın yerden açıldı.")}

@@ -125,6 +125,16 @@ istiyor). **Program deposu herkese açık kalır.** Karar:
   okuma anahtarıyla yalnız GET (hafiza.json, sablonlar), PUT/DELETE hiç yok; yerel öğrenilen, eklenen ve silinen
   müşteri yerelde kalıyor; `anahtar.txt` varken `salt:false`, okur-yazar anahtar.
 
+- 2026-11-06 gece: **Eleman 3.0.4** (yalnız `eleman`), Ölçü Tablosu (kullanıcı Eleman sohbetinden istedi):
+  - Logo: şablonlarda müşteri logosu F7:I10 kutusundan taşıyor (Lykka üst/alt, Strikkeby ve Story of Mine yanlar; Excel'de
+    gölgeli beyaz kart olarak görünüyor). `buildXlsx` → `logoSigdir`: merkezi boş bir birleşik hücreye düşen resim o kutuya
+    oranı korunarak, ortalanarak, %9 payla sığdırılır (oneCellAnchor). Şirket logosu (D2) ve nokta şekli dokunulmaz.
+    Önizleme sütun pikselleri Excel'deki gibi (`xlPx`: (256w+18)/256*7; eskiden w*7+5). LibreOffice ve önizlemeyle 7 müşteri denendi.
+  - Beden dizisi: `SZ={list,sample,base,elle}`; "Beden dizisi" menüsü (şablondaki, hazır harf/numara dizileri, son elle
+    yazılanlar `ota_beden_son`, elle yaz). Dizideki bir bedene basınca kağıttan araya giren beden geri alınır. Müşteri
+    değişince / boş tabloda şablondakine döner; taramadan sonra elle seçilen dizi kalır. Az bedenli dizide yazdırma alanı
+    şablonun genişliğinde kalır (Development başlığı kesilmesin).
+
 ## Sıradaki işler
 
 1. ✓ Müşteri şablonları gizli `eleman-hafiza` deposunda: `olcu-tablosu/veri/sablonlar.json` (2026-11-06, 7 müşteri).
