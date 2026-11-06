@@ -169,6 +169,14 @@ istiyor). **Program deposu herkese açık kalır.** Karar:
   **Kural:** kabuk_yap.py'de main'in kullandığı sınıf adları (bos, ok, on, ad, x, ik, t, is, bekle, bad, tab ...) kapsamsız
   kullanılmaz; yeni sınıflara Eleman'a özgü ad verilir. Playwright ile ⚙'deki her düğmenin üstte olduğu ve çalıştığı denendi.
 
+- 2026-11-07 gece: **Eleman 3.0.9** (yalnız `eleman`): sol üstteki uygulama değiştirici yeniden (kullanıcı: "fena değil ama çok
+  daha güzel bir şey istiyorum"). `#uMenu`: Eleman simgesinden yayılan cam panel (468 px), üç büyük kutu `.uApp[data-u]`
+  (58 px simge, ad, durum: `#mDH` selam, `#mDA`, `#mDO`; açık sayfası olanın simgesi altında nokta `.acik .uNokta`;
+  seçili olan kendi renginde `--r`), kutular sırayla gelir, ok tuşlarıyla gezilir. Panel açılışta `body`'ye taşınır:
+  `#bar`'ın backdrop-filter'ı içindeki elemanın arkayı bulanıklaştırmasını engelliyor (backdrop root). Bu yüzden ⚙ menüsünün
+  açık temadaki `--pop`'u .92 (neredeyse opak). Kısayol: Ctrl+1/2/3 (`kisayol`, `kisayolBagla`: Asorti ve Ölçü iframe'lerinin
+  belgesine de bağlanır). Playwright: ok tuşları + Enter, Ölçü ve Asorti içindeyken Ctrl+2/3/1 denendi.
+
 ## Sıradaki işler
 
 1. ✓ Müşteri şablonları gizli `eleman-hafiza` deposunda: `olcu-tablosu/veri/sablonlar.json` (2026-11-06, 7 müşteri).

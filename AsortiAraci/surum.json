@@ -1,7 +1,8 @@
 {
- "surum": "3.0.8",
+ "surum": "3.0.9",
  "tarih": "2026-11-07",
  "notlar": [
-  "Asorti Aracı ayarlarındaki düğmeler yeniden çalışıyor (Excel klasörü seçilmemişken bir yazı hepsinin üstünü kapatıyordu)"
+  "Sol üstteki uygulama menüsü yenilendi: Eleman simgesinden açılan cam panelde büyük simgeli Ana sayfa, Asorti Aracı ve Ölçü Tablosu; açık sayfası olanın altında nokta",
+  "Ctrl+1 Ana sayfa, Ctrl+2 Asorti Aracı, Ctrl+3 Ölçü Tablosu: sayfaların içindeyken de çalışır; menüde ok tuşlarıyla da gezilir"
  ]
 }

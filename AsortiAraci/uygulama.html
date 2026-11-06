@@ -168,26 +168,44 @@ html[data-theme=dark][data-uyg=olcu]{--acc:#34c77b;--accs:rgba(52,199,123,.2)}
 #logo .lOk{width:11px;height:8px;fill:none;stroke:var(--mut);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;margin-left:2px;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
 #logo[aria-expanded=true] .lOk{transform:rotate(180deg)}
 html.pencere #bar #logo{app-region:no-drag;-webkit-app-region:no-drag}
-#uMenu{position:absolute;top:52px;left:8px;z-index:30;width:292px;padding:6px;border-radius:16px;background:var(--pop);backdrop-filter:saturate(180%) blur(24px);
- box-shadow:var(--psh);border:1px solid var(--line);transform-origin:22px 0;opacity:0;visibility:hidden;transform:translateY(-6px) scale(.96);
- transition:opacity .2s cubic-bezier(.2,.8,.2,1),transform .26s cubic-bezier(.2,.9,.25,1),visibility 0s linear .26s;app-region:no-drag;-webkit-app-region:no-drag}
-#uMenu.on{opacity:1;visibility:visible;transform:none;transition:opacity .18s ease-out,transform .3s cubic-bezier(.2,.9,.25,1.05),visibility 0s}
-#uMenu button{display:flex;align-items:center;gap:12px;width:100%;padding:8px 10px;border:0;border-radius:11px;background:transparent;text-align:left;cursor:pointer;color:var(--ink);transition:background .15s}
-#uMenu button:hover{background:var(--tabh)}
-#uMenu button.on{background:var(--accs)}
-#uMenu .mIk{width:34px;height:34px;flex:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.14))}
-#uMenu .mEv{display:grid;place-items:center;border-radius:9px;background:linear-gradient(#ffe36e,#ffc21a)}
-#uMenu .mEv svg{width:19px;height:19px;fill:none;stroke:#1d1d1f;stroke-width:1.9;stroke-linejoin:round}
-#uMenu .mMt{display:flex;flex-direction:column;gap:1px;flex:1;min-width:0}
-#uMenu .mMt b{font-size:14px;font-weight:620;letter-spacing:-.01em}
-#uMenu .mMt small{font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#uMenu .mOn{width:7px;height:7px;border-radius:50%;flex:none;margin-right:4px;background:transparent}
-#uMenu button.on .mOn{background:var(--acc)}
-#uMenu button[data-u=asorti].on{background:rgba(0,113,227,.12)}#uMenu button[data-u=asorti].on .mOn{background:#0071e3}
-#uMenu button[data-u=olcu].on{background:rgba(22,138,73,.13)}#uMenu button[data-u=olcu].on .mOn{background:#168a49}
-html[data-theme=dark] #uMenu button[data-u=asorti].on{background:rgba(10,132,255,.22)}html[data-theme=dark] #uMenu button[data-u=asorti].on .mOn{background:#0a84ff}
-html[data-theme=dark] #uMenu button[data-u=olcu].on{background:rgba(52,199,123,.2)}html[data-theme=dark] #uMenu button[data-u=olcu].on .mOn{background:#34c77b}
-#uMenu .mAy{height:1px;margin:5px 10px;background:var(--line)}
+/* sol üstteki uygulama değiştirici: Eleman simgesinden yayılan cam panel, üç büyük uygulama kutusu (Dock / Cmd-Tab gibi) */
+/* panel gövdeye taşınır (bkz. uMenuTasi): üst çubuğun kendi bulanıklığı, içindekilerin arkadaki sayfayı bulanıklaştırmasını engelliyor */
+#uMenu{position:fixed;top:52px;left:8px;z-index:40;width:468px;padding:10px;border-radius:24px;
+ background:rgba(255,255,255,.76);-webkit-backdrop-filter:blur(30px) saturate(1.9);backdrop-filter:blur(30px) saturate(1.9);border:1px solid rgba(255,255,255,.88);
+ box-shadow:inset 1px 1px 0 rgba(255,255,255,.95),0 0 0 1px rgba(30,44,90,.08),0 12px 28px -12px rgba(30,44,90,.3),0 36px 84px -24px rgba(30,44,90,.46);
+ transform-origin:26px 0;opacity:0;visibility:hidden;transform:translateY(-8px) scale(.94);
+ transition:opacity .15s ease-in,transform .2s cubic-bezier(.4,0,.6,1),visibility 0s linear .2s;app-region:no-drag;-webkit-app-region:no-drag}
+html[data-theme=dark] #uMenu{background:rgba(34,38,52,.8);border-color:rgba(255,255,255,.13);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 0 0 1px rgba(0,0,0,.45),0 36px 84px -24px rgba(0,0,0,.78)}
+#uMenu.on{opacity:1;visibility:visible;transform:none;transition:opacity .2s ease-out,transform .4s cubic-bezier(.2,.9,.25,1.12),visibility 0s}
+#uMenu .uKutu{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+#uMenu .uApp{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:16px 8px 13px;border:0;border-radius:17px;background:transparent;
+ color:var(--ink);cursor:pointer;text-align:center;font:inherit;transition:background .2s,box-shadow .2s,transform .28s cubic-bezier(.2,.9,.25,1.15)}
+#uMenu.on .uApp{animation:uGel .44s cubic-bezier(.2,.9,.25,1.1) backwards}
+#uMenu.on .uApp:nth-child(2){animation-delay:.045s}#uMenu.on .uApp:nth-child(3){animation-delay:.09s}
+@keyframes uGel{from{opacity:0;transform:translateY(10px) scale(.95)}}
+#uMenu .uApp:hover{background:rgba(255,255,255,.62);transform:translateY(-2px);
+ box-shadow:inset 1px 1px 0 rgba(255,255,255,.95),0 0 0 1px rgba(30,44,90,.06),0 12px 24px -12px rgba(30,44,90,.38)}
+html[data-theme=dark] #uMenu .uApp:hover{background:rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 12px 24px -12px rgba(0,0,0,.6)}
+#uMenu .uApp:active{transform:scale(.97)}
+#uMenu .uApp:focus-visible{outline:2px solid rgb(var(--r));outline-offset:2px}
+#uMenu .uApp.on{background:rgba(var(--r),.13);box-shadow:inset 0 0 0 1.5px rgba(var(--r),.5),0 12px 26px -14px rgba(var(--r),.6)}
+html[data-theme=dark] #uMenu .uApp.on{background:rgba(var(--r),.2);box-shadow:inset 0 0 0 1.5px rgba(var(--r),.62),0 12px 26px -14px rgba(var(--r),.55)}
+#uMenu .uIk{width:58px;height:58px;flex:none;margin-bottom:9px;filter:drop-shadow(0 7px 12px rgba(var(--r),.36)) drop-shadow(0 1px 2px rgba(0,0,0,.14));
+ transition:transform .32s cubic-bezier(.2,.9,.25,1.25)}
+#uMenu .uApp:hover .uIk{transform:scale(1.07) translateY(-1px)}
+#uMenu .uEv{display:grid;place-items:center;border-radius:15px;background:linear-gradient(#ffe36e,#ffc21a)}
+#uMenu .uEv svg{width:30px;height:30px;fill:none;stroke:#1d1d1f;stroke-width:1.8;stroke-linejoin:round}
+#uMenu .uApp b{font-size:13.5px;font-weight:650;letter-spacing:-.01em}
+#uMenu .uApp small{font-size:11.5px;color:var(--mut);line-height:1.3;min-height:30px;max-width:136px}
+#uMenu .uNokta{position:absolute;top:80px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:rgb(var(--r));opacity:0;transition:opacity .2s}
+#uMenu .uApp.acik .uNokta{opacity:.85}
+#uMenu .uAlt{display:flex;align-items:center;justify-content:center;gap:5px;margin:8px 6px 1px;padding-top:9px;border-top:1px solid var(--line);font-size:11.5px;color:var(--mut)}
+#uMenu .uAlt span:last-child{margin-left:4px}
+#uMenu kbd{font:600 11px/1 inherit;font-family:inherit;min-width:20px;text-align:center;padding:3px 6px;border-radius:6px;color:var(--ink);background:rgba(255,255,255,.75);
+ box-shadow:inset 0 -1px 0 rgba(30,44,90,.14),0 0 0 1px rgba(30,44,90,.1)}
+html[data-theme=dark] #uMenu kbd{background:rgba(255,255,255,.1);box-shadow:inset 0 -1px 0 rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.13)}
+@media (prefers-reduced-motion:reduce){#uMenu,#uMenu .uApp,#uMenu .uIk{transition:none;animation:none}}
 /* sekme şeritleri: açık uygulamanınki görünür, geçerken yumuşakça belirir */
 html[data-uyg=ana] #serit>*{display:none}
 html[data-uyg=asorti] #tabsO,html[data-uyg=olcu] #tabs{display:none}
@@ -285,7 +303,7 @@ html[data-theme=dark] .kart{border-color:rgba(255,255,255,.12);background:linear
 <div id="acilis" aria-hidden="true"><svg class="aIk"><use href="#ikEleman"/></svg><canvas></canvas></div>
 <div id="bar">
  <button id="logo" type="button" aria-haspopup="menu" aria-expanded="false" title="Ana sayfa ve uygulamalar"><svg aria-hidden="true"><use href="#ikEleman"/></svg><span class="lAd"><b>Eleman</b><span id="lUyg"></span></span><svg class="lOk" viewBox="0 0 12 8" aria-hidden="true"><path d="M1.6 1.8 6 6.2l4.4-4.4"/></svg></button>
- <div id="uMenu" role="menu" aria-label="Ana sayfa ve uygulamalar"><button type="button" role="menuitem" data-u="ana"><span class="mIk mEv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.6 12 3.6l8.5 7v9.1a1 1 0 0 1-1 1H15v-6.2H9v6.2H4.5a1 1 0 0 1-1-1z"/></svg></span><span class="mMt"><b>Ana sayfa</b><small>Eleman</small></span><i class="mOn"></i></button><div class="mAy"></div><button type="button" role="menuitem" data-u="asorti"><svg class="mIk" aria-hidden="true"><use href="#ikAsorti"/></svg><span class="mMt"><b>Asorti Aracı</b><small id="mDA"></small></span><i class="mOn"></i></button><button type="button" role="menuitem" data-u="olcu"><svg class="mIk" aria-hidden="true"><use href="#ikOlcu"/></svg><span class="mMt"><b>Ölçü Tablosu</b><small id="mDO"></small></span><i class="mOn"></i></button></div>
+ <div id="uMenu" role="menu" aria-label="Ana sayfa ve uygulamalar"><div class="uKutu"><button type="button" role="menuitem" class="uApp" data-u="ana" style="--r:236,170,0"><span class="uIk uEv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.6 12 3.6l8.5 7v9.1a1 1 0 0 1-1 1H15v-6.2H9v6.2H4.5a1 1 0 0 1-1-1z"/></svg></span><i class="uNokta"></i><b>Ana sayfa</b><small id="mDH"></small></button><button type="button" role="menuitem" class="uApp" data-u="asorti" style="--r:0,113,227"><svg class="uIk" aria-hidden="true"><use href="#ikAsorti"/></svg><i class="uNokta"></i><b>Asorti Aracı</b><small id="mDA"></small></button><button type="button" role="menuitem" class="uApp" data-u="olcu" style="--r:22,138,73"><svg class="uIk" aria-hidden="true"><use href="#ikOlcu"/></svg><i class="uNokta"></i><b>Ölçü Tablosu</b><small id="mDO"></small></button></div><div class="uAlt"><kbd>Ctrl</kbd><span>+</span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><span>ile her yerden geçebilirsin</span></div></div>
  <div id="serit"><div id="tabs" role="tablist" aria-label="Asorti sayfaları"></div><div id="tabsO" role="tablist" aria-label="Ölçü Tablosu sayfaları"></div>
   <button id="yeni" type="button" title="Yeni çalışma sayfası aç (sekme çubuğunda boş yere çift tıklayarak da açılır)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>Yeni sayfa</button></div>
  <div id="sag">
@@ -365,7 +383,7 @@ const T=$('tabs'),AZ=matchMedia('(prefers-reduced-motion: reduce)'),YUMUSAK='cub
 const xIk='<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2.3 2.3l5.4 5.4M7.7 2.3L2.3 7.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
 let giris=null,gosterilen=null,sonAktif=null;
 function frame(id){let f=document.querySelector('#sayfalar iframe[data-id="'+id+'"]');
- if(!f){f=document.createElement('iframe');f.dataset.id=id;f.addEventListener('load',()=>{f.dataset.hazir='1'});camEkle(f);f.addEventListener('load',()=>camEkle(f));
+ if(!f){f=document.createElement('iframe');f.dataset.id=id;f.addEventListener('load',()=>{f.dataset.hazir='1'});camEkle(f);f.addEventListener('load',()=>camEkle(f));kisayolBagla(f);
   f.src='asorti_araci.html?sayfa='+encodeURIComponent(id);$('sayfalar').appendChild(f)}
  return f}
 function sekme(id){let b=T.querySelector('.tab[data-id="'+id+'"]');
@@ -708,7 +726,7 @@ let girisO=null,gosterilenO=null;
 function saveO(){try{localStorage.setItem(LO,JSON.stringify(SO))}catch(e){}yerelYedek()}
 function frameO(id){let f=document.querySelector('#sayfalarO iframe[data-id="'+id+'"]');
  if(!f){f=document.createElement('iframe');f.dataset.id=id;f.title='Ölçü Tablosu Aracı';f.addEventListener('load',()=>{f.dataset.hazir='1'});
-  f.src='olcu_tablosu_araci.html?sayfa='+encodeURIComponent(id);$('sayfalarO').appendChild(f)}
+  f.src='olcu_tablosu_araci.html?sayfa='+encodeURIComponent(id);$('sayfalarO').appendChild(f);kisayolBagla(f)}
  return f}
 function sekmeO(id){let b=TO.querySelector('.tab[data-id="'+id+'"]');
  if(!b){b=document.createElement('div');b.className='tab';b.dataset.id=id;b.setAttribute('role','tab');
@@ -770,10 +788,17 @@ function anaYaz(){if(!$('dAsorti'))return;
  $('dAsorti').innerHTML=cip('',sA)+(is?cip('is',is+' Gerber işi sürüyor'):'')+(GB==='ok'?cip('ok','Gerber bağlı'):GB==='bad'?cip('bad','Gerber köprüsü kapalı'):'');
  $('dOlcu').innerHTML=cip('',sO)+(dg?cip('is',dg+' kaydedilmemiş tablo'):'');
  $('mDA').textContent=sA+(is?' · '+is+' Gerber işi sürüyor':'');
- $('mDO').textContent=sO+(dg?' · '+dg+' kaydedilmemiş':'')}
+ $('mDO').textContent=sO+(dg?' · '+dg+' kaydedilmemiş':'');
+ $('mDH').textContent=selam();const u=$('uMenu');u.querySelector('[data-u=asorti]').classList.toggle('acik',n>0);u.querySelector('[data-u=olcu]').classList.toggle('acik',no>0)}
 function uMenu(ac){const m=$('uMenu'),b=$('logo');if(ac===undefined)ac=!m.classList.contains('on');
  m.classList.toggle('on',ac);b.setAttribute('aria-expanded',String(ac));
  if(ac){menu(false);anaYaz();m.querySelectorAll('button[data-u]').forEach(x=>x.classList.toggle('on',x.dataset.u===UYG))}}
+/* uygulamalar arası kısayol: Ctrl+1 Ana sayfa, Ctrl+2 Asorti, Ctrl+3 Ölçü (sayfaların içindeyken de: kabuk iframe'lere bağlar) */
+function kisayol(e){if((e.ctrlKey||e.metaKey)&&!e.altKey&&!e.shiftKey&&/^[123]$/.test(e.key)){e.preventDefault();uygGit(['ana','asorti','olcu'][+e.key-1]);return true}return false}
+function kisayolBagla(f){const bag=()=>{let d=null;try{d=f.contentDocument}catch(x){}if(!d||d.URL==='about:blank'||d.__elemanKisayol)return!!(d&&d.__elemanKisayol);
+ d.__elemanKisayol=true;d.addEventListener('keydown',e=>{if(kisayol(e))try{window.focus()}catch(x){}},true);return true};
+ if(!bag()){let n=0;const t=setInterval(()=>{if(bag()||++n>300)clearInterval(t)},10)}f.addEventListener('load',bag)}
+document.addEventListener('keydown',e=>{kisayol(e)},true);
 function uygGit(u){if(!['ana','asorti','olcu'].includes(u))u='ana';const once=UYG;UYG=u;
  document.documentElement.dataset.uyg=u;
  $('lUyg').textContent=u==='asorti'?'Asorti Aracı':u==='olcu'?'Ölçü Tablosu':'';
@@ -782,11 +807,15 @@ function uygGit(u){if(!['ana','asorti','olcu'].includes(u))u='ana';const once=UY
  if(u==='asorti'){if(!S.list.length)bosGoster('A');else if(once!=='asorti'){const f=document.querySelector('#sayfalar iframe.on');try{if(f&&f.contentWindow.sayfaBelir)f.contentWindow.sayfaBelir()}catch(e){}}}
  try{localStorage.setItem('eleman-son',u)}catch(e){}
  uMenu(false);menu(false);anaYaz()}
+document.body.appendChild($('uMenu'));   // uMenuTasi: #bar'ın backdrop-filter'ı panelin bulanıklığını keser
 $('logo').onclick=e=>{e.stopPropagation();uMenu()};
 $('uMenu').querySelectorAll('button[data-u]').forEach(b=>b.onclick=e=>{e.stopPropagation();uygGit(b.dataset.u)});
 document.querySelectorAll('.kart').forEach(b=>b.onclick=()=>uygGit(b.dataset.u));
 document.addEventListener('click',e=>{if(!e.target.closest('#uMenu'))uMenu(false)});
-document.addEventListener('keydown',e=>{if(e.key==='Escape')uMenu(false)});
+document.addEventListener('keydown',e=>{const m=$('uMenu');if(e.key==='Escape'){uMenu(false);return}
+ if(!m.classList.contains('on')||!/^Arrow(Left|Right)$/.test(e.key))return;e.preventDefault();
+ const k=[...m.querySelectorAll('.uApp')],i=k.indexOf(document.activeElement),y=e.key==='ArrowRight'?1:-1;
+ k[i<0?k.findIndex(x=>x.classList.contains('on')):(i+y+k.length)%k.length].focus()});
 window.addEventListener('blur',()=>uMenu(false));
 $('ayar').addEventListener('click',()=>uMenu(false));
 $('olAyar').onclick=e=>{e.stopPropagation();menu(false);const f=document.querySelector('#sayfalarO iframe.on');if(f)try{f.contentWindow.postMessage({t:'ayarlar'},'*')}catch(x){}};
