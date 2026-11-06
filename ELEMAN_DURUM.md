@@ -14,8 +14,9 @@ Her sohbet işe başlamadan önce bunu okur, iş bitince "Son durum" bölümün�
 
 ## Değişmeyecekler (çalışan hiçbir şey bozulmasın diye)
 
-- **Depo adı `eleman` oluyor** (kullanıcı 7 Kasım 2026: "hepsi tek yerde, Eleman adı altında, düzenli dursun"; eski adı
-  `asorti-araci`, adı kullanıcı GitHub'da değiştirir). GitHub eski adresleri (git, raw.githubusercontent, codeload, API) yeni
+- **Depo adı `eleman` OLDU** (kullanıcı 7 Kasım 2026 gece değiştirdi: "hepsi tek yerde, Eleman adı altında, düzenli dursun";
+  eski adı `asorti-araci`). Varsayılan dal `eleman`, açıklama "Eleman · Asorti Aracı ve Ölçü Tablosu bir arada".
+  Yerel klonlar: `git remote set-url origin https://github.com/TheBurzzz/eleman`. GitHub eski adresleri (git, raw.githubusercontent, codeload, API) yeni
   ada yönlendirir; iş bilgisayarındaki v2.0.4 bu yönlendirmeyle güncellenir. Eleman 3.1.0+ ikisini sırayla dener
   (`ElemanDepolari`: önce `TheBurzzz/eleman`, 404'te `TheBurzzz/asorti-araci`); kurulum `eleman-<dal>` ve `asorti-araci-<dal>`
   klasör adlarını tanır. Varsayılan dal `eleman` yapılır (depo sayfası ve Download ZIP Eleman'ı verir; güncelleyiciler dalı
@@ -189,6 +190,10 @@ istiyor). **Program deposu herkese açık kalır.** Karar:
   tanır; README Eleman'ın vitrin sayfası oldu (simge, iki uygulama, kurulum, klasörler, dallar).
 
 ## Sıradaki işler
+0. **main'e geçmeden önce:** güncelleyici (Guncelleme.cs, sunucu.ps1) ve kurulum (Kurulum.ps1) paketteki program klasörünü
+   hem `Eleman/` hem `AsortiAraci/` olarak tanısın (önce Eleman). İş bilgisayarı Eleman'a geçtikten sonra klasör `Eleman/`
+   yapılır (kullanıcı adların "Asorti Aracı" kalmasını sordu: şimdilik böyle durmalı, sonra değişecek). İstenirse eski
+   `surum-v1.*` dalları GitHub Releases'a taşınabilir (dal listesi sadeleşir; Asorti sohbetinin sürüm arşivi alışkanlığı da değişir).
 
 1. ✓ Müşteri şablonları gizli `eleman-hafiza` deposunda: `olcu-tablosu/veri/sablonlar.json` (2026-11-06, 7 müşteri).
    Eleman ilk açılışta `anahtar.txt` ile oradan indirip `olcu_sablonlar.json` olarak saklar, 6 saatte bir arka planda tazeler
