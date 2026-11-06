@@ -77,13 +77,30 @@ Her sohbet işe başlamadan önce bunu okur, iş bitince "Son durum" bölümün�
   Excel'e kaydedildi, Asorti sayfası açıldı. Tek 404: `kopru/alanlar.json` (Gerber'siz kurulumda zaten yok, eskiden de böyle).
   Deneme araçları (Eleman sohbeti): `/home/claude/is/e2e/e2e.py`, `/home/claude/is/derle/derle.sh`, `/home/claude/is/parse.ps1` (pwsh 7.4).
 
+- 2026-11-06 gece: **Eleman 3.0.1** (yalnız `eleman` dalı; kullanıcının evdeki kurulumu bu daldan güncellenir).
+  Kullanıcının kısaltmaları: **AA** = Asorti Aracı, **ÖT** = Ölçü Tablosu.
+  - Simge: kurulumdaki derleme (sistem/ortak.ps1) de eleman.ico kullanır; kısayollar (Kisayol.cs) eleman.ico'ya bağlanır,
+    güncellenen kurulumlarda masaüstü / Başlat'taki "Asorti Araci.lnk" adı "Eleman.lnk" olur (görev çubuğuna sabitlenmişe dokunulmaz).
+  - Açılış (X / Twitter iOS gibi): yerel açılış ekranı (Acilis.cs) düz zemin + ortada 104 px simge (sistem/acilis/orta_*.png
+    yalnız simge). Sayfa da aynı görüntüyle açılır (#acilis); yerel ekran kalkınca Eleman sayfaya {t:"acilis"} yollar, simge
+    küçülüp büyür, içi pencere olur ve uygulama görünür (tuval, ~0,9 sn). Aynı oturumda yenilemede oynamaz (sessionStorage).
+  - Üst çubuk: AA / ÖT düğmeleri kalktı; sol üstteki Eleman simgesi menü açar (Ana sayfa, AA, ÖT). Etiket: "Eleman › Asorti Aracı".
+  - Sayfa kendiliğinden açılmaz; boşken AA / ÖT boş ekranı (Yeni sayfa düğmesi). Ana sayfada sürüm yazmaz (yalnız ⚙).
+  - Hız: sayfalar ilk açılınca yüklenir; AA'da en çok 4, ÖT'de 3 sayfa canlı, gerisi uyur (AA: yalnız boş ya da tablosu
+    kaydedilmiş sayfa uyur; Gerber işi süren uyumaz. ÖT: okuma / kayıt sürerken uyumaz, uyumadan önce taslakYaz(true)).
+    Sekme adları kalıcı (S.ad / SO.ad).
+  - ÖT: müşteri döşemeleri (şablondaki logo + ad; sıra Sorgenfri, Lykka, Deerberg, Heiter, sonra alfabetik), başlıkta
+    "＋ Müşteri ekle" ve "Sıfırla" (AA'daki gibi; Kaydet'teki "Yeni tablo" kalktı), Tara'da bağlı tarayıcının adı ya da
+    "Tarayıcı bağlı değil", "Kağıdı yanda aç": taranan kağıt solda, seçili satırın kağıttaki yeri işaretli (satırlarda yer:{pg,a,b}),
+    "✓ Onayla" düğmesi. Eleman sekmesinde tablo kaydedilse de sekmede durur, program açılınca sessizce geri gelir.
+
 ## Sıradaki işler
 
 1. ✓ Müşteri şablonları gizli `eleman-hafiza` deposunda: `olcu-tablosu/veri/sablonlar.json` (2026-11-06, 7 müşteri).
    Eleman ilk açılışta `anahtar.txt` ile oradan indirip `olcu_sablonlar.json` olarak saklar, 6 saatte bir arka planda tazeler
    (SunucuOlcu.cs: OlcuSablonIndir). Bu klasör çalışan Ölçü Tablosu'nun okuduğu `olcu-tablosu/sablonlar/` değildir, ona karışmaz.
    Claude'un GitHub uygulaması artık `eleman-hafiza`'ya da erişebiliyor.
-2. Masaüstü kısayolunun adı ve simgesi "Eleman"; Kurulum.ps1 ve Kaldir.bat'ta görünen ad.
+2. ✓ Masaüstü kısayolunun adı ve simgesi "Eleman" (kurulum ve güncelleme).
 3. Ölçü: birden çok sekme açıkken ortak hafıza eşitlemesini tek sekme yapsın.
 4. ⚙ menüsünde Ölçü'nün ayarları (şimdilik düğme Ölçü'nün kendi ayar penceresini açıyor).
 5. Sürüm 3.0.0 → iş bilgisayarında deneme (Asorti sayfaları, Gerber, Ölçü kaydet / Excel'de aç / tara, güncelleme) → main.

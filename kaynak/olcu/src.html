@@ -229,6 +229,54 @@ html[data-theme=dark] .seg button.on{background:#6a6f7e}
 
 /* Eleman içinde görünüm yalnız Eleman'ın ⚙ menüsünden değişir */
 .gomulu #temaSec{display:none}
+
+/* ---- müşteriler: derli toplu döşemeler (logo + ad), seçilen yeşil çerçeveli ---- */
+.musteriler{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:10px;border-radius:18px}
+.musteriler .chip{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;height:86px;padding:10px 12px;border-radius:16px;font-weight:560;min-width:0}
+.musteriler .chip:hover{transform:translateY(-2px)}
+.musteriler .chip .mLogo{height:34px;width:100%;display:flex;align-items:center;justify-content:center}
+.musteriler .chip .mLogo img{max-height:34px;max-width:128px;object-fit:contain;mix-blend-mode:multiply}
+html[data-theme=dark] .musteriler .chip .mLogo img{mix-blend-mode:normal;background:#fff;border-radius:7px;padding:3px 7px;max-height:30px}
+.musteriler .chip .mLogo i{font-style:normal;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--acc);background:rgba(var(--accrgb),.12)}
+.musteriler .chip .mAd{font-size:12.5px;color:var(--mut);font-weight:560;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.musteriler .chip.on{background:rgba(var(--accrgb),.09);color:var(--ink);border:1.5px solid var(--acc);box-shadow:0 0 0 4px rgba(var(--accrgb),.12),0 6px 16px rgba(var(--accrgb),.14)}
+.musteriler .chip.on .mAd{color:var(--acc);font-weight:680}
+.musteriler .chip.on::after{content:"✓";position:absolute;top:7px;right:8px;width:18px;height:18px;border-radius:50%;background:var(--acc);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center}
+.musteriler .chip em{position:absolute;top:7px;left:9px;font-size:10px;font-style:normal;font-weight:650;letter-spacing:.03em;color:var(--acc)}
+.btn.sifirla{color:var(--red)}.btn.sifirla:hover:not(:disabled){background:var(--badbg)}
+/* ---- Tara: bağlı tarayıcı yoksa sönük ---- */
+.tara.yok{filter:grayscale(1);opacity:.72}
+/* ---- satırdaki onay düğmesi: tıklanabilir olduğu belli olsun ---- */
+.onayla{display:inline-flex;align-items:center;gap:4px;height:26px;padding:0 10px 0 8px;margin-right:4px;border-radius:13px;border:1.5px solid var(--ok);background:var(--okbg);color:var(--ok);font:650 12px/1 inherit;cursor:pointer;white-space:nowrap;vertical-align:middle;transition:background .15s,color .15s,transform .12s}
+.onayla:hover{background:var(--ok);color:#fff}.onayla:active{transform:scale(.95)}
+/* ---- taranan kağıt yanda: tablo yazılırken kağıt solda açık kalır, seçili satırın kağıttaki yeri işaretlenir ---- */
+#kpanel{position:fixed;left:16px;top:14px;bottom:14px;width:var(--kpw,40vw);z-index:20;display:flex;flex-direction:column;border-radius:20px;background:var(--glass);border:1px solid var(--gb);box-shadow:var(--hi),var(--sh);overflow:hidden;animation:kpGir .38s cubic-bezier(.2,.8,.2,1)}
+html:not(.gomulu) #kpanel{top:calc(var(--stk,96px) - 4px)}
+#kpanel[hidden]{display:none}
+@keyframes kpGir{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+html.yanyana main{max-width:none;margin-left:calc(var(--kpw,40vw) + 32px);margin-right:16px}
+/* yan yanayken tablo daralır: kağıttaki kesit sütunu (solda kağıt zaten açık) ve ↑ ↓ gizlenir, ad sütunları kalan yeri paylaşır */
+html.yanyana #tbl col:nth-child(3){width:92px!important}
+html.yanyana #tbl col:nth-child(4){width:auto!important}html.yanyana #tbl col:nth-child(5){width:30%!important}
+html.yanyana .enw select{max-width:84px}
+html.yanyana #tbl col:nth-child(7){width:0!important}
+html.yanyana #tbl tr>:nth-child(7){padding:0!important;border:0!important;font-size:0;overflow:hidden}
+html.yanyana #tbl tr>:nth-child(7) *{display:none}
+html.yanyana #tbl col:nth-child(8){width:146px!important}
+html.yanyana #tbl .acts [data-a=up],html.yanyana #tbl .acts [data-a=down]{display:none}
+html.yanyana .card{padding-left:20px;padding-right:20px}
+.kpUst{display:flex;align-items:center;gap:4px;padding:10px 10px 10px 16px;border-bottom:1px solid var(--line)}
+.kpUst b{font-size:14px;font-weight:650}.kpUst .kpNot{font-size:12px;color:var(--mut);margin-left:8px}
+.kpUst .icb{font-size:15px;min-width:30px}.kpUst #kpSig{font-size:12px;min-width:52px;font-variant-numeric:tabular-nums}
+.kpIc{flex:1;overflow:auto;padding:14px;--kpz:1}
+.kpSf{position:relative;margin:0 auto 16px;width:calc(100% * var(--kpz))}
+.kpSn{font-size:12px;color:var(--mut);margin:0 4px 6px}
+.kpSf img{width:100%;display:block;border-radius:10px;border:1px solid var(--line);background:#fff}
+.kpVurgu{position:absolute;left:-5px;right:-5px;border-radius:8px;border:2px solid var(--acc);background:rgba(var(--accrgb),.10);box-shadow:0 0 0 3px rgba(var(--accrgb),.14);pointer-events:none;transition:top .28s cubic-bezier(.2,.8,.2,1),height .28s cubic-bezier(.2,.8,.2,1)}
+.kpVurgu[hidden]{display:none}
+.kpTut{position:absolute;top:0;bottom:0;right:-3px;width:8px;cursor:ew-resize}
+.kpTut::after{content:"";position:absolute;top:50%;left:2px;width:4px;height:44px;margin-top:-22px;border-radius:2px;background:var(--tb);opacity:0;transition:opacity .2s}
+#kpanel:hover .kpTut::after{opacity:1}
 </style>
 </head>
 <body>
@@ -252,17 +300,20 @@ html[data-theme=dark] .seg button.on{background:#6a6f7e}
   <span class="cr">Created by <b>Şamil Yeşil</b></span>
 </header>
 
+<aside id="kpanel" hidden aria-label="Taranan kağıt"><div class="kpUst"><b>Taranan kağıt</b><span class="kpNot" id="kpNot"></span><span class="sp"></span>
+  <button class="icb" id="kpKucult" type="button" title="Uzaklaştır">−</button><button class="icb" id="kpSig" type="button" title="Genişliğe sığdır">100%</button><button class="icb" id="kpBuyut" type="button" title="Yakınlaştır (Ctrl + tekerlek)">＋</button><button class="icb" id="kpKapat" type="button" title="Kağıdı kapat">✕</button></div>
+  <div class="kpIc" id="kpIc"></div><div class="kpTut" id="kpTut" title="Sürükleyerek genişliği ayarla"></div></aside>
 <main id="vOlcu">
   <div id="taslakBar"></div>
   <section class="card">
-    <h2><span class="step">1</span> Müşteri</h2>
-    <div class="chips" id="cust"></div>
+    <h2><span class="step">1</span> Müşteri<span class="sp"></span><button class="btn sm duz" id="custEkle" type="button" title="Yeni müşteri şablonu ekle">＋ Müşteri ekle</button><button class="btn sm sifirla" id="sifirlaBtn" type="button" title="Sayfayı baştan başlat (Excel'e kaydettiklerin durur)">Sıfırla</button></h2>
+    <div class="chips musteriler" id="cust"></div>
   </section>
 
   <section class="card">
     <h2><span class="step">2</span> Müşteri kağıdı</h2>
     <div class="kagit">
-      <button class="tara hidden" id="taraBtn" type="button" title="Kağıdı tarayıcıya koy ve bas"><svg><use href="#i-tara"/></svg><b>Tara</b><small id="taraAlt">Epson L3260</small></button>
+      <button class="tara hidden" id="taraBtn" type="button" title="Kağıdı tarayıcıya koy ve bas"><svg><use href="#i-tara"/></svg><b>Tara</b><small id="taraAlt">Tarayıcı aranıyor…</small></button>
       <div class="drop" id="drop">
         <svg><use href="#i-belge"/></svg>
         <div class="b1"><b>Taranan PDF'i ya da resmi buraya bırak</b> veya tıklayıp seç</div>
@@ -293,7 +344,7 @@ html[data-theme=dark] .seg button.on{background:#6a6f7e}
     </section>
 
     <section class="card">
-      <h2><span class="step">4</span> Ölçüler <span class="m">satırları ⋮⋮ ile sürükle, yön tuşlarıyla kutular arasında gez</span><span class="sp"></span><button class="btn sm" id="pageBtn" type="button"><svg><use href="#i-kagit"/></svg> Taranan kağıdı aç</button></h2>
+      <h2><span class="step">4</span> Ölçüler <span class="m">satırları ⋮⋮ ile sürükle, yön tuşlarıyla kutular arasında gez</span><span class="sp"></span><button class="btn sm" id="pageBtn" type="button" title="Taranan kağıt solda açık kalsın; yazarken yan yana kontrol et"><svg><use href="#i-kagit"/></svg> <span id="pageBtnY">Kağıdı yanda aç</span></button></h2>
       <div class="legend">
         <span><i class="st ok"></i> sözlükte var</span>
         <span><i class="st chk"></i> benzerine eşlendi, kontrol et</span>
@@ -302,7 +353,7 @@ html[data-theme=dark] .seg button.on{background:#6a6f7e}
       </div>
       <div class="tblw">
       <table class="t" id="tbl">
-        <colgroup><col style="width:26px"><col style="width:18px"><col style="width:108px"><col style="width:36%"><col style="width:26%"><col style="width:76px"><col style="width:190px"><col style="width:132px"></colgroup>
+        <colgroup><col style="width:26px"><col style="width:18px"><col style="width:108px"><col style="width:36%"><col style="width:26%"><col style="width:76px"><col style="width:190px"><col style="width:196px"></colgroup>
         <thead><tr><th></th><th></th><th>Grup</th><th>İngilizce</th><th>Türkçe</th><th style="text-align:center" id="sizeTh">M</th><th>Kağıt</th><th></th></tr></thead>
         <tbody></tbody>
       </table>
@@ -315,7 +366,6 @@ html[data-theme=dark] .seg button.on{background:#6a6f7e}
       <div class="row">
         <div class="fnw"><input type="text" id="fnameIn" autocomplete="off" spellcheck="false" placeholder="Dosya adı" aria-label="Dosya adı"><em>.xlsx</em></div>
         <span class="sp"></span>
-        <button class="btn" id="newBtn" type="button">Yeni tablo</button>
         <button class="btn" id="prevBtn" type="button"><svg><use href="#i-goz"/></svg> Önizleme</button>
         <button class="btn" id="printBtn" type="button"><svg><use href="#i-yazici"/></svg> Yazdır</button>
         <button class="btn pri" id="saveBtn" type="button"><svg><use href="#i-kaydet"/></svg> Excel'e kaydet</button>
@@ -361,6 +411,7 @@ const SAYFA=new URLSearchParams(location.search).get("sayfa")||"";
 const GOMULU=!!SAYFA&&window.parent!==window;
 /* Eleman'da her Ölçü sekmesinin kaydedilmemiş tablosu ayrı tutulur (sekme kimliği ?sayfa=...) */
 const TASLAK_K=GOMULU&&SAYFA!=="olcu"?"taslak-"+SAYFA:"taslak";
+const SEKMELI=GOMULU&&SAYFA!=="olcu";   // Eleman'ın Ölçü sekmesi: tablo kaydedilse de sekmede durur (Asorti sayfaları gibi)
 const KHTTP=/^https?:$/.test(location.protocol);
 const LIB="sistem/olcu/lib/";
 let EXE=false,EXE_DURUM=null; // EXE: yerel sunucu "/olcu/durum" sorusuna cevap verdi
@@ -607,14 +658,14 @@ const PLAT={
 let CUR=null; // seçili müşteri şablonu
 let CUSTN=""; // seçili müşterinin adı (açılışta seçili gelmez)
 let CUSTOM=[]; // {name,prefix,b64,t,slug,sha,bekliyor,silindi}
-let CUSTS=TEMPLATES.slice();
+let CUSTS=TEMPLATES.slice().sort(musSira);
 const b64buf=b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0)).buffer;
 function bufB64(buf){const b=new Uint8Array(buf);let s="";for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(s)}
 const slugOf=s=>artUp(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"musteri";
 function custsYenile(){
   const m=new Map(TEMPLATES.map(t=>[slugOf(t.name),{...t,yerlesik:true}]));
   for(const c of CUSTOM){if(c.silindi)continue;const k=slugOf(c.name);const y=m.get(k);m.set(k,{...c,yerlesik:!!y,degisti:!!y,eklenen:!y})}
-  CUSTS=[...m.values()];initCust();
+  CUSTS=[...m.values()].sort(musSira);initCust();
 }
 async function customYukle(){try{CUSTOM=(await IDB.get("sablonlar"))||[]}catch(e){CUSTOM=[]}custsYenile()}
 async function customKaydet(){await IDB.set("sablonlar",CUSTOM)}
@@ -640,9 +691,20 @@ async function parseTemplate(buf){
         const b64=await zip.file(f).async("base64");imgs.push({src:`data:image/${f.split(".").pop()};base64,${b64}`,col:g("col",from),colOff:g("colOff",from),row:g("row",from),rowOff:g("rowOff",from),w:+ext[1]/9525,h:+ext[2]/9525})}}}catch(e){console.warn(e)}
   return {rows,hasQual,sizes,imgs,hdrOk};
 }
+/* müşteri sırası: önce bunlar, sonra diğerleri alfabetik */
+function musSira(a,b){const once=["sorgenfri","lykka","deerberg","heiter"];const k=t=>{const n=String(t.name||"").toLocaleLowerCase("tr").replace(/ı/g,"i");const i=once.findIndex(p=>n.startsWith(p));return i<0?99:i};
+  return k(a)-k(b)||String(a.name).localeCompare(String(b.name),"tr")}
+/* müşteri logosu: şablonun içindeki resim (firmanın kendi logosu her şablonda aynı: o atlanır) */
+const LOGO=new Map();
+async function logoBul(t){const key=t.name+"|"+(t.b64||"").length;if(LOGO.has(key))return LOGO.get(key);LOGO.set(key,null);
+  try{const z=await JSZip.loadAsync(b64buf(t.b64));const med=Object.keys(z.files).filter(n=>/^xl\/media\/[^/]+\.(png|jpe?g|webp|gif|bmp)$/i.test(n));
+    let ad=med.find(n=>/image2\./i.test(n))||med.find(n=>!/image1\.png$/i.test(n));if(!ad)return null;
+    const tip=/\.png$/i.test(ad)?"image/png":/\.webp$/i.test(ad)?"image/webp":/\.gif$/i.test(ad)?"image/gif":"image/jpeg";
+    const u=URL.createObjectURL(new Blob([await z.file(ad).async("uint8array")],{type:tip}));LOGO.set(key,u);return u}catch(e){return null}}
 function initCust(){const box=$("#cust");
-  box.innerHTML=CUSTS.map(t=>`<button type="button" class="chip${t.name===CUSTN?" on":""}" data-n="${esc(t.name)}" title="${t.eklenen?"Sonradan eklenen şablon":t.degisti?"Şablonu değiştirildi":""}">${esc(t.name)}</button>`).join("")
-   +`<button type="button" class="chip ekle" data-ekle="1" title="Yeni müşteri şablonu ekle">＋ Müşteri ekle</button>`}
+  box.innerHTML=CUSTS.map(t=>{const lg=LOGO.get(t.name+"|"+(t.b64||"").length);const bas=String(t.name).trim().slice(0,1).toLocaleUpperCase("tr");
+    return `<button type="button" class="chip${t.name===CUSTN?" on":""}" data-n="${esc(t.name)}" title="${t.eklenen?"Sonradan eklenen şablon":t.degisti?"Şablonu değiştirildi":esc(t.name)}">${t.eklenen?"<em>yeni</em>":""}<span class="mLogo">${lg?`<img src="${lg}" alt="">`:`<i>${esc(bas)}</i>`}</span><span class="mAd">${esc(t.name)}</span></button>`}).join("");
+  CUSTS.forEach(t=>{if(LOGO.has(t.name+"|"+(t.b64||"").length))return;logoBul(t).then(u=>{if(!u)return;const b=[...box.querySelectorAll(".chip")].find(x=>x.dataset.n===t.name);if(b)b.querySelector(".mLogo").innerHTML=`<img src="${u}" alt="">`})})}
 $("#cust").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;if(b.dataset.ekle){sablonEkle();return}custSec(b.dataset.n)};
 async function custSec(name){
   const t=CUSTS.find(c=>c.name===name);if(!t)return;
@@ -1093,6 +1155,7 @@ async function handleFile(files,o={}){if(needCust())return;
 /* tek sayfayı oku: base = bu sayfanın satırlarının kağıttaki sıra başlangıcı (2. sayfa 1000'den başlar) */
 async function sayfaOku(w,canvas,base){
     const src=deskew(canvas);
+    const yer=(a,b)=>({pg:Math.floor(base/1000),a:a/src.height,b:b/src.height});   // satırın kağıttaki yeri (0-1)
     const clean=cleanCanvas(src);setProg(.08);
     const img=src.toDataURL("image/jpeg",.7);
     setProg(.35,"Kağıt okunuyor…");
@@ -1104,13 +1167,13 @@ async function sayfaOku(w,canvas,base){
     window.__last={words,res};
     const xr=res.M?res.M.x1+src.width*.1:src.width*.95;
     const JUNK=[];
-    const unreadRow=(y0,y1,yc,pi)=>newRow({en:"",tr:"",m:"",status:"unread",wasUnread:true,hw:hiCrop(src,y0,y1,Math.min(src.width,xr)),snip:cropSnip(src,y0,y1,Math.min(src.width,xr)),paperIdx:base+pi});
+    const unreadRow=(y0,y1,yc,pi)=>newRow({en:"",tr:"",m:"",status:"unread",wasUnread:true,hw:hiCrop(src,y0,y1,Math.min(src.width,xr)),yer:yer(y0,y1),snip:cropSnip(src,y0,y1,Math.min(src.width,xr)),paperIdx:base+pi});
     const rows=res.rows.map((r,i)=>{const lk=lookup(r.en);
       // anlamsız okunan (çoğunlukla el yazısı) satır: atma, okunamadı diye göster
       if(!r.num&&lk.status==="new"&&(r.en.match(/[A-Za-z]/g)||[]).length<8){JUNK.push({y0:r.y0,y1:r.y1,yc:r.yc,pi:i});return null}
       let tr=lk.tr||(r.tr?up(r.tr):"");
       const en=lk.en||up(r.en);const pv=plaus(en,parseVal(r.num));
-      return newRow({en,tr,m:pv.v,mChk:!r.sure||!pv.ok,grp:lk.grp||"",after:lk.after||"",status:lk.status,orig:r.en,origTr:r.tr,hw:(!r.tr)?hiCrop(src,r.y0,r.y1,Math.min(src.width,xr)):null,snip:cropSnip(src,r.y0,r.y1,Math.min(src.width,xr)),paperIdx:base+i})});
+      return newRow({en,tr,m:pv.v,mChk:!r.sure||!pv.ok,grp:lk.grp||"",after:lk.after||"",status:lk.status,orig:r.en,origTr:r.tr,hw:(!r.tr)?hiCrop(src,r.y0,r.y1,Math.min(src.width,xr)):null,yer:yer(r.y0,r.y1),snip:cropSnip(src,r.y0,r.y1,Math.min(src.width,xr)),paperIdx:base+i})});
     // hiçbir satıra denk gelmeyen yazılar (elle eklenmiş satırlar vb.)
     for(let i=rows.length-1;i>=0;i--)if(!rows[i])rows.splice(i,1);
     const bands=inkBands(src,res).map(bd=>({...bd,pi:res.rows.filter(r=>(r.y0+r.y1)/2<bd.yc).length-.5+bd.yc/1e6})).concat(JUNK);
@@ -1125,7 +1188,7 @@ async function sayfaOku(w,canvas,base){
       if(lk&&lk.status==="new"){const ws=normEn(enTxt).split(" ").filter(x=>/^[A-Z]{2,}$/.test(x));const known=ws.filter(x=>VOCAB.has(x)||["AT","THE","OF","TO","IN","AND"].includes(x)).length;
         if(ws.length>=3&&known/ws.length>=.6)lk={...lk,status:"new",en:fixTokens(normEn(enTxt))};else lk=null}
       if(lk&&(lk.status==="ok"||lk.status==="chk"||lk.status==="new")){let pv={v:"",ok:true};for(const t of tnums){const c=plaus(lk.en,parseVal(cleanNum(t).v));if(c.ok){pv=c;break}if(pv.v==="")pv=c}
-        rows.push(newRow({en:lk.en,tr:lk.tr||"",m:pv.v,mChk:true,grp:lk.grp||"",after:lk.after||"",status:lk.status==="new"?"new":"chk",orig:enTxt,snip:cropSnip(src,bd.y0,bd.y1,Math.min(src.width,xr)),paperIdx:base+pi}))}
+        rows.push(newRow({en:lk.en,tr:lk.tr||"",m:pv.v,mChk:true,grp:lk.grp||"",after:lk.after||"",status:lk.status==="new"?"new":"chk",orig:enTxt,yer:yer(bd.y0,bd.y1),snip:cropSnip(src,bd.y0,bd.y1,Math.min(src.width,xr)),paperIdx:base+pi}))}
       else{const u=unreadRow(bd.y0,bd.y1,bd.yc,pi);u.ocrText=rb.text;rows.push(u)}}
     return {rows,info:res.info,sizeLbl:res.sizeLbl||null,img};
 }
@@ -1162,7 +1225,7 @@ $("#blankBtn").onclick=async()=>{if(needCust())return;
 const GROUPS0=["pocket","chest dart","collar","belt"];
 /* grup seçenekleri: her zamankiler + seçili müşterinin şablonundaki gruplar */
 function groupList(){const s=new Set(GROUPS0);for(const t of TPL)if((t.grp||"").trim())s.add(t.grp.trim());return ["",...s]}
-function openEdit(){$("#editArea").classList.remove("hidden");renderTable();updName();$("#editArea").scrollIntoView({behavior:"smooth",block:"start"})}
+function openEdit(sessiz){$("#editArea").classList.remove("hidden");renderTable();updName();if(KP.acik||LS.get("ota_yanyana",false))kpAc(true);if(!sessiz)$("#editArea").scrollIntoView({behavior:"smooth",block:"start"})}
 function stCls(s){return s==="ok"?"ok":s==="chk"?"chk":s==="unread"?"unread":"new"}
 const neckVar=en=>/\(INSIDE\)\s*$/.test(en)?"IN":/\(SEAM TO SEAM\)\s*$/.test(en)?"SS":"";
 function applyNeck(r,v){
@@ -1182,7 +1245,7 @@ function renderTable(){
     <td><input data-k="tr" autocomplete="off" spellcheck="false" class="${r.tr?"":"empty"}" value="${esc(r.tr)}" placeholder="${esc(r.origTr?up(r.origTr):(glossHint(r.en)?"öneri: "+glossHint(r.en):"Türkçesi…"))}" title="${r.tr?"":"Çift tıkla: öneriyi yaz"}"></td>
     <td><input autocomplete="off" class="m ${r.m===""?"empty":r.mChk?"mchk":""}" data-k="m" value="${esc(fmtVal(r.m))}" title="${r.mChk?"Okuma emin değil, kağıttan kontrol et":""}"></td>
     <td>${r.snip?`<img class="snip" src="${r.snip}" alt="">`:""}</td>
-    <td class="acts">${(r.status==="chk"||r.mChk)?`<button type="button" class="icb okb" data-a="ok" title="Doğru, onayla">✓</button>`:""}<button class="icb" data-a="up" title="Yukarı">↑</button><button class="icb" data-a="down" title="Aşağı">↓</button><button class="icb" data-a="ins" title="Altına satır ekle">＋</button><button class="icb del" data-a="del" title="Satırı sil">✕</button></td></tr>`).join("");
+    <td class="acts">${(r.status==="chk"||r.mChk)?`<button type="button" class="onayla" data-a="ok" title="Okunan ad ve ölçü doğru: onayla">✓ Onayla</button>`:""}<button class="icb" data-a="up" title="Yukarı">↑</button><button class="icb" data-a="down" title="Aşağı">↓</button><button class="icb" data-a="ins" title="Altına satır ekle">＋</button><button class="icb del" data-a="del" title="Satırı sil">✕</button></td></tr>`).join("");
 
 }
 const tbody=$("#tbl tbody");
@@ -1235,10 +1298,13 @@ $("#fArt").addEventListener("input",e=>{const p=e.target.selectionStart;e.target
 $("#fnameIn").addEventListener("input",()=>{nameEdited=!!$("#fnameIn").value.trim();degisti()});
 $("#fQual").addEventListener("input",degisti);$("#fDate").addEventListener("input",degisti);
 $("#fQual").addEventListener("change",e=>{e.target.value=normQual(e.target.value)});
-function tabloKapat(){ROWS=[];PAGES=[];nameEdited=false;LAST_SCANNED=false;LAST_SIZE=null;LAST_QUAL_RAW="";DELETED_UNREAD=[];
+function tabloKapat(){ROWS=[];PAGES=[];if(typeof KP!=="undefined"&&KP.acik)kpCiz();nameEdited=false;LAST_SCANNED=false;LAST_SIZE=null;LAST_QUAL_RAW="";DELETED_UNREAD=[];
   $("#fnameIn").value="";$("#fArt").value="";$("#fQual").value="";$("#saveInfo").innerHTML="";$("#editArea").classList.add("hidden");$("#prog").classList.add("hidden");$("#ocrMsg").textContent="";
   DEGISTI=false;taslakSil();durumBildir()}
-$("#newBtn").onclick=async()=>{if(ROWS.length&&DEGISTI&&!(await ask("Mevcut tablo kapatılsın mı? Kaydetmediğin değişiklikler kaybolur.","Yeni tablo")))return;tabloKapat();window.scrollTo({top:0,behavior:"smooth"})};
+$("#sifirlaBtn").onclick=async()=>{if(OKUYOR){toast("Bir kağıt okunuyor, bitmesini bekle.");return}
+  if((ROWS.length||CUR)&&!(await ask(ROWS.length&&DEGISTI?"Sayfa sıfırlansın mı? Kaydetmediğin tablo silinir (Excel'e kaydettiklerin durur).":"Sayfa sıfırlansın mı? Açık tablo kapanır (Excel'e kaydettiklerin durur).","Sıfırla")))return;
+  tabloKapat();kpAc(false);CUR=null;CUSTN="";initCust();window.scrollTo({top:0,behavior:"smooth"});toast("Sayfa sıfırlandı.")};
+$("#custEkle").onclick=()=>sablonEkle();
 
 /* her kayıtta öğren: kağıtta okunan ad -> düzeltilmiş ad, Türkçe tercihleri, yeni ölçüler ve yerleri, kumaş, ölçü aralıkları */
 function learn(){
@@ -1304,7 +1370,7 @@ $("#saveBtn").onclick=async()=>{
     const ad=r.ad||name,saat=new Date().toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
     $("#saveInfo").innerHTML=`<div class="bildir ok"><span class="bik">✓</span><div class="bmt"><b>Kaydedildi:</b> ${esc(ad)}<div class="balt">${esc(r.yol||((r.klasor?r.klasor+"\\":"")+ad))} · ${saat}</div></div>${EXE?`<div class="row"><button type="button" class="btn sm yesil" data-ac="dosya">Excel'de aç</button><button type="button" class="btn sm" data-ac="klasor">Klasörde göster</button></div>`:""}</div>`;
     $("#saveInfo").onclick=e=>{const b=e.target.closest("[data-ac]");if(b)PLAT.ac(CUR.name,ad,b.dataset.ac)};
-    DEGISTI=false;taslakSil();durumBildir();
+    DEGISTI=false;if(SEKMELI)taslakYaz(true);else taslakSil();durumBildir();
     if(GOMULU)try{parent.postMessage({t:"bildirim",id:SAYFA,tur:"olcu",baslik:"Excel'e kaydedildi",metin:ad,ad},"*")}catch(e){}
     toast("Kaydedildi: "+ad);
   }catch(e){console.error(e);toast("Kaydedilemedi: "+e.message,7000)}
@@ -1515,7 +1581,7 @@ $("#prevClose").onclick=()=>$("#prevModal").classList.add("hidden");$("#prevModa
 $("#prevSave").onclick=()=>{$("#prevModal").classList.add("hidden");$("#saveBtn").click()};
 $("#sortBtn").onclick=()=>{if(!ROWS.length)return;ROWS=orderRows(ROWS);renderTable();degisti();toast("Şablon sırasına dizildi.")};
 $("#paperBtn").onclick=()=>{if(!ROWS.length)return;const inPaper=ROWS.filter(r=>r.paperIdx<EKLENEN).sort((a,b)=>a.paperIdx-b.paperIdx);const added=ROWS.filter(r=>r.paperIdx>=EKLENEN);ROWS=inPaper.concat(added);renderTable();degisti();toast("Kağıttaki sıraya dönüldü.")};
-$("#pageBtn").onclick=()=>{if(!PAGES.length){toast("Taranmış kağıt yok.");return}$("#pageImgs").innerHTML=PAGES.map((u,i)=>`${PAGES.length>1?`<div class="muted small" style="margin:${i?14:0}px 4px 6px">Sayfa ${i+1}</div>`:""}<img src="${u}" alt="Taranan kağıt" style="width:100%;border-radius:10px;border:1px solid var(--line);background:#fff;display:block">`).join("");$("#pageModal").classList.remove("hidden")};
+$("#pageBtn").onclick=()=>{if(innerWidth>=1100){kpAc(!KP.acik);return}if(!PAGES.length){toast("Taranmış kağıt yok.");return}$("#pageImgs").innerHTML=PAGES.map((u,i)=>`${PAGES.length>1?`<div class="muted small" style="margin:${i?14:0}px 4px 6px">Sayfa ${i+1}</div>`:""}<img src="${u}" alt="Taranan kağıt" style="width:100%;border-radius:10px;border:1px solid var(--line);background:#fff;display:block">`).join("");$("#pageModal").classList.remove("hidden")};
 $("#pageClose").onclick=()=>$("#pageModal").classList.add("hidden");
 $("#pageModal").onclick=e=>{if(e.target.id==="pageModal")$("#pageModal").classList.add("hidden")};
 
@@ -1523,8 +1589,8 @@ $("#pageModal").onclick=e=>{if(e.target.id==="pageModal")$("#pageModal").classLi
 let DEGISTI=false,TASLAK_T=0;
 function degisti(){DEGISTI=true;taslakZamanla();durumBildir()}
 function taslakZamanla(){clearTimeout(TASLAK_T);TASLAK_T=setTimeout(taslakYaz,1200)}
-async function taslakYaz(){clearTimeout(TASLAK_T);if(!CUR||!ROWS.length||!DEGISTI)return;
-  try{await IDB.set(TASLAK_K,{v:1,ts:Date.now(),cust:CUR.name,art:$("#fArt").value,qual:$("#fQual").value,date:$("#fDate").value,fname:$("#fnameIn").value,nameEdited,rows:ROWS,sz:SZ,lastSize:LAST_SIZE,scanned:LAST_SCANNED,qualRaw:LAST_QUAL_RAW,pages:PAGES,deleted:DELETED_UNREAD})}catch(e){console.warn(e)}}
+async function taslakYaz(zorla){clearTimeout(TASLAK_T);if(!CUR||!ROWS.length||(!DEGISTI&&!zorla))return;
+  try{await IDB.set(TASLAK_K,{v:1,ts:Date.now(),degisti:DEGISTI,cust:CUR.name,art:$("#fArt").value,qual:$("#fQual").value,date:$("#fDate").value,fname:$("#fnameIn").value,nameEdited,rows:ROWS,sz:SZ,lastSize:LAST_SIZE,scanned:LAST_SCANNED,qualRaw:LAST_QUAL_RAW,pages:PAGES,deleted:DELETED_UNREAD})}catch(e){console.warn(e)}}
 async function taslakSil(){clearTimeout(TASLAK_T);$("#taslakBar").innerHTML="";try{await IDB.del(TASLAK_K)}catch(e){}}
 async function taslakSor(){let d=null;try{d=await IDB.get(TASLAK_K)}catch(e){}
   if(!d||!d.rows||!d.rows.length||!CUSTS.some(x=>x.name===d.cust))return;
@@ -1535,7 +1601,7 @@ async function taslakSor(){let d=null;try{d=await IDB.get(TASLAK_K)}catch(e){}
     if(b.dataset.t==="sil"){if(await ask("Kaydedilmemiş tablo silinsin mi? Bu geri alınamaz.","Sil"))taslakSil();return}
     if(DEGISTI&&ROWS.length&&!(await ask("Şu an açık olan tablo kapanacak. Devam edilsin mi?","Devam")))return;
     await taslakAc(d)}}
-async function taslakAc(d){
+async function taslakAc(d,sessiz){
   LAST_SIZE=d.lastSize||null;LAST_SCANNED=!!d.scanned;LAST_QUAL_RAW=d.qualRaw||"";DELETED_UNREAD=d.deleted||[];
   ROWS=[];await custSec(d.cust);if(!CUR)return;
   nextId=Math.max(nextId,...d.rows.map(r=>(r.id||0)+1));
@@ -1543,7 +1609,10 @@ async function taslakAc(d){
   if(d.sz&&d.sz.list&&d.sz.list.length){SZ={list:d.sz.list.slice(),sample:d.sz.sample};renderSizes();sizeNote("")}
   $("#fArt").value=d.art||"";$("#fQual").value=d.qual||"";$("#fDate").value=d.date||today();
   nameEdited=!!d.nameEdited;$("#fnameIn").value=d.fname||"";if(!nameEdited)autoName();
-  $("#taslakBar").innerHTML="";$("#saveInfo").innerHTML="";DEGISTI=true;openEdit();durumBildir();toast("Tablo kaldığın yerden açıldı.")}
+  $("#taslakBar").innerHTML="";$("#saveInfo").innerHTML="";DEGISTI=sessiz?d.degisti!==false:true;openEdit(sessiz);durumBildir();if(!sessiz)toast("Tablo kaldığın yerden açıldı.")}
+/* Eleman'ın Ölçü sekmesi: sekmenin tablosu sormadan, sessizce geri gelir */
+async function taslakDevam(){let d=null;try{d=await IDB.get(TASLAK_K)}catch(e){}
+  if(!d||!d.rows||!d.rows.length||!CUSTS.some(x=>x.name===d.cust))return;await taslakAc(d,true)}
 window.addEventListener("pagehide",()=>{if(DEGISTI)taslakYaz()});
 /* tarayıcıda: kaydedilmemiş tabloyla sekme kapatılırken sor (Eleman penceresinde pencere kendi sorar) */
 if(!KHTTP&&!GOMULU)window.addEventListener("beforeunload",e=>{if(DEGISTI&&ROWS.length){taslakYaz();e.preventDefault();e.returnValue=""}});
@@ -1588,7 +1657,15 @@ function hafizaCiz(){const el=$("#hafizaInfo");if(!el||$("#ayarModal").classList
 $("#esitleBtn").onclick=async()=>{const b=$("#esitleBtn");b.disabled=true;try{await syncNow();await syncSamples();await sablonEsitle().catch(()=>{})}finally{b.disabled=false;hafizaCiz()}};
 
 /* ---------------- tek tuşla tarama (Eleman programında: Epson L3260, WIA) ---------------- */
-function taraYazi(ad){$("#taraAlt").textContent=`${ad||AYAR.cihazAd||"Epson L3260"} · ${AYAR.dpi} dpi · ${AYAR.renk==="gri"?"gri":"renkli"}`}
+let TARAYICILAR=null,TARA_T=0;
+async function tarayiciBak(zorla){if(!EXE)return;if(!zorla&&Date.now()-TARA_T<30000)return;TARA_T=Date.now();
+  let L=[];try{L=await PLAT.tarayicilar()}catch(e){L=[]}TARAYICILAR=Array.isArray(L)?L:[];taraYazi()}
+function taraYazi(){const b=$("#taraBtn"),L=TARAYICILAR;
+  if(L&&!L.length){$("#taraAlt").textContent="Tarayıcı bağlı değil";b.classList.add("yok");b.title="Bağlı tarayıcı bulunamadı. Tarayıcıyı açıp bilgisayara bağla, sonra tekrar bas.";return}
+  b.classList.remove("yok");b.title="Kağıdı tarayıcıya koy ve bas";
+  const s=L?(L.find(t=>t.id===AYAR.cihaz)||L[0]):null;
+  $("#taraAlt").textContent=s?`${s.ad} · ${AYAR.dpi} dpi · ${AYAR.renk==="gri"?"gri":"renkli"}`:"Tarayıcı aranıyor…"}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)tarayiciBak(false)});
 async function taraAyarCiz(){const el=$("#taraAyar");
   if(!EXE){el.innerHTML=`<div class="muted small" style="line-height:1.5">Tek tuşla tarama <b>Eleman programında</b> açılır: kağıdı Epson'un camına koyup <b>Tara</b>'ya basınca kağıt taranır ve hemen okunur.<br>Şimdilik Epson ScanSmart ile PDF olarak tarayıp 2. adıma bırakabilirsin.</div>`;return}
   el.innerHTML=`<div class="row" style="gap:16px"><label class="fld"><span>Tarayıcı</span><select id="aCihaz"><option value="">Bulunuyor…</option></select></label>
@@ -1596,20 +1673,49 @@ async function taraAyarCiz(){const el=$("#taraAyar");
     <div class="fld"><span>Renk</span><div class="seg" id="aRenk"><button type="button" data-v="renkli" class="${AYAR.renk!=="gri"?"on":""}">Renkli</button><button type="button" data-v="gri" class="${AYAR.renk==="gri"?"on":""}">Gri</button></div></div></div>
     <p>Renkli tarama önerilir: mavi/kırmızı tükenmez kalemle yazılanlar basılı yazıdan ayrılır, okuma daha doğru olur. 300 dpi yeterli ve hızlıdır.</p>`;
   const sel=$("#aCihaz");const L=await PLAT.tarayicilar();
-  sel.innerHTML=L.length?`<option value="">Kendiliğinden (Epson öncelikli)</option>`+L.map(t=>`<option value="${esc(t.id)}" ${t.id===AYAR.cihaz?"selected":""}>${esc(t.ad)}</option>`).join(""):`<option value="">Tarayıcı bulunamadı</option>`;
+  sel.innerHTML=L.length?`<option value="">Kendiliğinden (bağlı olan)</option>`+L.map(t=>`<option value="${esc(t.id)}" ${t.id===AYAR.cihaz?"selected":""}>${esc(t.ad)}</option>`).join(""):`<option value="">Tarayıcı bulunamadı</option>`;
   const yaz=()=>{PLAT.ayarYaz(AYAR);taraYazi()};
   sel.onchange=()=>{AYAR.cihaz=sel.value;AYAR.cihazAd=sel.value?sel.selectedOptions[0].textContent:"";yaz()};
   $("#aDpi").onclick=e=>{const b=e.target.closest("button");if(!b)return;AYAR.dpi=+b.dataset.v;$("#aDpi").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));yaz()};
   $("#aRenk").onclick=e=>{const b=e.target.closest("button");if(!b)return;AYAR.renk=b.dataset.v;$("#aRenk").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));yaz()}}
 async function taraBasla(){if(needCust())return;if(OKUYOR){toast("Bir kağıt okunuyor, bitmesini bekle.");return}
+  await tarayiciBak(true);if(TARAYICILAR&&!TARAYICILAR.length){toast("Tarayıcı bağlı değil. Tarayıcının açık ve bilgisayara (Wi-Fi ya da kabloyla) bağlı olduğundan emin ol.",7000);return}
   if(DEGISTI&&ROWS.length&&!(await ask("Kaydedilmemiş bir tablo açık. Yeni kağıt taranırsa bu tablo kapanır. Devam edilsin mi?","Tara")))return;
-  const b=$("#taraBtn");b.disabled=true;OKUYOR=true;durumBildir();PROG_ON="";setProg(.02,"Taranıyor… (kağıt Epson'un camında, yazılı yüzü aşağıda olmalı)");
+  const b=$("#taraBtn");b.disabled=true;OKUYOR=true;durumBildir();PROG_ON="";setProg(.02,"Taranıyor… (kağıt tarayıcının camında, yazılı yüzü aşağıda olmalı)");
   let f=null;
   try{f=await PLAT.tara(AYAR)}
   catch(e){toast(e.message,8000);$("#ocrMsg").textContent="";$("#prog").classList.add("hidden")}
   finally{b.disabled=false;OKUYOR=false;durumBildir()}
   if(f)await handleFile([f],{sorma:true})}
 $("#taraBtn").onclick=taraBasla;
+
+/* ---------------- taranan kağıt yanda ---------------- */
+const KP={acik:false,z:1};
+(()=>{const w=+LS.get("ota_kpw",0);if(w>=320)document.documentElement.style.setProperty("--kpw",w+"px")})();
+function kpCiz(){const ic=$("#kpIc");
+  if(!PAGES.length){ic.innerHTML=`<div class="muted small" style="padding:24px;text-align:center;line-height:1.6">Bu tabloda taranmış kağıt yok.<br>Kağıt okutunca burada açık kalır.</div>`;$("#kpNot").textContent="";return}
+  ic.innerHTML=PAGES.map((u,i)=>`<div class="kpSf" data-p="${i}">${PAGES.length>1?`<div class="kpSn">Sayfa ${i+1}</div>`:""}<img src="${u}" alt="Taranan kağıt"><div class="kpVurgu" hidden></div></div>`).join("");
+  $("#kpNot").textContent=PAGES.length>1?PAGES.length+" sayfa":"";kpZoom();
+  const r=kpSecili();if(r)ic.querySelectorAll("img").forEach(im=>im.addEventListener("load",()=>kpSatir(r,true),{once:true}))}
+function kpAc(ac){KP.acik=!!ac;$("#kpanel").hidden=!KP.acik;document.documentElement.classList.toggle("yanyana",KP.acik);LS.set("ota_yanyana",KP.acik);
+  const y=$("#pageBtnY");if(y)y.textContent=KP.acik?"Kağıdı kapat":"Kağıdı yanda aç";
+  if(KP.acik){kpCiz();const r=kpSecili();if(r)kpSatir(r,true)}}
+function kpZoom(){$("#kpIc").style.setProperty("--kpz",KP.z);$("#kpSig").textContent=Math.round(KP.z*100)+"%"}
+function kpSecili(){const tr=document.activeElement&&document.activeElement.closest&&document.activeElement.closest("#tbl tbody tr");return tr?ROWS[+tr.dataset.i]:null}
+function kpSatir(r,hemen){if(!KP.acik)return;const ic=$("#kpIc");ic.querySelectorAll(".kpVurgu").forEach(v=>v.hidden=true);if(!r||!r.yer)return;
+  const sf=ic.querySelector(`.kpSf[data-p="${r.yer.pg}"]`);if(!sf)return;const v=sf.querySelector(".kpVurgu"),im=sf.querySelector("img");const h=im.clientHeight;if(!h)return;
+  const p=.004,ust=im.offsetTop+(r.yer.a-p)*h;v.style.top=ust+"px";v.style.height=Math.max(14,(r.yer.b-r.yer.a+2*p)*h)+"px";v.hidden=false;
+  ic.scrollTo({top:Math.max(0,sf.offsetTop+ust-ic.clientHeight*.38),behavior:hemen?"auto":"smooth"})}
+$("#tbl tbody").addEventListener("focusin",e=>{const tr=e.target.closest("tr");if(tr)kpSatir(ROWS[+tr.dataset.i])});
+$("#kpKapat").onclick=()=>kpAc(false);
+$("#kpSig").onclick=()=>{KP.z=1;kpZoom();kpSatir(kpSecili(),true)};
+$("#kpBuyut").onclick=()=>{KP.z=Math.min(3,+(KP.z*1.25).toFixed(3));kpZoom();kpSatir(kpSecili(),true)};
+$("#kpKucult").onclick=()=>{KP.z=Math.max(.5,+(KP.z/1.25).toFixed(3));kpZoom();kpSatir(kpSecili(),true)};
+$("#kpIc").addEventListener("wheel",e=>{if(!e.ctrlKey)return;e.preventDefault();KP.z=Math.min(3,Math.max(.5,KP.z*(e.deltaY<0?1.1:1/1.1)));kpZoom();kpSatir(kpSecili(),true)},{passive:false});
+$("#kpTut").addEventListener("mousedown",e=>{e.preventDefault();const bas=e.clientX,w0=$("#kpanel").getBoundingClientRect().width;
+  const ol=ev=>{const w=Math.round(Math.min(innerWidth*.7,Math.max(320,w0+ev.clientX-bas)));document.documentElement.style.setProperty("--kpw",w+"px");LS.set("ota_kpw",w)};
+  const bit=()=>{removeEventListener("mousemove",ol);removeEventListener("mouseup",bit);kpSatir(kpSecili(),true)};addEventListener("mousemove",ol);addEventListener("mouseup",bit)});
+window.addEventListener("resize",()=>{if(KP.acik&&innerWidth<1100)kpAc(false)});
 
 /* Esc: açık pencereyi kapat */
 document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;for(const id of ["#ayarModal","#prevModal","#pageModal"])if(!$(id).classList.contains("hidden")){$(id).classList.add("hidden");return}});
@@ -1628,7 +1734,8 @@ initCust();
   memApply();memInfo();HW_WAIT=(await HWQ.get()).length;memInfo();
   syncNow();setInterval(syncNow,5*60*1000);window.addEventListener("online",syncNow);
   document.addEventListener("visibilitychange",()=>{if(document.hidden){if(DEGISTI)taslakYaz()}else syncNow()});
-  await taslakSor();
+  if(SEKMELI)await taslakDevam();else await taslakSor();
+  tarayiciBak(true);
   durumBildir();
 })().catch(e=>console.error(e));
 window.__ota={renderXlsx,renderCurrent,pickSize,groupTogether,get SZ(){return SZ},sheetData,learn,get MEM(){return MEM},handleFile,buildXlsx,get ROWS(){return ROWS},get CUR(){return CUR},lookup,analyse,glossHint,custSec,get CUSTS(){return CUSTS},PLAT,taslakYaz,get EXE(){return EXE},orderRows,syncNow,sablonEsitle};

@@ -49,13 +49,26 @@ namespace AsortiAraci
                                 bool vbs = arg.IndexOf("baslat.vbs", StringComparison.OrdinalIgnoreCase) >= 0 && arg.IndexOf(Yer.Kok, StringComparison.OrdinalIgnoreCase) >= 0;
                                 bool bizim = string.Equals(hedef, exe, StringComparison.OrdinalIgnoreCase);
                                 if (!vbs && !bizim) continue;   // bu kurulumun kısayolu değil
-                                if (bizim && arg.Length == 0 && simge.StartsWith(exe, StringComparison.OrdinalIgnoreCase)) continue;   // zaten bağlı
-                                Ver(k, "TargetPath", exe);
-                                Ver(k, "Arguments", "");
-                                Ver(k, "WorkingDirectory", Yer.Sistem);
-                                Ver(k, "IconLocation", exe + ",0");
-                                t.InvokeMember("Save", BindingFlags.InvokeMethod, null, k, null);
-                                n++;
+                                // simge: Eleman (simge dosyası; exe'nin içindeki eski derlemede Asorti simgesi kalmış olabilir)
+                                string ico = Simge.Ico + ",0";
+                                bool eskiAd = string.Equals(Path.GetFileName(l), "Asorti Araci.lnk", StringComparison.OrdinalIgnoreCase)
+                                              && y.IndexOf("User Pinned", StringComparison.OrdinalIgnoreCase) < 0;   // görev çubuğuna sabitlenmişin adına dokunulmaz
+                                if (!(bizim && arg.Length == 0 && string.Equals(simge, ico, StringComparison.OrdinalIgnoreCase)))
+                                {
+                                    Ver(k, "TargetPath", exe);
+                                    Ver(k, "Arguments", "");
+                                    Ver(k, "WorkingDirectory", Yer.Sistem);
+                                    Ver(k, "IconLocation", ico);
+                                    Ver(k, "Description", "Eleman");
+                                    t.InvokeMember("Save", BindingFlags.InvokeMethod, null, k, null);
+                                    n++;
+                                }
+                                if (eskiAd)
+                                {
+                                    // Asorti Aracı'ndan güncellenen kurulum: masaüstü / Başlat kısayolunun adı Eleman olur
+                                    string yeniAd = Path.Combine(Path.GetDirectoryName(l), "Eleman.lnk");
+                                    try { if (File.Exists(yeniAd)) File.Delete(l); else File.Move(l, yeniAd); n++; } catch { }
+                                }
                             }
                             catch { }
                             finally { if (k != null) { try { Marshal.ReleaseComObject(k); } catch { } } }

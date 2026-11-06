@@ -1,10 +1,12 @@
 {
- "surum": "3.0.0",
+ "surum": "3.0.1",
  "tarih": "2026-11-06",
  "notlar": [
-  "Eleman: Asorti Aracı ve Ölçü Tablosu Aracı tek programda",
-  "Açılışta ana sayfa; üst çubukta Asorti Aracı / Ölçü Tablosu düğmeleri",
-  "Ölçü Tablosu: yeşil tema, sekmeler (Sayfa 1, Yeni sayfa), internetsiz kağıt okuma, tek tuşla tarama, Excel'e kaydet",
-  "Görünüm (açık / koyu / otomatik) ve gece ışığı ⚙ Ayarlar'da, üç uygulamada birlikte"
+  "Açılışta Eleman simgesi küçülüp büyüyerek uygulamayı açıyor; masaüstü simgesi ve görev çubuğu Eleman",
+  "Sol üstteki Eleman simgesine basınca Ana sayfa, Asorti Aracı ve Ölçü Tablosu menüsü; geçişler yumuşak",
+  "Sayfa kendiliğinden açılmıyor; açık sayfa yokken boş ekranda Yeni sayfa düğmesi",
+  "Çok sayfa açıkken hızlı: uzun süredir bakılmayan sayfalar uyuyor, tıklayınca kaldığı yerden açılıyor",
+  "Ölçü Tablosu: müşteriler logolarıyla ve sırayla (Sorgenfri, Lykka, Deerberg, Heiter…), Sıfırla üstte, bağlı tarayıcının adı, taranan kağıt yan yana, belirgin Onayla düğmesi",
+  "Ana sayfada sürüm yazmıyor (⚙ Ayarlar'da)"
  ]
 }

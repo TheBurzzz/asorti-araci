@@ -3,15 +3,20 @@
 #   python3 kaynak/eleman/kabuk_yap.py <asorti uygulama.html> <çıktı>
 #
 # Asorti'nin kendi kodu (sekmeler, Gerber, güncelleme, görünüm) olduğu gibi kalır; üstüne eklenenler:
-#   - Eleman simgesi ve adı, uygulama düğmeleri (Asorti Aracı · Ölçü Tablosu), Apple tarzı ana sayfa
+#   - sol üstte Eleman simgesi: basınca Ana sayfa / Asorti Aracı / Ölçü Tablosu menüsü
+#   - Apple tarzı ana sayfa; açılışta Eleman simgesi küçülüp büyüyerek uygulamayı açar (X / Twitter'ın iOS açılışı gibi)
 #   - Ölçü Tablosu için Asorti'ninkiyle aynı tarzda sekmeler (ayrı kap: #sayfalarO, ayrı kayıt: eleman-olcu-sayfalar)
-#   - ⚙ menüsünde açık uygulamaya göre bölümler (görünüm hepsinde ortak)
+#   - sayfa kendiliğinden açılmaz; açık sayfa yokken düzgün bir boş ekran
+#   - çok sayfada hız: sayfalar ilk açılınca yüklenir, uzun süredir bakılmayanlar uyutulur (kaydedilip kapatılır,
+#     dönünce kaldığı yerden açılır); Gerber işi ya da okuma süren sayfa hiç uyutulmaz
+#   - ⚙ menüsünde açık uygulamaya göre bölümler (görünüm hepsinde ortak); sürüm yalnız ⚙ menüsünde
 #   - renk: Eleman sarı, Asorti mavi (aynen), Ölçü yeşil
 # main'deki uygulama.html değişirse (Asorti düzeltmesi) bu betik onun üstüne yeniden çalıştırılır.
-import re, sys
+import os, re, sys
 
 src, out = sys.argv[1], sys.argv[2]
 s = open(src, encoding="utf-8").read()
+SISTEM = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "AsortiAraci", "sistem")
 
 
 def r(a, b, n=1):
@@ -22,10 +27,12 @@ def r(a, b, n=1):
 
 
 SQ = re.search(r'<path id="lgS" d="([^"]+)"', s).group(1)
+ELEMAN_SVG = open(os.path.join(SISTEM, "eleman.svg"), encoding="utf-8").read().strip()
 
 # ---------- başlık, simge ----------
 r("try{if(window.asortiPencere&&asortiPencere.baslik)document.documentElement.classList.add('pencere')}catch(e){}",
-  "document.documentElement.dataset.uyg='ana';try{if(window.asortiPencere&&asortiPencere.baslik)document.documentElement.classList.add('pencere')}catch(e){}")
+  "document.documentElement.dataset.uyg='ana';try{if(sessionStorage.getItem('eleman-acildi'))document.documentElement.classList.add('acildi')}catch(e){}"
+  "try{if(window.asortiPencere&&asortiPencere.baslik)document.documentElement.classList.add('pencere')}catch(e){}")
 r("<title>Asorti Aracı</title>", "<title>Eleman</title>")
 r('href="sistem/asorti.png?v=2"', 'href="sistem/eleman.png?v=1"', 2)
 r('href="sistem/asorti.ico?v=2"', 'href="sistem/eleman.ico?v=1"')
@@ -43,92 +50,7 @@ SPRITE = f'''<svg id="ikonlar" width="0" height="0" style="position:absolute" ar
 </defs></svg>
 '''
 
-# ---------- üst çubuk: Eleman + uygulama düğmeleri ----------
-i = s.find('<div id="logo"')
-j = s.find("</div>", i) + 6
-assert i > 0 and s[i:j].count("lgS") >= 1
-s = s[:i] + ('<div id="logo" title="Ana sayfa" role="button" tabindex="0"><svg aria-hidden="true"><use href="#ikEleman"/></svg><span><b>Eleman</b></span></div>\n'
-             ' <nav id="uyg" aria-label="Uygulamalar">'
-             '<button type="button" data-u="asorti" title="Asorti Aracı"><svg aria-hidden="true"><use href="#ikAsorti"/></svg><span>Asorti Aracı</span><i></i></button>'
-             '<button type="button" data-u="olcu" title="Ölçü Tablosu Aracı"><svg aria-hidden="true"><use href="#ikOlcu"/></svg><span>Ölçü Tablosu</span><i></i></button></nav>') + s[j:]
-r('<body>\n<div id="bar">', '<body>\n' + SPRITE + '<div id="bar">')
-r('<div id="tabs" role="tablist"></div>', '<div id="tabs" role="tablist" aria-label="Asorti sayfaları"></div><div id="tabsO" role="tablist" aria-label="Ölçü Tablosu sayfaları"></div>')
-
-r('<div id="durum" title="Gerber köprüsünün durumu">', '<button id="hafiza" type="button" title="Ölçü Tablosu ortak hafızası"><i></i><span>Ortak hafıza</span></button>\n  <div id="durum" title="Gerber köprüsünün durumu">')
-# ---------- ⚙ menüsü: açık uygulamaya göre bölümler ----------
-r('  <h4>Excel kayıt klasörü</h4>', '  <div class="mAsorti">\n  <h4>Excel kayıt klasörü</h4>')
-r('<div id="gbNot"></div></div>\n  <div class="alt">',
-  '<div id="gbNot"></div></div>\n  </div>\n'
-  '  <div class="mOlcu"><h4>Ölçü Tablosu</h4>\n'
-  '  <div class="blok"><div class="not">Müşteriler ve şablonlar, kayıt klasörleri, tarayıcı, ortak hafıza.</div>\n'
-  '   <div class="satir dug"><button type="button" id="olAyar">Ölçü Tablosu ayarları…</button></div></div></div>\n'
-  '  <div class="alt">')
-r('title="Ayarlar: görünüm, gece ışığı, Excel kayıt klasörü, güncelleme"', 'title="Ayarlar: görünüm, gece ışığı, uygulama ayarları, güncelleme"')
-
-# ---------- ana sayfa ve Ölçü sayfalarının kabı ----------
-ANA = '''<main id="ana" aria-label="Ana sayfa"><div class="anaIc">
- <div class="anaUst"><svg class="anaIk" aria-hidden="true"><use href="#ikEleman"/></svg><h1 id="anaSelam">Merhaba</h1><p>Hangi işi yapalım?</p></div>
- <div class="kartlar">
-  <button type="button" class="kart" data-u="asorti"><svg class="kIk" aria-hidden="true"><use href="#ikAsorti"/></svg>
-   <span class="kMetin"><b>Asorti Aracı</b><span>Siparişi yaz, asortiyi hesapla, Excel'e kaydet. Pastalları Gerber'e gönder.</span></span>
-   <span class="kDurum" id="dAsorti"></span><span class="kOk" aria-hidden="true"><svg viewBox="0 0 12 20"><path d="M2 2l8 8-8 8"/></svg></span></button>
-  <button type="button" class="kart" data-u="olcu"><svg class="kIk" aria-hidden="true"><use href="#ikOlcu"/></svg>
-   <span class="kMetin"><b>Ölçü Tablosu Aracı</b><span>Müşteri kağıdını tara, ölçü tablosunu kontrol et, Excel'e kaydet ve yazdır.</span></span>
-   <span class="kDurum" id="dOlcu"></span><span class="kOk" aria-hidden="true"><svg viewBox="0 0 12 20"><path d="M2 2l8 8-8 8"/></svg></span></button>
- </div>
- <div class="anaAlt">Created by <b>Şamil Yeşil</b><span id="anaSurum"></span></div>
-</div></main>
-'''
-r('<div id="sayfalar"></div>', ANA + '<div id="sayfalar"></div><div id="sayfalarO"></div>')
-
-# ---------- görünüm (CSS) ----------
-CSS = '''
-/* ================= Eleman ================= */
-/* renk: Eleman sarı, Asorti mavi (aynen), Ölçü yeşil. Açık uygulama html[data-uyg] ile seçilir */
-html[data-uyg=ana]{--acc:#b57d00;--accs:rgba(245,176,0,.17)}
-html[data-theme=dark][data-uyg=ana]{--acc:#ffc93c;--accs:rgba(255,201,60,.18)}
-html[data-uyg=olcu]{--acc:#168a49;--accs:rgba(22,138,73,.12)}
-html[data-theme=dark][data-uyg=olcu]{--acc:#34c77b;--accs:rgba(52,199,123,.2)}
-#logo{cursor:pointer;border-radius:10px;margin-left:-6px;padding:4px 16px 4px 6px;transition:background .18s}
-#logo:hover{background:var(--tabh)}
-#logo:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
-#logo svg{filter:drop-shadow(0 1px 1.5px rgba(150,105,0,.28)) drop-shadow(0 3px 6px rgba(150,105,0,.12))}
-#logo b{font-weight:680}
-html.pencere #bar #logo{app-region:no-drag;-webkit-app-region:no-drag}
-#uyg{display:flex;align-items:center;gap:2px;flex:none;padding:3px;border-radius:12px;background:var(--tabh)}
-#uyg button{position:relative;display:flex;align-items:center;gap:7px;height:30px;padding:0 12px 0 6px;border:0;border-radius:9px;background:transparent;color:var(--mut);font-weight:560;letter-spacing:-.005em;cursor:pointer;white-space:nowrap;transition:background .2s,color .2s,box-shadow .2s}
-#uyg button svg{width:21px;height:21px;flex:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.12))}
-#uyg button:hover{color:var(--ink)}
-#uyg button.on{background:var(--on);color:var(--ink);font-weight:620;box-shadow:var(--sh)}
-#uyg button i{position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:50%;background:transparent}
-#uyg button i.is{background:#ff9f0a}
-#uyg button.on i{display:none}
-@media (max-width:1100px){#uyg button span{display:none}#uyg button{padding:0 6px}}
-html[data-uyg=ana] #serit>*{display:none}
-html[data-uyg=asorti] #tabsO,html[data-uyg=olcu] #tabs{display:none}
-#tabsO{display:flex;align-items:center;gap:4px;overflow-x:auto;scrollbar-width:none;padding:6px 2px;min-width:0;scroll-behavior:smooth}
-#tabsO::-webkit-scrollbar{display:none}
-/* Gerber durumu yalnız Asorti'de; bağlantı sorunu her yerde görünür */
-html:not([data-uyg=asorti]) #durum:not(.bad):not(.bekle){display:none}
-#hafiza{display:none;align-items:center;gap:6px;height:28px;padding:0 10px;border:0;border-radius:14px;background:var(--tabh);font-size:12px;color:var(--mut);cursor:pointer}
-html[data-uyg=olcu] #hafiza{display:flex}
-#hafiza:hover{color:var(--ink)}
-#hafiza i{width:7px;height:7px;border-radius:50%;background:var(--mut)}
-#hafiza.ok i{background:var(--ok);box-shadow:0 0 0 3px rgba(31,157,85,.18)}
-#hafiza.gonder i{background:#ff9f0a;animation:nb 1.2s ease-in-out infinite}
-#hafiza.err i{background:#ff9f0a}
-#hafiza.yok i{background:var(--bad)}
-#menu .mAsorti,#menu .mOlcu{display:none}
-html[data-uyg=asorti] #menu .mAsorti,html[data-uyg=olcu] #menu .mOlcu{display:block}
-/* katmanlar: ana sayfa, Asorti sayfaları, Ölçü sayfaları. Gizli olan çalışmaya devam eder */
-#ana,#sayfalarO{position:absolute;top:54px;left:0;right:0;bottom:0;overflow:hidden}
-#sayfalarO iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:var(--bg)}
-#sayfalarO iframe.on{display:block;z-index:2}
-#sayfalarO iframe.yukleniyor{display:block;visibility:hidden;z-index:0}
-#ana,#sayfalar,#sayfalarO{transition:opacity .24s cubic-bezier(.2,.8,.2,1)}
-html:not([data-uyg=ana]) #ana,html:not([data-uyg=asorti]) #sayfalar,html:not([data-uyg=olcu]) #sayfalarO{visibility:hidden;opacity:0;pointer-events:none}
-@media (prefers-reduced-motion:reduce){#ana,#sayfalar,#sayfalarO{transition:none}}
-/* ana sayfa (Apple tarzı: büyük başlık, cam kartlar, yumuşak renk lekeleri) */
+ANA_CSS = r'''/* ana sayfa (Apple tarzı: büyük başlık, cam kartlar, yumuşak renk lekeleri) */
 #ana{overflow-y:auto;background:radial-gradient(48vmax 38vmax at 50% -6%,rgba(255,206,64,.30),transparent 62%),radial-gradient(46vmax 42vmax at 4% 96%,rgba(120,170,255,.24),transparent 62%),radial-gradient(46vmax 42vmax at 98% 92%,rgba(70,200,130,.20),transparent 62%),var(--bg)}
 html[data-theme=dark] #ana{background:radial-gradient(48vmax 38vmax at 50% -6%,rgba(255,190,40,.13),transparent 62%),radial-gradient(46vmax 42vmax at 4% 96%,rgba(40,90,220,.20),transparent 62%),radial-gradient(46vmax 42vmax at 98% 92%,rgba(30,140,80,.18),transparent 62%),var(--bg)}
 .anaIc{min-height:100%;max-width:920px;margin:0 auto;padding:7vh 28px 22px;display:flex;flex-direction:column}
@@ -159,36 +81,42 @@ html[data-theme=dark] .kart{border-color:rgba(255,255,255,.12);background:linear
 .kDurum span.ok i{background:var(--ok)}.kDurum span.is i{background:#ff9f0a}.kDurum span.bad{color:var(--bad)}.kDurum span.bad i{background:var(--bad)}
 .anaAlt{margin-top:auto;padding-top:40px;text-align:center;font-size:12px;color:var(--mut);letter-spacing:.2px}
 .anaAlt b{font-weight:600;color:var(--ink)}
-.anaAlt span:not(:empty)::before{content:' · '}
-'''
-r("</style></head>", CSS + "</style></head>")
+.anaAlt span:not(:empty)::before{content:' · '}'''
 
-# ---------- davranış (JS) ----------
-# yerel yedek: Eleman'ın kayıtları da (eleman-...) diske yedeklensin
-r("for(const k in d)if(k.startsWith('asorti-')&&", "for(const k in d)if((k.startsWith('asorti-')||k.startsWith('eleman-'))&&")
-r("if(k&&k.startsWith('asorti-'))d[k]=localStorage.getItem(k)", "if(k&&(k.startsWith('asorti-')||k.startsWith('eleman-')))d[k]=localStorage.getItem(k)")
-# görünüm ve "kaydet" haberi Ölçü sayfalarına da gitsin
-r("document.querySelectorAll('#sayfalar iframe').forEach(f=>{try{f.contentDocument.documentElement.dataset.theme=t}catch(e){}temaYolla(f,t)})",
-  "document.querySelectorAll('#sayfalar iframe,#sayfalarO iframe').forEach(f=>{try{f.contentDocument.documentElement.dataset.theme=t}catch(e){}temaYolla(f,t)})")
-r("function sayfalarKaydetsin(){document.querySelectorAll('#sayfalar iframe').forEach(",
-  "function sayfalarKaydetsin(){document.querySelectorAll('#sayfalar iframe,#sayfalarO iframe').forEach(")
-# Yeni sayfa: açık uygulamanın sekmesi
-r("$('yeni').onclick=yeni;", "$('yeni').onclick=()=>UYG==='olcu'?yeniO():yeni();")
-r("$('serit').addEventListener('dblclick',e=>{if(e.target===$('serit')||e.target===$('tabs'))yeni()});",
-  "$('serit').addEventListener('dblclick',e=>{if(UYG==='ana')return;if(e.target===$('serit')||e.target===$('tabs')||e.target===$('tabsO'))UYG==='olcu'?yeniO():yeni()});")
-r("$('surum').textContent=j.surum?'Asorti Aracı v'+j.surum:'';", "$('surum').textContent=j.surum?'Eleman v'+j.surum:'';$('anaSurum').textContent=j.surum?'v'+j.surum:'';")
-r("confirm('Asorti Aracı v'+G.yeni", "confirm('Eleman v'+G.yeni")
-r("masaüstündeki Asorti Aracı simgesinden aç", "masaüstündeki Eleman simgesinden aç")
-r("durumYaz(j.kopru?'ok':'bad',j.kopru?'Gerber bağlı':'Gerber köprüsü kapalı')}", "durumYaz(j.kopru?'ok':'bad',j.kopru?'Gerber bağlı':'Gerber köprüsü kapalı');GB=j.gerber===false?'yok':j.kopru?'ok':'bad';anaYaz()}")
+# ---------- açılış katmanı (sayfanın ilk karesinden itibaren görünür; yerel açılış ekranıyla birebir aynı) ----------
+ACILIS_HTML = '<div id="acilis" aria-hidden="true"><svg class="aIk"><use href="#ikEleman"/></svg><canvas></canvas></div>\n'
 
 JS = r'''
-/* ================= Eleman: ana sayfa, uygulama düğmeleri, Ölçü Tablosu sekmeleri =================
+/* ================= Eleman: ana sayfa, menü, Ölçü Tablosu sekmeleri, açılış =================
    Asorti'nin sekmeleri (#tabs, #sayfalar) olduğu gibi çalışır. Ölçü Tablosu'nun sekmeleri ayrı kapta (#tabsO, #sayfalarO),
    ayrı kayıtta (eleman-olcu-sayfalar). İki uygulama birbirinin sayfasına, kaydına, haberine dokunmaz. */
 let UYG='ana',GB='';
+
+/* ---------- çok sayfada hız: sayfalar ilk açılınca yüklenir; uzun süredir bakılmayanlar uyutulur ----------
+   Uyuyan sayfa kaydedilip kapatılır (sekmesi yerinde kalır), tıklanınca kaldığı yerden açılır.
+   Gerber işi süren ya da kağıt okuyan sayfa hiç uyutulmaz. */
+const CANLI_A=4,CANLI_O=3,sonA={},sonO={};
+function kaliciA(id){const d=info[id]||{};S.ad=S.ad||{};S.ms=S.ms||{};const ms=!!d.busy;
+ if(S.ad[id]!==(d.ad||'')||!!S.ms[id]!==ms){S.ad[id]=d.ad||'';if(ms)S.ms[id]=1;else delete S.ms[id];save()}}
+function mesgulA(id){if((info[id]||{}).busy||(S.ms&&S.ms[id]))return true;
+ try{const j=JSON.parse(localStorage.getItem('asorti-gjob-'+id)||'null');return !!(j&&Date.now()-j.t<6*3600e3&&j.st&&!['bitti','hata','iptal'].includes(j.st.asama))}catch(e){return false}}
+function uyutA(){const fs=[...document.querySelectorAll('#sayfalar iframe')].filter(f=>!f.dataset.sil);let fazla=fs.length-CANLI_A;if(fazla<=0)return;
+ /* yalnız kaybolacak bir şeyi olmayan sayfa uyur: boş sayfa ya da son hali kaydedilmiş sayfa (tablosu hazırlanmış).
+    Sipariş formu yazılıp henüz tablo hazırlanmamış sayfa uyutulmaz (o hal kaydedilmiyor) */
+ const uyuyabilir=f=>{try{const w=f.contentWindow;if(w.sayfaKaydet)w.sayfaKaydet();return !!((w.sayfaBos&&w.sayfaBos())||localStorage.getItem('asorti-sayfa-'+f.dataset.id))}catch(e){return false}};
+ fs.filter(f=>f!==gosterilen&&!f.classList.contains('yukleniyor')&&!mesgulA(f.dataset.id)).sort((a,b)=>(sonA[a.dataset.id]||0)-(sonA[b.dataset.id]||0))
+  .forEach(f=>{if(fazla<=0||!uyuyabilir(f))return;f.remove();fazla--})}
+function bosGoster(k){if(k==='A'){gosterilen=null;document.querySelectorAll('#sayfalar iframe').forEach(x=>{x.classList.remove('on');if(x.dataset.sil)x.remove()});$('bosA').hidden=false}
+ else{gosterilenO=null;document.querySelectorAll('#sayfalarO iframe').forEach(x=>{x.classList.remove('on');if(x.dataset.sil)x.remove()});$('bosO').hidden=false}}
+$('bosYeniA').onclick=()=>yeni();
+$('bosYeniO').onclick=()=>yeniO();
+
+/* ---------- Ölçü Tablosu sekmeleri ---------- */
 const LO='eleman-olcu-sayfalar',TO=$('tabsO');
 let SO=(()=>{try{return JSON.parse(localStorage.getItem(LO)||'null')}catch(e){return null}})()||{list:[],on:''};
-const infoO={};let girisO=null,gosterilenO=null;
+SO.ad=SO.ad||{};
+const infoO={};for(const id of SO.list)if(SO.ad[id])infoO[id]={ad:SO.ad[id]};
+let girisO=null,gosterilenO=null;
 function saveO(){try{localStorage.setItem(LO,JSON.stringify(SO))}catch(e){}yerelYedek()}
 function frameO(id){let f=document.querySelector('#sayfalarO iframe[data-id="'+id+'"]');
  if(!f){f=document.createElement('iframe');f.dataset.id=id;f.title='Ölçü Tablosu Aracı';f.addEventListener('load',()=>{f.dataset.hazir='1'});
@@ -209,68 +137,312 @@ function cizO(){let onceki=null;
   b.title=ad+(d.degisti?' · kaydedilmedi':'');
   if(yeniMi&&girisO===id){girisO=null;if(!AZ.matches)sekmeOyna(b,true,()=>{if(b.classList.contains('on'))b.scrollIntoView({block:'nearest',inline:'nearest'})})}});
  [...TO.children].forEach(b=>{if(!b.dataset.kapaniyor&&!SO.list.includes(b.dataset.id))sekmeCik(b)});
- if(UYG==='olcu'||SO.on&&document.querySelector('#sayfalarO iframe[data-id="'+SO.on+'"]'))sayfaGosterO(SO.on);
+ if(UYG==='olcu'){if(SO.on)sayfaGosterO(SO.on);else bosGoster('O')}
  anaYaz()}
-function sayfaGosterO(id){if(!id)return;const f=frameO(id);if(gosterilenO===f)return;gosterilenO=f;
+function sayfaGosterO(id){if(!id)return;$('bosO').hidden=true;const f=frameO(id);sonO[id]=Date.now();if(gosterilenO===f)return;gosterilenO=f;
  const degis=()=>{if(gosterilenO!==f)return;
   document.querySelectorAll('#sayfalarO iframe').forEach(x=>{if(x!==f&&!x.classList.contains('yukleniyor'))sayfaKaldir(x)});
-  f.classList.remove('yukleniyor');f.classList.add('on')};
+  f.classList.remove('yukleniyor');f.classList.add('on');setTimeout(uyutO,400)};
  if(f.dataset.hazir)return degis();
  f.classList.add('yukleniyor');let t=0;
  const hazir=()=>{clearTimeout(t);f.removeEventListener('load',hazir);if(gosterilenO===f)degis();else f.classList.remove('yukleniyor')};
  f.addEventListener('load',hazir);t=setTimeout(hazir,1500)}
+function uyutO(){const fs=[...document.querySelectorAll('#sayfalarO iframe')].filter(f=>!f.dataset.sil&&!f.dataset.uyuyor);let fazla=fs.length-CANLI_O;if(fazla<=0)return;
+ fs.filter(f=>f!==gosterilenO&&!f.classList.contains('yukleniyor')&&!(infoO[f.dataset.id]||{}).busy).sort((a,b)=>(sonO[a.dataset.id]||0)-(sonO[b.dataset.id]||0))
+  .forEach(f=>{if(fazla<=0)return;fazla--;f.dataset.uyuyor='1';let p=null;try{p=f.contentWindow.taslakYaz&&f.contentWindow.taslakYaz(true)}catch(e){}
+   Promise.race([Promise.resolve(p),new Promise(r=>setTimeout(r,1500))]).catch(()=>{}).then(()=>{if(f!==gosterilenO)f.remove();else delete f.dataset.uyuyor})})}
 function acO(id){SO.on=id;saveO();cizO()}
 function yeniO(){const id=yeniId();SO.list.push(id);girisO=id;acO(id)}
-/* kapanan sekmenin kaydedilmemiş tablosu da silinir (Ölçü'nün bu bilgisayardaki deposu: taslak-<sekme>) */
+/* kapanan sekmenin bu bilgisayardaki tablosu da silinir (Ölçü'nün deposu: taslak-<sekme>) */
 function olcuTaslakSil(id){try{const q=indexedDB.open('olcu-tablosu-araci',1);q.onupgradeneeded=()=>q.result.createObjectStore('kv');
  q.onsuccess=()=>{try{q.result.transaction('kv','readwrite').objectStore('kv').delete('taslak-'+id)}catch(e){}}}catch(e){}}
 function kapatO(id){const i=SO.list.indexOf(id);if(i<0)return;const d=infoO[id]||{},f=document.querySelector('#sayfalarO iframe[data-id="'+id+'"]');
  if(d.busy){alert((d.ad||'Bu sayfa')+' şu an kağıt okuyor ya da kaydediyor. Bitince kapat.');return}
  if(d.degisti&&!confirm((d.ad?d.ad+' tablosu':'Bu sayfa')+' kapatılsın mı?\nKaydedilmemiş tablo silinir (Excel\'e kaydettiklerin durur).'))return;
- SO.list.splice(i,1);delete infoO[id];olcuTaslakSil(id);
+ SO.list.splice(i,1);delete infoO[id];delete SO.ad[id];olcuTaslakSil(id);
  if(f)f.dataset.sil='1';
- if(!SO.list.length){const n=yeniId();SO.list.push(n);girisO=n;SO.on=n}else if(SO.on===id)SO.on=SO.list[Math.max(0,i-1)];
+ if(!SO.list.length)SO.on='';else if(SO.on===id)SO.on=SO.list[Math.max(0,i-1)];
  saveO();cizO();if(f&&f!==gosterilenO&&!f.classList.contains('on'))f.remove()}
 TO.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){TO.scrollLeft+=e.deltaY;e.preventDefault()}},{passive:false});
-/* Ölçü sayfalarından gelen haberler: sekme başlığı, bildirim */
+/* Ölçü sayfalarından gelen haberler: sekme başlığı, bildirim, ortak hafıza durumu */
 window.addEventListener('message',e=>{const d=e.data||{};if(d.uygulama!=='olcu'&&d.tur!=='olcu')return;
- if(d.t==='sayfa'&&SO.list.includes(d.id)){const o=infoO[d.id]||{};if(o.ad!==d.ad||o.busy!==d.busy||o.degisti!==d.degisti){infoO[d.id]={ad:d.ad,busy:!!d.busy,degisti:!!d.degisti};cizO()}}
+ if(d.t==='sayfa'&&SO.list.includes(d.id)){const o=infoO[d.id]||{};if(o.ad!==d.ad||o.busy!==d.busy||o.degisti!==d.degisti){infoO[d.id]={ad:d.ad,busy:!!d.busy,degisti:!!d.degisti};
+   if((SO.ad[d.id]||'')!==(d.ad||'')){SO.ad[d.id]=d.ad||'';saveO()}cizO()}}
  if(d.t==='bildirim'&&SO.list.includes(d.id))bildirim({tur:'excel',baslik:d.baslik||'Excel\'e kaydedildi',metin:d.metin||d.ad||'',
-  ipucu:UYG!=='olcu'||d.id!==SO.on?'Tabloya gitmek için tıkla':'',tik:()=>{uygGit('olcu');acO(d.id)}})});
-/* Ölçü'nün ortak hafıza durumu: hangi sekmeden gelirse gelsin aynı hafıza; tıklayınca açık sekmede ayarların o bölümü */
-window.addEventListener('message',e=>{const d=e.data||{};if(d.t!=='hafiza'||d.uygulama!=='olcu')return;const h=$('hafiza');
- h.className=['ok','gonder','err','yok'].includes(d.durum)?d.durum:'';h.querySelector('span').textContent=d.yazi||'Ortak hafıza';h.title=d.ipucu||'Ortak hafıza'});
+  ipucu:UYG!=='olcu'||d.id!==SO.on?'Tabloya gitmek için tıkla':'',tik:()=>{uygGit('olcu');acO(d.id)}});
+ if(d.t==='hafiza'){const h=$('hafiza');h.className=['ok','gonder','err','yok'].includes(d.durum)?d.durum:'';h.querySelector('span').textContent=d.yazi||'Ortak hafıza';h.title=d.ipucu||'Ortak hafıza'}});
 $('hafiza').onclick=e=>{e.stopPropagation();const f=document.querySelector('#sayfalarO iframe.on');if(f)try{f.contentWindow.postMessage({t:'ayarlar',bolum:'hafiza'},'*')}catch(x){}};
-/* ana sayfa ve uygulama düğmeleri */
+
+/* ---------- ana sayfa, sol üstteki menü, uygulamalar arası geçiş ---------- */
 function selam(){const h=new Date().getHours();return h>=5&&h<11?'Günaydın':h>=11&&h<17?'İyi günler':h>=17&&h<22?'İyi akşamlar':'İyi geceler'}
 function cip(c,t){return '<span class="'+c+'"><i></i>'+t+'</span>'}
 function anaYaz(){if(!$('dAsorti'))return;
  const n=S.list.length,is=Object.values(info).filter(d=>d.busy).length,no=SO.list.length,dg=Object.values(infoO).filter(d=>d.degisti).length;
- $('dAsorti').innerHTML=cip('',n+' sayfa açık')+(is?cip('is',is+' Gerber işi sürüyor'):'')+(GB==='ok'?cip('ok','Gerber bağlı'):GB==='bad'?cip('bad','Gerber köprüsü kapalı'):'');
- $('dOlcu').innerHTML=(no?cip('',no+' sayfa açık'):cip('','Henüz açılmadı'))+(dg?cip('is',dg+' kaydedilmemiş tablo'):'');
- document.querySelector('#uyg [data-u=asorti] i').className=is?'is':'';
- document.querySelector('#uyg [data-u=olcu] i').className=dg?'is':''}
-function uygGit(u,ilk){if(!['ana','asorti','olcu'].includes(u))u='ana';const once=UYG;UYG=u;
+ const sA=n?n+' sayfa açık':'Açık sayfa yok',sO=no?no+' sayfa açık':'Açık sayfa yok';
+ $('dAsorti').innerHTML=cip('',sA)+(is?cip('is',is+' Gerber işi sürüyor'):'')+(GB==='ok'?cip('ok','Gerber bağlı'):GB==='bad'?cip('bad','Gerber köprüsü kapalı'):'');
+ $('dOlcu').innerHTML=cip('',sO)+(dg?cip('is',dg+' kaydedilmemiş tablo'):'');
+ $('mDA').textContent=sA+(is?' · '+is+' Gerber işi sürüyor':'');
+ $('mDO').textContent=sO+(dg?' · '+dg+' kaydedilmemiş':'')}
+function uMenu(ac){const m=$('uMenu'),b=$('logo');if(ac===undefined)ac=!m.classList.contains('on');
+ m.classList.toggle('on',ac);b.setAttribute('aria-expanded',String(ac));
+ if(ac){menu(false);anaYaz();m.querySelectorAll('button[data-u]').forEach(x=>x.classList.toggle('on',x.dataset.u===UYG))}}
+function uygGit(u){if(!['ana','asorti','olcu'].includes(u))u='ana';const once=UYG;UYG=u;
  document.documentElement.dataset.uyg=u;
- document.querySelectorAll('#uyg button').forEach(b=>{const on=b.dataset.u===u;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on))});
+ $('lUyg').textContent=u==='asorti'?'Asorti Aracı':u==='olcu'?'Ölçü Tablosu':'';
  if(u==='ana')$('anaSelam').textContent=selam();
- if(u==='olcu'){if(!SO.list.length){const id=yeniId();SO.list.push(id);SO.on=id;saveO()}if(!SO.list.includes(SO.on))SO.on=SO.list[0];cizO();sayfaGosterO(SO.on)}
- if(u==='asorti'&&once!=='asorti'){const f=document.querySelector('#sayfalar iframe.on');try{if(f&&f.contentWindow.sayfaBelir)f.contentWindow.sayfaBelir()}catch(e){}}
+ if(u==='olcu'){if(SO.on&&!SO.list.includes(SO.on))SO.on=SO.list[0]||'';cizO()}
+ if(u==='asorti'){if(!S.list.length)bosGoster('A');else if(once!=='asorti'){const f=document.querySelector('#sayfalar iframe.on');try{if(f&&f.contentWindow.sayfaBelir)f.contentWindow.sayfaBelir()}catch(e){}}}
  try{localStorage.setItem('eleman-son',u)}catch(e){}
- menu(false);anaYaz()}
-$('logo').onclick=()=>uygGit('ana');
-$('logo').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();uygGit('ana')}};
-document.querySelectorAll('#uyg button,.kart').forEach(b=>b.onclick=()=>uygGit(b.dataset.u));
+ uMenu(false);menu(false);anaYaz()}
+$('logo').onclick=e=>{e.stopPropagation();uMenu()};
+$('uMenu').querySelectorAll('button[data-u]').forEach(b=>b.onclick=e=>{e.stopPropagation();uygGit(b.dataset.u)});
+document.querySelectorAll('.kart').forEach(b=>b.onclick=()=>uygGit(b.dataset.u));
+document.addEventListener('click',e=>{if(!e.target.closest('#uMenu'))uMenu(false)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')uMenu(false)});
+window.addEventListener('blur',()=>uMenu(false));
+$('ayar').addEventListener('click',()=>uMenu(false));
 $('olAyar').onclick=e=>{e.stopPropagation();menu(false);const f=document.querySelector('#sayfalarO iframe.on');if(f)try{f.contentWindow.postMessage({t:'ayarlar'},'*')}catch(x){}};
 setInterval(()=>{if(UYG==='ana')$('anaSelam').textContent=selam()},60000);
-uygGit('ana',true);
+uygGit('ana');
+
+/* ---------- açılış: Eleman simgesi önce hafifçe küçülür, sonra büyüyerek uygulamayı açar (X / Twitter'ın iOS açılışı gibi) ----------
+   Yerel açılış ekranı (pencerenin kendisi) ve bu katman aynı görüntü: düz zemin, ortada 104 px simge. Yerel ekran kalkınca
+   (Eleman haber verir) simgenin içi bir pencere olur ve büyüdükçe uygulama görünür. */
+const ACILIS_SVG=__ACILIS_SVG__,KARE=__KARE__;
+let acilisKalkti=false,acilisBasladi=false,acilisBekliyor=false;
+if(PW)PW.addEventListener('message',e=>{if((e.data||{}).t==='acilis'){acilisKalkti=true;if(acilisBekliyor)requestAnimationFrame(acilisOyna)}});
+function acilisBekle(){const ov=$('acilis');if(!ov||document.documentElement.classList.contains('acildi'))return;
+ if(!PW||acilisKalkti){setTimeout(acilisOyna,PW?0:350);return}
+ acilisBekliyor=true;setTimeout(acilisOyna,1600)}   // Eleman haber vermezse de en geç 1,6 sn sonra
+function acilisOyna(){const ov=$('acilis');if(!ov||acilisBasladi)return;acilisBasladi=true;
+ try{sessionStorage.setItem('eleman-acildi','1')}catch(e){}
+ const bitir=()=>{ov.remove();document.documentElement.classList.add('acildi')};
+ if(AZ.matches){const a=ov.animate([{opacity:1},{opacity:0}],{duration:260,easing:'ease-out',fill:'forwards'});a.onfinish=bitir;return}
+ const cv=ov.querySelector('canvas'),ik=ov.querySelector('.aIk'),h=document.documentElement,cs=getComputedStyle(h);
+ const dpr=window.devicePixelRatio||1,W=innerWidth,H=innerHeight,S0=104,cx=W/2,cy=H/2;
+ cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);cv.style.width=W+'px';cv.style.height=H+'px';
+ const g=cv.getContext('2d'),bg=cs.getPropertyValue('--bg').trim()||'#eef0f6',ink=cs.getPropertyValue('--ink').trim()||'#1d1d1f';
+ const kare=new Path2D(KARE),img=new Image(),pencere=h.classList.contains('pencere'),tam=h.classList.contains('tam');
+ img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(ACILIS_SVG);
+ const K=Math.hypot(W,H)/S0*1.45,T1=240,T2=660,LK=Math.log(K/.88);
+ const io=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;                  // yumuşak küçülme
+ const buyu=p=>.88*Math.exp(LK*Math.pow(p,1.7));                     // hızlanarak büyüme (göze düzgün gelen üstel yakınlaşma)
+ const yumu=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t)};
+ const cizgi=(x0,y0,x1,y1)=>{g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke()};
+ const dugmeler=()=>{if(!pencere)return;g.save();g.strokeStyle=ink;g.lineWidth=1;g.globalAlpha=.92;
+  const y=Math.round(27-5)+.5,x3=Math.round(W-46+18)+.5,x2=Math.round(W-92+18)+.5,x1=Math.round(W-138+18)+.5;
+  cizgi(x1,y+5,x1+10,y+5);
+  if(tam){g.strokeRect(x2,y+2,7,7);cizgi(x2+2,y+2,x2+2,y);cizgi(x2+2,y,x2+9,y);cizgi(x2+9,y,x2+9,y+7);cizgi(x2+9,y+7,x2+7,y+7)}else g.strokeRect(x2,y,9,9);
+  cizgi(x3,y,x3+9,y+9);cizgi(x3+9,y,x3,y+9);g.restore()};
+ const kare1=(s,a)=>{g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);g.fillStyle=bg;g.fillRect(0,0,W,H);
+  const k=S0*s/64*(.94+.06*(1-a));   // simge tam görünürken delik bir tık küçük: kenarda arkası sızmasın
+  g.save();g.globalCompositeOperation='destination-out';g.translate(cx-32*k,cy-32*k);g.scale(k,k);g.fill(kare);g.restore();
+  if(a>0&&img.complete&&img.naturalWidth){g.save();g.globalAlpha=a;g.imageSmoothingQuality='high';g.drawImage(img,cx-S0*s/2,cy-S0*s/2,S0*s,S0*s);g.restore()}
+  dugmeler()};
+ const basla=()=>{kare1(1,1);cv.style.display='block';ov.style.background='transparent';ik.style.display='none';
+  const ana=UYG==='ana'?$('ana'):null;let t0=0;
+  const adim=now=>{if(!t0)t0=now;const t=now-t0;
+   if(t<T1){kare1(1-.12*io(t/T1),1);requestAnimationFrame(adim);return}
+   const p=Math.min(1,(t-T1)/T2),s=buyu(p),a=1-yumu(.04,.36,p);
+   kare1(s,a);
+   if(p<1)requestAnimationFrame(adim);else bitir()};
+  if(ana)ana.animate([{transform:'scale(1.045)',opacity:.75},{transform:'none',opacity:1}],{duration:T1+T2,delay:0,easing:'cubic-bezier(.25,.1,.25,1)'});
+  requestAnimationFrame(adim)};
+ if(img.complete&&img.naturalWidth)basla();else{img.onload=basla;img.onerror=()=>{const a=ov.animate([{opacity:1},{opacity:0}],{duration:260,fill:'forwards'});a.onfinish=bitir}}}
 '''
-r("/* açılışta önce görünen sayfa yüklenir, diğerleri hemen ardından", JS + "/* açılışta önce görünen sayfa yüklenir, diğerleri hemen ardından")
-# Asorti sekmeleri değişince ana sayfa sayıları da
+
+import json
+JS = JS.replace('__ACILIS_SVG__', json.dumps(ELEMAN_SVG)).replace('__KARE__', json.dumps(SQ))
+
+# ---------- üst çubuk: Eleman simgesi (menü) ----------
+i = s.find('<div id="logo"')
+j = s.find("</div>", i) + 6
+assert i > 0 and s[i:j].count("lgS") >= 1
+s = s[:i] + ('<button id="logo" type="button" aria-haspopup="menu" aria-expanded="false" title="Ana sayfa ve uygulamalar">'
+             '<svg aria-hidden="true"><use href="#ikEleman"/></svg><span class="lAd"><b>Eleman</b><span id="lUyg"></span></span>'
+             '<svg class="lOk" viewBox="0 0 12 8" aria-hidden="true"><path d="M1.6 1.8 6 6.2l4.4-4.4"/></svg></button>\n'
+             ' <div id="uMenu" role="menu" aria-label="Ana sayfa ve uygulamalar">'
+             '<button type="button" role="menuitem" data-u="ana"><span class="mIk mEv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.6 12 3.6l8.5 7v9.1a1 1 0 0 1-1 1H15v-6.2H9v6.2H4.5a1 1 0 0 1-1-1z"/></svg></span>'
+             '<span class="mMt"><b>Ana sayfa</b><small>Eleman</small></span><i class="mOn"></i></button>'
+             '<div class="mAy"></div>'
+             '<button type="button" role="menuitem" data-u="asorti"><svg class="mIk" aria-hidden="true"><use href="#ikAsorti"/></svg>'
+             '<span class="mMt"><b>Asorti Aracı</b><small id="mDA"></small></span><i class="mOn"></i></button>'
+             '<button type="button" role="menuitem" data-u="olcu"><svg class="mIk" aria-hidden="true"><use href="#ikOlcu"/></svg>'
+             '<span class="mMt"><b>Ölçü Tablosu</b><small id="mDO"></small></span><i class="mOn"></i></button></div>') + s[j:]
+r('<body>\n<div id="bar">', '<body>\n' + SPRITE + ACILIS_HTML + '<div id="bar">')
+r('<div id="tabs" role="tablist"></div>', '<div id="tabs" role="tablist" aria-label="Asorti sayfaları"></div><div id="tabsO" role="tablist" aria-label="Ölçü Tablosu sayfaları"></div>')
+r('<div id="durum" title="Gerber köprüsünün durumu">', '<button id="hafiza" type="button" title="Ölçü Tablosu ortak hafızası"><i></i><span>Ortak hafıza</span></button>\n  <div id="durum" title="Gerber köprüsünün durumu">')
+# ---------- ⚙ menüsü: açık uygulamaya göre bölümler ----------
+r('  <h4>Excel kayıt klasörü</h4>', '  <div class="mAsorti">\n  <h4>Excel kayıt klasörü</h4>')
+r('<div id="gbNot"></div></div>\n  <div class="alt">',
+  '<div id="gbNot"></div></div>\n  </div>\n'
+  '  <div class="mOlcu"><h4>Ölçü Tablosu</h4>\n'
+  '  <div class="blok"><div class="not">Müşteriler ve şablonlar, kayıt klasörleri, tarayıcı, ortak hafıza.</div>\n'
+  '   <div class="satir dug"><button type="button" id="olAyar">Ölçü Tablosu ayarları…</button></div></div></div>\n'
+  '  <div class="alt">')
+r('title="Ayarlar: görünüm, gece ışığı, Excel kayıt klasörü, güncelleme"', 'title="Ayarlar: görünüm, gece ışığı, uygulama ayarları, güncelleme"')
+
+# ---------- ana sayfa, boş sayfa ekranları, Ölçü sayfalarının kabı ----------
+ANA = '''<main id="ana" aria-label="Ana sayfa"><div class="anaIc">
+ <div class="anaUst"><svg class="anaIk" aria-hidden="true"><use href="#ikEleman"/></svg><h1 id="anaSelam">Merhaba</h1><p>Hangi işi yapalım?</p></div>
+ <div class="kartlar">
+  <button type="button" class="kart" data-u="asorti"><svg class="kIk" aria-hidden="true"><use href="#ikAsorti"/></svg>
+   <span class="kMetin"><b>Asorti Aracı</b><span>Siparişi yaz, asortiyi hesapla, Excel'e kaydet. Pastalları Gerber'e gönder.</span></span>
+   <span class="kDurum" id="dAsorti"></span><span class="kOk" aria-hidden="true"><svg viewBox="0 0 12 20"><path d="M2 2l8 8-8 8"/></svg></span></button>
+  <button type="button" class="kart" data-u="olcu"><svg class="kIk" aria-hidden="true"><use href="#ikOlcu"/></svg>
+   <span class="kMetin"><b>Ölçü Tablosu Aracı</b><span>Müşteri kağıdını tara, ölçü tablosunu kontrol et, Excel'e kaydet ve yazdır.</span></span>
+   <span class="kDurum" id="dOlcu"></span><span class="kOk" aria-hidden="true"><svg viewBox="0 0 12 20"><path d="M2 2l8 8-8 8"/></svg></span></button>
+ </div>
+ <div class="anaAlt">Created by <b>Şamil Yeşil</b></div>
+</div></main>
+'''
+ARTI = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>'
+BOS_A = ('<div class="bos" id="bosA" hidden><div class="bosK"><svg class="bosIk" aria-hidden="true"><use href="#ikAsorti"/></svg>'
+         '<h2>Asorti Aracı</h2><p>Açık sayfa yok. Yeni bir sayfa aç; siparişi yaz, asortiyi hesapla.</p>'
+         '<button type="button" class="bosYeni" id="bosYeniA">' + ARTI + 'Yeni sayfa</button></div></div>')
+BOS_O = ('<div class="bos" id="bosO" hidden><div class="bosK"><svg class="bosIk" aria-hidden="true"><use href="#ikOlcu"/></svg>'
+         '<h2>Ölçü Tablosu Aracı</h2><p>Açık sayfa yok. Yeni bir sayfa aç; müşteri kağıdını tara ya da PDF\'ini bırak.</p>'
+         '<button type="button" class="bosYeni" id="bosYeniO">' + ARTI + 'Yeni sayfa</button></div></div>')
+r('<div id="sayfalar"></div>', ANA + '<div id="sayfalar">' + BOS_A + '</div><div id="sayfalarO">' + BOS_O + '</div>')
+
+# ---------- görünüm (CSS) ----------
+CSS = '''
+/* ================= Eleman ================= */
+/* renk: Eleman sarı, Asorti mavi (aynen), Ölçü yeşil. Açık uygulama html[data-uyg] ile seçilir */
+html[data-uyg=ana]{--acc:#b57d00;--accs:rgba(245,176,0,.17)}
+html[data-theme=dark][data-uyg=ana]{--acc:#ffc93c;--accs:rgba(255,201,60,.18)}
+html[data-uyg=olcu]{--acc:#168a49;--accs:rgba(22,138,73,.12)}
+html[data-theme=dark][data-uyg=olcu]{--acc:#34c77b;--accs:rgba(52,199,123,.2)}
+/* sol üst: Eleman simgesi, basınca menü */
+#logo{border:0;background:transparent;font:inherit;cursor:pointer;border-radius:11px;margin-left:-6px;padding:5px 14px 5px 6px;gap:9px;transition:background .2s}
+#logo:hover,#logo[aria-expanded=true]{background:var(--tabh)}
+#logo:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+#logo>svg:first-child{filter:drop-shadow(0 1px 1.5px rgba(150,105,0,.28)) drop-shadow(0 3px 6px rgba(150,105,0,.12))}
+#logo .lAd{display:flex;align-items:center}
+#logo b{font-weight:680;color:var(--ink)}
+#lUyg{color:var(--mut);font-weight:500}
+#lUyg:not(:empty)::before{content:'›';display:inline-block;margin:0 7px 0 8px;opacity:.55;font-weight:400}
+#logo .lOk{width:11px;height:8px;fill:none;stroke:var(--mut);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;margin-left:2px;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+#logo[aria-expanded=true] .lOk{transform:rotate(180deg)}
+html.pencere #bar #logo{app-region:no-drag;-webkit-app-region:no-drag}
+#uMenu{position:absolute;top:52px;left:8px;z-index:30;width:292px;padding:6px;border-radius:16px;background:var(--pop);backdrop-filter:saturate(180%) blur(24px);
+ box-shadow:var(--psh);border:1px solid var(--line);transform-origin:22px 0;opacity:0;visibility:hidden;transform:translateY(-6px) scale(.96);
+ transition:opacity .2s cubic-bezier(.2,.8,.2,1),transform .26s cubic-bezier(.2,.9,.25,1),visibility 0s linear .26s;app-region:no-drag;-webkit-app-region:no-drag}
+#uMenu.on{opacity:1;visibility:visible;transform:none;transition:opacity .18s ease-out,transform .3s cubic-bezier(.2,.9,.25,1.05),visibility 0s}
+#uMenu button{display:flex;align-items:center;gap:12px;width:100%;padding:8px 10px;border:0;border-radius:11px;background:transparent;text-align:left;cursor:pointer;color:var(--ink);transition:background .15s}
+#uMenu button:hover{background:var(--tabh)}
+#uMenu button.on{background:var(--accs)}
+#uMenu .mIk{width:34px;height:34px;flex:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.14))}
+#uMenu .mEv{display:grid;place-items:center;border-radius:9px;background:linear-gradient(#ffe36e,#ffc21a)}
+#uMenu .mEv svg{width:19px;height:19px;fill:none;stroke:#1d1d1f;stroke-width:1.9;stroke-linejoin:round}
+#uMenu .mMt{display:flex;flex-direction:column;gap:1px;flex:1;min-width:0}
+#uMenu .mMt b{font-size:14px;font-weight:620;letter-spacing:-.01em}
+#uMenu .mMt small{font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#uMenu .mOn{width:7px;height:7px;border-radius:50%;flex:none;margin-right:4px;background:transparent}
+#uMenu button.on .mOn{background:var(--acc)}
+#uMenu button[data-u=asorti].on{background:rgba(0,113,227,.12)}#uMenu button[data-u=asorti].on .mOn{background:#0071e3}
+#uMenu button[data-u=olcu].on{background:rgba(22,138,73,.13)}#uMenu button[data-u=olcu].on .mOn{background:#168a49}
+html[data-theme=dark] #uMenu button[data-u=asorti].on{background:rgba(10,132,255,.22)}html[data-theme=dark] #uMenu button[data-u=asorti].on .mOn{background:#0a84ff}
+html[data-theme=dark] #uMenu button[data-u=olcu].on{background:rgba(52,199,123,.2)}html[data-theme=dark] #uMenu button[data-u=olcu].on .mOn{background:#34c77b}
+#uMenu .mAy{height:1px;margin:5px 10px;background:var(--line)}
+/* sekme şeritleri: açık uygulamanınki görünür, geçerken yumuşakça belirir */
+html[data-uyg=ana] #serit>*{display:none}
+html[data-uyg=asorti] #tabsO,html[data-uyg=olcu] #tabs{display:none}
+#tabsO{display:flex;align-items:center;gap:4px;overflow-x:auto;scrollbar-width:none;padding:6px 2px;min-width:0;scroll-behavior:smooth}
+#tabsO::-webkit-scrollbar{display:none}
+html[data-uyg=asorti] #tabs,html[data-uyg=olcu] #tabsO,html:not([data-uyg=ana]) #yeni{animation:serGir .34s cubic-bezier(.2,.8,.2,1)}
+@keyframes serGir{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+/* Gerber durumu yalnız Asorti'de; bağlantı sorunu her yerde görünür */
+html:not([data-uyg=asorti]) #durum:not(.bad):not(.bekle){display:none}
+#hafiza{display:none;align-items:center;gap:6px;height:28px;padding:0 10px;border:0;border-radius:14px;background:var(--tabh);font-size:12px;color:var(--mut);cursor:pointer}
+html[data-uyg=olcu] #hafiza{display:flex}
+#hafiza:hover{color:var(--ink)}
+#hafiza i{width:7px;height:7px;border-radius:50%;background:var(--mut)}
+#hafiza.ok i{background:var(--ok);box-shadow:0 0 0 3px rgba(31,157,85,.18)}
+#hafiza.gonder i{background:#ff9f0a;animation:nb 1.2s ease-in-out infinite}
+#hafiza.err i{background:#ff9f0a}
+#hafiza.yok i{background:var(--bad)}
+#menu .mAsorti,#menu .mOlcu{display:none}
+html[data-uyg=asorti] #menu .mAsorti,html[data-uyg=olcu] #menu .mOlcu{display:block}
+/* katmanlar: ana sayfa, Asorti sayfaları, Ölçü sayfaları. Geçişler yumuşak; gizli olan çalışmaya devam eder */
+#ana,#sayfalarO{position:absolute;top:54px;left:0;right:0;bottom:0;overflow:hidden}
+#sayfalarO iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:var(--bg)}
+#sayfalarO iframe.on{display:block;z-index:2}
+#sayfalarO iframe.yukleniyor{display:block;visibility:hidden;z-index:0}
+#ana,#sayfalar,#sayfalarO{transition:opacity .34s cubic-bezier(.2,.8,.2,1),transform .42s cubic-bezier(.2,.8,.2,1),visibility 0s}
+html:not([data-uyg=ana]) #ana,html:not([data-uyg=asorti]) #sayfalar,html:not([data-uyg=olcu]) #sayfalarO{visibility:hidden;opacity:0;pointer-events:none;transition:opacity .22s ease,transform .22s ease,visibility 0s linear .22s}
+html:not([data-uyg=ana]) #ana{transform:scale(.985)}
+@media (prefers-reduced-motion:reduce){#ana,#sayfalar,#sayfalarO{transition:none!important}}
+/* açık sayfa yokken: boş ekran */
+.bos{position:absolute;inset:0;z-index:3;display:grid;place-items:center;padding:24px}
+.bos[hidden]{display:none}
+#bosA{background:radial-gradient(55vmax 48vmax at 10% 6%,rgba(120,170,255,.30),transparent 62%),radial-gradient(50vmax 44vmax at 92% 10%,rgba(190,160,255,.22),transparent 62%),radial-gradient(56vmax 50vmax at 78% 98%,rgba(255,200,170,.25),transparent 62%),var(--bg)}
+#bosO{background:radial-gradient(55vmax 48vmax at 10% 6%,rgba(90,200,140,.28),transparent 62%),radial-gradient(50vmax 44vmax at 92% 10%,rgba(180,215,140,.22),transparent 62%),radial-gradient(56vmax 50vmax at 78% 98%,rgba(255,205,175,.24),transparent 62%),var(--bg)}
+html[data-theme=dark] #bosA{background:radial-gradient(55vmax 48vmax at 10% 6%,rgba(40,80,200,.30),transparent 62%),radial-gradient(56vmax 50vmax at 78% 98%,rgba(90,50,120,.25),transparent 62%),var(--bg)}
+html[data-theme=dark] #bosO{background:radial-gradient(55vmax 48vmax at 10% 6%,rgba(20,110,60,.30),transparent 62%),radial-gradient(56vmax 50vmax at 78% 98%,rgba(60,90,40,.22),transparent 62%),var(--bg)}
+.bosK{text-align:center;max-width:440px;animation:bosGir .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes bosGir{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
+.bosIk{width:84px;height:84px;display:block;margin:0 auto 18px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.10)) drop-shadow(0 12px 24px rgba(0,0,0,.12))}
+.bosK h2{margin:0;font-size:28px;font-weight:700;letter-spacing:-.03em}
+.bosK p{margin:10px 0 24px;font-size:15px;line-height:1.5;color:var(--mut)}
+.bosYeni{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 22px 0 18px;border:0;border-radius:22px;color:#fff;font:600 15px/1 inherit;cursor:pointer;
+ background:linear-gradient(180deg,#4da6ff,#0071e3);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 8px 22px rgba(0,113,227,.32);transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s}
+#bosYeniO{background:linear-gradient(180deg,#3cc47c,#168a49);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 8px 22px rgba(22,138,73,.30)}
+.bosYeni:hover{transform:translateY(-2px)}.bosYeni:active{transform:scale(.97)}
+.bosYeni svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+/* açılış: Eleman simgesi ortada; küçülüp büyüyerek uygulamayı açar */
+#acilis{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:var(--bg);pointer-events:none}
+#acilis .aIk{width:104px;height:104px;display:block}
+#acilis canvas{position:absolute;left:0;top:0;display:none}
+html.acildi #acilis{display:none}
+''' + ANA_CSS + '''
+'''
+r("</style></head>", CSS + "</style></head>")
+
+# ---------- davranış (Asorti'nin koduna dokunulan yerler) ----------
+# yerel yedek: Eleman'ın kayıtları da (eleman-...) diske yedeklensin
+r("for(const k in d)if(k.startsWith('asorti-')&&", "for(const k in d)if((k.startsWith('asorti-')||k.startsWith('eleman-'))&&")
+r("if(k&&k.startsWith('asorti-'))d[k]=localStorage.getItem(k)", "if(k&&(k.startsWith('asorti-')||k.startsWith('eleman-')))d[k]=localStorage.getItem(k)")
+# görünüm ve "kaydet" haberi Ölçü sayfalarına da gitsin
+r("document.querySelectorAll('#sayfalar iframe').forEach(f=>{try{f.contentDocument.documentElement.dataset.theme=t}catch(e){}temaYolla(f,t)})",
+  "document.querySelectorAll('#sayfalar iframe,#sayfalarO iframe').forEach(f=>{try{f.contentDocument.documentElement.dataset.theme=t}catch(e){}temaYolla(f,t)})")
+r("function sayfalarKaydetsin(){document.querySelectorAll('#sayfalar iframe').forEach(",
+  "function sayfalarKaydetsin(){document.querySelectorAll('#sayfalar iframe,#sayfalarO iframe').forEach(")
+# Yeni sayfa: açık uygulamanın sekmesi
+r("$('yeni').onclick=yeni;", "$('yeni').onclick=()=>UYG==='olcu'?yeniO():yeni();")
+r("$('serit').addEventListener('dblclick',e=>{if(e.target===$('serit')||e.target===$('tabs'))yeni()});",
+  "$('serit').addEventListener('dblclick',e=>{if(UYG==='ana')return;if(e.target===$('serit')||e.target===$('tabs')||e.target===$('tabsO'))UYG==='olcu'?yeniO():yeni()});")
+r("$('surum').textContent=j.surum?'Asorti Aracı v'+j.surum:'';", "$('surum').textContent=j.surum?'Eleman v'+j.surum:'';")
+r("confirm('Asorti Aracı v'+G.yeni", "confirm('Eleman v'+G.yeni")
+r("masaüstündeki Asorti Aracı simgesinden aç", "masaüstündeki Eleman simgesinden aç")
+r("durumYaz(j.kopru?'ok':'bad',j.kopru?'Gerber bağlı':'Gerber köprüsü kapalı')}", "durumYaz(j.kopru?'ok':'bad',j.kopru?'Gerber bağlı':'Gerber köprüsü kapalı');GB=j.gerber===false?'yok':j.kopru?'ok':'bad';anaYaz()}")
+# Asorti sekme adları ve Gerber işi bilgisi kalıcı (sayfa uyurken / program yeniden açılınca sekme adı kalsın)
+r("const info={};", "const info={};for(const id of (S.list||[]))if(S.ad&&S.ad[id])info[id]={ad:S.ad[id]};")
+r("info[d.id]={ad:d.ad,busy:d.busy,bitti:d.bitti};ciz()}}", "info[d.id]={ad:d.ad,busy:d.busy,bitti:d.bitti};kaliciA(d.id);ciz()}}")
+r("S.list.splice(i,1);delete info[id];", "S.list.splice(i,1);delete info[id];if(S.ad)delete S.ad[id];if(S.ms)delete S.ms[id];")
+# sayfa kendiliğinden açılmaz: son sayfa kapanınca boş ekran
+r("if(!S.list.length){const n=yeniId();S.list.push(n);giris=n;S.on=n}else if(S.on===id)S.on=S.list[Math.max(0,i-1)];",
+  "if(!S.list.length)S.on='';else if(S.on===id)S.on=S.list[Math.max(0,i-1)];")
+r("sekmeCik(b)});\n sayfaGoster(S.on);", "sekmeCik(b)});\n if(S.on)sayfaGoster(S.on);else bosGoster('A');")
+r("function sayfaGoster(id){const f=frame(id);if(gosterilen===f)return;gosterilen=f;",
+  "function sayfaGoster(id){$('bosA').hidden=true;const f=frame(id);sonA[id]=Date.now();if(gosterilen===f)return;gosterilen=f;")
+r("f.classList.remove('yukleniyor');f.classList.add('on');\n  try{const w=f.contentWindow;if(w&&w.sayfaBelir)w.sayfaBelir()}catch(e){}};",
+  "f.classList.remove('yukleniyor');f.classList.add('on');\n  try{const w=f.contentWindow;if(w&&w.sayfaBelir)w.sayfaBelir()}catch(e){};setTimeout(uyutA,400)};")
+# bildirime / Windows bildirimine tıklayınca Asorti'ye geçilir
+r("tik:d.id!==S.on?()=>ac(d.id):null", "tik:(d.id!==S.on||UYG!=='asorti')?()=>{uygGit('asorti');ac(d.id)}:null")
+r("ipucu:d.id!==S.on?'Sayfaya gitmek için tıkla':''", "ipucu:(d.id!==S.on||UYG!=='asorti')?'Sayfaya gitmek için tıkla':''")
+r("if(d.t==='git'&&S.list.includes(d.id))ac(d.id);", "if(d.t==='git'&&S.list.includes(d.id)){uygGit('asorti');ac(d.id)}")
+# açılış: sayfa kendiliğinden açılmaz; arkada yalnız Gerber işi süren sayfalar yüklenir (diğerleri ilk açılınca)
+r("if(!S.list.length)yeni();else{if(!S.list.includes(S.on))S.on=S.list[0];ac(S.on);",
+  "if(!S.list.length){S.on='';ciz()}else{if(!S.list.includes(S.on))S.on=S.list[0];ac(S.on);")
+r("const digerleri=()=>S.list.forEach(frame),", "const digerleri=()=>S.list.forEach(id=>{if(id!==S.on&&mesgulA(id))frame(id)}),")
 r("function ciz(){let onceki=null;", "function ciz(){setTimeout(()=>{try{anaYaz()}catch(e){}},0);let onceki=null;")
-# açılış ekranı: Eleman ana sayfayla açılır, ekran çizilince kaybolur
+# açılış ekranı: Eleman ana sayfayla açılır; ekran çizilince yerel açılış ekranı kalkar ve simge uygulamayı açar
 r("(()=>{const f=document.querySelector('#sayfalar iframe[data-id=\"'+S.on+'\"]');let gitti=false;",
   "(()=>{const f=UYG==='ana'?null:document.querySelector('#sayfalar iframe[data-id=\"'+S.on+'\"]');let gitti=false;")
+r(" const gonder=()=>{if(gitti)return;gitti=true;fetch('/hazir',{method:'POST',body:'{}'}).catch(()=>{})},",
+  " const gonder=()=>{if(gitti)return;gitti=true;fetch('/hazir',{method:'POST',body:'{}'}).catch(()=>{});acilisBekle()},")
 r(" if(!f)return bildir();", " if(!f)return Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,800))]).then(()=>setTimeout(bildir,40),bildir);")
+r("/* açılışta önce görünen sayfa yüklenir, diğerleri hemen ardından", JS + "/* açılışta önce görünen sayfa yüklenir, diğerleri hemen ardından")
 open(out, "w", encoding="utf-8", newline="\n").write(s)
 print("Eleman kabuğu:", out, len(s))

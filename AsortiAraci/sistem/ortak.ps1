@@ -88,7 +88,7 @@ function UygulamaDerle([string]$Kok) {
   $kayit = Join-Path $Kok 'kopru\log\uygulama_derleme.txt'
   if (-not (Test-Path -LiteralPath $csc)) { try { Set-Content -LiteralPath $kayit -Value 'csc.exe bulunamadi' -Encoding UTF8 } catch {}; return $false }
   $yeni = Join-Path $sis 'AsortiAraci.yeni.exe'; Remove-Item -LiteralPath $yeni -Force -ErrorAction SilentlyContinue
-  $arg = @('/nologo', '/target:winexe', '/optimize+', '/platform:anycpu', '/codepage:65001', "/out:$yeni", ('/win32icon:' + (Join-Path $sis 'asorti.ico')), ('/win32manifest:' + (Join-Path $uk 'uygulama.manifest')))
+  $arg = @('/nologo', '/target:winexe', '/optimize+', '/platform:anycpu', '/codepage:65001', "/out:$yeni", ('/win32icon:' + $(if (Test-Path -LiteralPath (Join-Path $sis 'eleman.ico')) { Join-Path $sis 'eleman.ico' } else { Join-Path $sis 'asorti.ico' })), ('/win32manifest:' + (Join-Path $uk 'uygulama.manifest')))
   foreach ($b in (UygulamaBasvurulari $uk)) {
     if ($b -like 'sistem:*') { $f = Join-Path $sis $b.Substring(7); if (Test-Path -LiteralPath ($f + '.yeni')) { $f += '.yeni' }; $arg += "/r:$f" }
     elseif ($b -like 'gac:*') { $g = GacYolu $b.Substring(4); $arg += $(if ($g) { "/r:$g" } else { '/r:' + $b.Substring(4) + '.dll' }) }

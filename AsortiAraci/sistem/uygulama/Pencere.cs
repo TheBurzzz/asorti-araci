@@ -355,7 +355,7 @@ namespace AsortiAraci
             {
                 katman = new AcilisKatmani(this, cizim);
                 katman.Dugmeler = ozelBaslik;
-                katman.Bitti += delegate { katman = null; acilisBitti = true; cizim.Dispose(); Invalidate(); };
+                katman.Bitti += delegate { katman = null; acilisBitti = true; cizim.Dispose(); Invalidate(); SayfayaGonder(Json.H("t", "acilis", "v", "bitti")); };
                 katman.Goster();
             }
             catch (Exception ex) { Kayit.Yaz("acilis ekrani gosterilemedi: " + ex.Message); katman = null; acilisBitti = true; }

@@ -1,5 +1,5 @@
-﻿// Asorti Aracı - açılış ekranı: pencerenin içini uygulamanın kendi görünümüyle kaplar
-// (renkli yumuşak lekeler, simge, "Asorti Aracı" yazısı, ince mavi çubuk). Uygulama hazır olunca saydamlaşarak kaybolur.
+﻿// Eleman - açılış ekranı: pencerenin içini düz zemin ve ortada Eleman simgesiyle kaplar (X / Twitter'ın açılışı gibi).
+// Sayfa da aynı görüntüyle açılır; bu katman kalkınca simge sayfada küçülüp büyüyerek uygulamayı açar (uygulama.html).
 // Görünüm uygulamanın açılış sayfasıyla (sistem\acilis.html) birebir aynıdır; simge ve yazı uygulamanın yazı tipiyle
 // hazır çizilmiş resimlerden (sistem\acilis\orta_*.png) gelir.
 using System;
@@ -39,18 +39,10 @@ namespace AsortiAraci
             boyut = s;
             Olcek = olcek;
             int w = s.Width, h = s.Height, cx = w / 2;
-            int ortaUst = (int)Math.Round(h / 2.0 - 88 * olcek);
             Bitmap t = new Bitmap(w, h, PixelFormat.Format32bppPArgb);
             using (Graphics g = Graphics.FromImage(t))
             {
-                using (Bitmap z = ZeminCiz(w, h, Koyu))
-                using (ImageAttributes ia = new ImageAttributes())
-                {
-                    ia.SetWrapMode(WrapMode.TileFlipXY);
-                    g.InterpolationMode = InterpolationMode.HighQualityBilinear;
-                    g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                    g.DrawImage(z, new Rectangle(0, 0, w, h), 0, 0, z.Width, z.Height, GraphicsUnit.Pixel, ia);
-                }
+                g.Clear(Zemin);   // düz zemin: sayfanın açılış görüntüsüyle birebir aynı
                 float resimOlcek;
                 string resim = ResimSec(out resimOlcek);
                 if (resim != null)
@@ -61,7 +53,7 @@ namespace AsortiAraci
                         {
                             float k = olcek / resimOlcek;
                             int iw = (int)Math.Round(im.Width * k), ih = (int)Math.Round(im.Height * k);
-                            int x = (int)Math.Round(cx - 120 * olcek), y = ortaUst - (int)Math.Round(24 * olcek);
+                            int x = cx - iw / 2, y = h / 2 - ih / 2;   // simge tam ortada
                             bool birebir = iw == im.Width && ih == im.Height;
                             g.InterpolationMode = birebir ? InterpolationMode.NearestNeighbor : InterpolationMode.HighQualityBicubic;
                             g.PixelOffsetMode = birebir ? PixelOffsetMode.Half : PixelOffsetMode.HighQuality;
@@ -73,8 +65,9 @@ namespace AsortiAraci
             }
             if (Tuval != null) Tuval.Dispose();
             Tuval = t;
-            HalR = new Rectangle((int)Math.Round(cx - 60 * olcek), ortaUst + (int)Math.Round(136 * olcek), (int)Math.Round(120 * olcek), Math.Max(2, (int)Math.Round(3 * olcek)));
-            NotR = new Rectangle((int)Math.Round(cx - 210 * olcek), ortaUst + (int)Math.Round(155 * olcek), (int)Math.Round(420 * olcek), (int)Math.Round(60 * olcek));
+            int alt = (int)Math.Round(h / 2.0 + 52 * olcek);   // simgenin alt kenarı
+            HalR = new Rectangle((int)Math.Round(cx - 60 * olcek), alt + (int)Math.Round(34 * olcek), (int)Math.Round(120 * olcek), Math.Max(2, (int)Math.Round(3 * olcek)));
+            NotR = new Rectangle((int)Math.Round(cx - 210 * olcek), alt + (int)Math.Round(53 * olcek), (int)Math.Round(420 * olcek), (int)Math.Round(60 * olcek));
             if (notYazi != null) notYazi.Dispose();
             notYazi = new Font("Segoe UI", 12.5f * olcek, FontStyle.Regular, GraphicsUnit.Pixel);
         }
@@ -216,14 +209,14 @@ namespace AsortiAraci
         [DllImport("user32.dll")] static extern IntPtr SendMessage(IntPtr h, int m, IntPtr w, IntPtr l);
 
         const double OPAK = 0.997;     // tam 1 olunca pencere katmanlı olmaktan çıkar ve bir an titrer
-        const double KAYBOL = 480;     // ms
+        const double KAYBOL = 140;     // ms (sayfa aynı görüntüyle altta hazır bekliyor)
         readonly Form sahip;
         readonly AcilisCizim cizim;
         readonly System.Windows.Forms.Timer saat = new System.Windows.Forms.Timer();
         readonly Stopwatch sw = Stopwatch.StartNew();
         double kayT = -1;
         string not = "";
-        bool cubuk = true;
+        bool cubuk = false;   // ilerleme çubuğu yalnız açılış uzarsa (Yaz) görünür
         public event EventHandler Bitti;
         bool dugmeler, surukle;
         int ustune = -1, basili = -1;   // fare hangi düğmenin üstünde / hangisine basıldı (0 küçült, 1 büyüt, 2 kapat)

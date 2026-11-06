@@ -104,7 +104,7 @@ namespace AsortiAraci
             soluk = koyu ? Color.FromArgb(161, 161, 166) : Color.FromArgb(110, 110, 115);
             izRenk = Color.FromArgb(46, 120, 120, 128);
 
-            Text = "Asorti Ara\u0131";
+            Text = "Eleman";
             FormBorderStyle = FormBorderStyle.None;
             StartPosition = FormStartPosition.Manual;
             ShowInTaskbar = false;
@@ -480,7 +480,7 @@ namespace AsortiAraci
                 if (!IsWindowVisible(h)) return true;
                 ad.Length = 0;
                 GetWindowText(h, ad, ad.Capacity);
-                if (!ad.ToString().StartsWith("Asorti Ara", StringComparison.Ordinal)) return true;
+                if (!ad.ToString().StartsWith("Asorti Ara", StringComparison.Ordinal) && !ad.ToString().StartsWith("Eleman", StringComparison.Ordinal)) return true;
                 sinif.Length = 0;
                 GetClassName(h, sinif, sinif.Capacity);
                 if (!sinif.ToString().StartsWith("Chrome_WidgetWin", StringComparison.Ordinal)) return true;
