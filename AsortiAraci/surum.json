@@ -1,8 +1,8 @@
 {
- "surum": "3.0.2",
+ "surum": "3.0.3",
  "tarih": "2026-11-06",
  "notlar": [
-  "Güncellemeler artık anahtarla da indirilebiliyor: program deposu ileride gizli yapılınca güncellemeler kesilmeyecek, anahtarı olmayan kimse dosyaları göremeyecek",
-  "Ölçü Tablosu dosyası da güncellemeden önce yedekleniyor (geri dönülebilsin)"
+  "Ortak hafıza anahtarı programın içinde geliyor: yeni kurulan her Eleman'da müşteriler kendiliğinden görünür",
+  "Kendi anahtarı olmayan bilgisayarlar ortak hafızayı yalnız okur; orada öğrenilen, eklenen ya da silinen o bilgisayarda kalır, kimseninkine dokunmaz"
  ]
 }

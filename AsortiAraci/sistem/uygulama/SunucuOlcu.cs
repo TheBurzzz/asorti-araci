@@ -102,7 +102,7 @@ namespace AsortiAraci
         // Salt-okur anahtar (yalnız eleman-hafiza, Contents: Read-only; kullanıcının kararı 6 Kasım 2026: depo herkese açık
         // kalsın, program kendinden anahtarlı gelsin, müşterilerin görünmesi sorun değil). Karışık yazılır, çünkü GitHub herkese
         // açık depoda düz duran anahtarı hemen iptal eder; bu bir gizleme değildir, kurcalayan çözebilir, yalnız okuyabilir.
-        const string OKUMA = "";
+        const string OKUMA = "LQUpAy4nRgo9Pzg3JyZSWwYgXwAAOAciKTgzXgclHx8YITQUM1lSBgQXSR5ZJzwUMVsOOA45SzcDIiU+KV8jBSIoXyxfDTsHVSU0JTYseSxaRDIVBBw6DxQGWQYM";
         static string OkumaAnahtari()
         {
             if (OKUMA.Length == 0) return "";
