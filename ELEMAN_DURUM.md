@@ -44,17 +44,38 @@ Her sohbet işe başlamadan önce bunu okur, iş bitince "Son durum" bölümün�
 - Masaüstündeki tek başına hali depo dışına derlenir: `derle.py --sablonlar <gizli> --anahtar <gizli> --cikti <depo dışı>`.
 - Sunucu tarafı: `AsortiAraci/sistem/uygulama/SunucuOlcu.cs` (yalnız `/olcu/...` adresleri), kitaplıklar `AsortiAraci/sistem/olcu/`.
 
+## Asorti ya da Ölçü değişince Eleman dalı nasıl güncellenir
+
+- **Asorti düzeltmesi** (Asorti sohbeti): her zamanki gibi exe-deneme → main'e yayınla. Sonra eleman dalında `git merge main`.
+  `AsortiAraci/uygulama.html` çakışırsa elle birleştirme yapılmaz: main'deki hali alınır ve Eleman kabuğu yeniden üretilir:
+  `git show main:AsortiAraci/uygulama.html > /tmp/u.html && python3 kaynak/eleman/kabuk_yap.py /tmp/u.html AsortiAraci/uygulama.html`
+- **Ölçü Tablosu düzeltmesi** (Ölçü sohbeti): `kaynak/olcu/src.html` eleman dalında düzeltilir, `python3 kaynak/olcu/derle.py`
+  çalıştırılır (AsortiAraci/olcu_tablosu_araci.html yenilenir). Masaüstündeki tek başına hali gerekirse depo dışına derlenir.
+- C# değişikliğinden sonra derleme denemesi (Linux, mono, Windows'taki csc.exe gibi C# 5): `KopruIcte.cs` yerine küçük bir taslak
+  sınıfla `mcs -langversion:5` (Eleman sohbetinde `/home/claude/is/derle/derle.sh`).
+
 ## Son durum
 
-- 2026-11-06 (Eleman sohbeti): `eleman` dalı açıldı (main = v2.0.4'ten). İş bilgisayarındaki dosyalar Eleman sohbetinin
-  çalışma alanına alındı (`/home/claude/eleman-arsiv`). Simgeler, açılış ekranı, pencere adı "Eleman", Ölçü sunucu bölümü eklendi.
-  C# kaynakları Linux'ta mono ile C# 5 sınırında derleniyor.
+- 2026-11-06 (Eleman sohbeti, öğleden sonra):
+  - `eleman` dalı açıldı (main = v2.0.4'ten). main'e dokunulmadı.
+  - Simgeler ve açılış ekranı Eleman; pencere, uyarı, bildirim, görev yöneticisi adı "Eleman". Ölçü sunucu bölümü (`/olcu/...`) eklendi.
+  - Eleman kabuğu (`uygulama.html`): Apple tarzı ana sayfa (selam, iki uygulama kartı, canlı durum), üst çubukta
+    Asorti Aracı / Ölçü Tablosu düğmeleri, Ölçü için Asorti'ninkiyle aynı sekmeler, ⚙ menüsünde açık uygulamanın bölümü,
+    Ölçü'nün ortak hafıza durumu üst çubukta. Açılışta ana sayfa gelir.
+  - Ölçü Tablosu: yeşil tema, tablo simgesi, tema düğmesi kaldırıldı, Eleman içinde başlıksız, sekme başına ayrı taslak,
+    müşteri şablonları `/olcu/sablonlar`'dan (kurulumdaki gizli `olcu_sablonlar.json`).
+  - Önizleme kullanıcının bilgisayarında: `Masaüstü\Ölçü Tablosu Aracı\exe-hazirlik\eleman_onizleme\Eleman.html`
+    (sadece görünüş; sunucu yok, yazılanlar gerçek programlara karışmaz).
+  - İş bilgisayarının kopyası Eleman sohbetinin çalışma alanında: `/home/claude/eleman-arsiv`
+    (`is_pc_C` = C:\AsortiAraci ayarlar/kayıtlar/sayfalar, `is_pc_masaustu` = KESİM RAPORLARI + Ölçü Tablosu Aracı klasörü,
+    `is_pc_ornekler` = son ölçü tabloları, müşteri logoları, bir tarama örneği). Gizli: GitHub'a konmaz.
 
 ## Sıradaki işler
 
-1. Eleman kabuğu (`uygulama.html`): ana sayfa, uygulama düğmeleri, Ölçü için sekmeler, ⚙ menüsünde uygulamaya göre bölümler.
-2. Ölçü Tablosu: yeşil tema, Eleman içinde kendi başlığını/tema düğmesini gizleme, sekme başına ayrı taslak.
-3. Müşteri şablonları: gizli `eleman-hafiza` deposundan (`olcu-tablosu/sablonlar/`) gelsin; `/olcu/sablonlar` yerel önbellekten.
-4. Kısayol adı "Eleman" ve masaüstü simgesi; kurulum sihirbazı (Kurulum.ps1) Eleman adıyla.
-5. Sürüm 3.0.0, iş bilgisayarında deneme, sonra main'e.
-6. El yazısı okuma modeli.
+1. Müşteri şablonları: `olcu_sablonlar.json` kurulumla gelsin (anahtar.txt gibi elden) ve gizli `eleman-hafiza`'ya da yüklensin.
+   Bunun için Claude'un GitHub uygulamasına `eleman-hafiza` deposunun da eklenmesi gerekiyor (kullanıcı yapacak).
+2. Masaüstü kısayolunun adı ve simgesi "Eleman"; Kurulum.ps1 ve Kaldir.bat'ta görünen ad.
+3. Ölçü: birden çok sekme açıkken ortak hafıza eşitlemesini tek sekme yapsın.
+4. ⚙ menüsünde Ölçü'nün ayarları (şimdilik düğme Ölçü'nün kendi ayar penceresini açıyor).
+5. Sürüm 3.0.0 → iş bilgisayarında deneme (Asorti sayfaları, Gerber, Ölçü kaydet / Excel'de aç / tara, güncelleme) → main.
+6. El yazısı okuma modeli (Eleman'ın ilk sürümünde olacak).
