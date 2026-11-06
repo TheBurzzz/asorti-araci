@@ -1,0 +1,33 @@
+# main'e yeni sürüm (AsortiAraci/surum.json) geldiğinde GitHub Releases'a kendiliğinden eklenir.
+# Etiket: v<sürüm>, notlar surum.json'dan. (Bu dosya main'e Eleman ile birlikte geçince çalışmaya başlar.)
+name: Sürüm
+on:
+  push:
+    branches: [main]
+    paths: ['AsortiAraci/surum.json']
+permissions:
+  contents: write
+jobs:
+  surum:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Releases'a ekle
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import json, subprocess
+          s = json.loads(open('AsortiAraci/surum.json', encoding='utf-8-sig').read())
+          t = 'v' + s['surum']
+          if subprocess.run(['gh', 'release', 'view', t], capture_output=True).returncode == 0:
+              print('zaten var:', t); raise SystemExit
+          AY = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık']
+          y, m, d = (int(x) for x in s.get('tarih', '2026-01-01').split('-'))
+          govde = f'**{d} {AY[m-1]} {y}**\n\n' + '\n'.join('- ' + n for n in s.get('notlar', [])) + \
+                  '\n\nKurmak için: aşağıdaki **Source code (zip)** → klasöre çıkar → **Kurulum.bat**.'
+          open('notlar.md', 'w', encoding='utf-8').write(govde)
+          ad = ('Eleman ' if int(s['surum'].split('.')[0]) >= 3 else 'Asorti Aracı ') + t
+          subprocess.run(['gh', 'release', 'create', t, '--target', subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+                          '--title', ad, '--notes-file', 'notlar.md', '--latest'], check=True)
+          PY

@@ -362,7 +362,8 @@ function Kur {
     if (-not $ayar.Contains('tarayici')) { $ayar['tarayici'] = '' }
     # paket GitHub'daki bir daldan indirildiyse (klasör adı eleman-<dal>, eskiden asorti-araci-<dal>) güncellemeler de o daldan gelir; main ise varsayılan
     $pk = Split-Path -Leaf $PAKET
-    if ($pk -match '^(?:eleman|asorti-araci)-([A-Za-z0-9._-]+)$') { if ($Matches[1] -eq 'main') { if ($ayar.Contains('dal')) { $ayar.Remove('dal') } } else { $ayar['dal'] = $Matches[1]; Adim "     güncellemeler '$($Matches[1])' dalından gelecek" } }
+    # Releases'tan inen paket (eleman-1.1.22 / eleman-ilk-deneme gibi) bir dal değildir: güncellemeler main'den gelir
+    if ($pk -match '^(?:eleman|asorti-araci)-([A-Za-z0-9._-]+)$') { if ($Matches[1] -eq 'main' -or $Matches[1] -match '^v?\d+(\.\d+)+$' -or $Matches[1] -eq 'ilk-deneme') { if ($ayar.Contains('dal')) { $ayar.Remove('dal') } } else { $ayar['dal'] = $Matches[1]; Adim "     güncellemeler '$($Matches[1])' dalından gelecek" } }
     [IO.File]::WriteAllText($af, ($ayar | ConvertTo-Json), (New-Object Text.UTF8Encoding($true)))
     Adim ('     ' + $(if (-not $S.gerber) { 'sadece asorti' } else { "Gerber: $($S.accumark) · OTOPASTAL: $($S.otopastal)" + $(if ($S.otopastal -ne 'yok') { " · $($S.surucu.ToUpperInvariant())" } else { '' }) }))
     if ($r) { try { ($r | ConvertTo-Json -Depth 7) | Set-Content -Path (Join-Path $hedef 'kopru\log\tarama_kurulum.json') -Encoding UTF8 } catch {} }

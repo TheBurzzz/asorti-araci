@@ -1,0 +1,162 @@
+[
+ {
+  "etiket": "ilk-deneme",
+  "sha": "abd6757ffd54ed1d0e8c2262744f28b19d584e07",
+  "dal": "arsiv"
+ },
+ {
+  "etiket": "v1.0.0",
+  "sha": "354f997c02598b6a67a9cc0cc133be1b01e1aee5",
+  "dal": "surum-v1.0.0"
+ },
+ {
+  "etiket": "v1.0.1",
+  "sha": "d4c8a113af2fbd3494c0fb7fb10dc7a51afdcb9d",
+  "dal": "surum-v1.0.1"
+ },
+ {
+  "etiket": "v1.0.2",
+  "sha": "06167e78c7aaab02ac48efe7f947c379c78efa5e",
+  "dal": "surum-v1.0.2"
+ },
+ {
+  "etiket": "v1.1.0",
+  "sha": "41c2edb6fe588e46f1884c6aed71106fb09ec1ee",
+  "dal": "surum-v1.1.0"
+ },
+ {
+  "etiket": "v1.1.1",
+  "sha": "05ef53b6232c1fdf752a7416078d2e4d83e429d2",
+  "dal": "surum-v1.1.1"
+ },
+ {
+  "etiket": "v1.1.2",
+  "sha": "ec404eb44f08ca1d2d66465e69bff14ce89f03ee",
+  "dal": "surum-v1.1.2"
+ },
+ {
+  "etiket": "v1.1.3",
+  "sha": "038f51845a0e4f3f862f1fdf5af44315dd4626a1",
+  "dal": "surum-v1.1.3"
+ },
+ {
+  "etiket": "v1.1.4",
+  "sha": "d0e4705e53ef1397d114eef257624936c0d7379b",
+  "dal": "surum-v1.1.4"
+ },
+ {
+  "etiket": "v1.1.5",
+  "sha": "e849223a10ad79fbd2813b80be82a2f9e2baab04",
+  "dal": "surum-v1.1.5"
+ },
+ {
+  "etiket": "v1.1.6",
+  "sha": "30bffbbe6a5efc0df5bf53f43e4bc6203cf74238",
+  "dal": "surum-v1.1.6"
+ },
+ {
+  "etiket": "v1.1.7",
+  "sha": "660e679ccd55cd9720ad9c32b3f83916cf69a1b0",
+  "dal": "surum-v1.1.7"
+ },
+ {
+  "etiket": "v1.1.8",
+  "sha": "d26392320c61abcc4c2c0370b02ea508ec64959d",
+  "dal": "surum-v1.1.8"
+ },
+ {
+  "etiket": "v1.1.9",
+  "sha": "3dba09d85e8c687ec0ef2eb163d9e98bf24d6415",
+  "dal": "surum-v1.1.9"
+ },
+ {
+  "etiket": "v1.1.10",
+  "sha": "43add4b3458ecd94e21d9bf56ac7854d58319ec5",
+  "dal": "surum-v1.1.10"
+ },
+ {
+  "etiket": "v1.1.11",
+  "sha": "3d57c65e31155260be9ae76d0d0f3096be9d90a4",
+  "dal": "surum-v1.1.11"
+ },
+ {
+  "etiket": "v1.1.12",
+  "sha": "b10ea4e50a4b54ebf389adecdd97925b0bb7fd99",
+  "dal": "surum-v1.1.12"
+ },
+ {
+  "etiket": "v1.1.13",
+  "sha": "d514dbb640b4f66506a360b58d274ac341da623c",
+  "dal": "surum-v1.1.13"
+ },
+ {
+  "etiket": "v1.1.14",
+  "sha": "73e52a6fd0fb04f7540bf986dc0e1558f4f26b28",
+  "dal": "surum-v1.1.14"
+ },
+ {
+  "etiket": "v1.1.15",
+  "sha": "8b532bb9a34f4daf3f562d54ba066be1654aec2e",
+  "dal": "surum-v1.1.15"
+ },
+ {
+  "etiket": "v1.1.16",
+  "sha": "3d3c022ce1385eea31fee84d03a824bcb6fef5ed",
+  "dal": "surum-v1.1.16"
+ },
+ {
+  "etiket": "v1.1.17",
+  "sha": "7869c23fa88eb12dc184f2fa2f0cf28df236e68b",
+  "dal": "surum-v1.1.17"
+ },
+ {
+  "etiket": "v1.1.18",
+  "sha": "0f7660f1e51e519c5b1adabd52c6fb0c0f7061bc",
+  "dal": "surum-v1.1.18"
+ },
+ {
+  "etiket": "v1.1.19",
+  "sha": "2c11f8e50d885258df251e4a5b76abd10fa73e98",
+  "dal": "surum-v1.1.19"
+ },
+ {
+  "etiket": "v1.1.20",
+  "sha": "5f9f323fe664744b8a91eb445ab87641827b6171",
+  "dal": "surum-v1.1.20"
+ },
+ {
+  "etiket": "v1.1.21",
+  "sha": "75ac118bfa0185427e189060d02e15158185935a",
+  "dal": "surum-v1.1.21"
+ },
+ {
+  "etiket": "v1.1.22",
+  "sha": "ec2587ad45aa5a5d9ca7161fe046eab58655d8d2",
+  "dal": "surum-v1.1.22"
+ },
+ {
+  "etiket": "v2.0.0",
+  "sha": "b6db252203d62e03ecf0420ca39a698b48d504ec",
+  "dal": null
+ },
+ {
+  "etiket": "v2.0.1",
+  "sha": "c340f2ab4abbc9f6cd0dd7d7935fe0f0e3e2930f",
+  "dal": null
+ },
+ {
+  "etiket": "v2.0.2",
+  "sha": "dfbab3bf37590d74d9cafa2baa83b3a53350763f",
+  "dal": null
+ },
+ {
+  "etiket": "v2.0.3",
+  "sha": "c57d96c3014e3be76c6de6e189ef3b5fc49e5f59",
+  "dal": null
+ },
+ {
+  "etiket": "v2.0.4",
+  "sha": "aee9d6523634ec7737c97f9d6f0dec0972a4728e",
+  "dal": null
+ }
+]
