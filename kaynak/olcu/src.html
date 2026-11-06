@@ -475,7 +475,10 @@ let MEM=memNorm(LS.get(MEM_KEY,null)||{names:LS.get("ota_ogrenilen",{})});
 function memSave(){LS.set(MEM_KEY,MEM)}
 /* ---------------- ortak hafıza (GitHub): her bilgisayar aynı hafızayı kullanır ---------------- */
 /* Eleman ortak veri deposu (gizli): her uygulama kendi klasörünü kullanır — olcu-tablosu/, asorti/ … */
-const SYNC={owner:"TheBurzzz",repo:"eleman-hafiza",dir:"olcu-tablosu",path:"olcu-tablosu/hafiza.json",token:"/*__TOKEN__*/"};
+const SYNC={owner:"TheBurzzz",repo:"eleman-hafiza",dir:"olcu-tablosu",path:"olcu-tablosu/hafiza.json",token:"/*__TOKEN__*/",salt:false};
+/* salt: programın içindeki salt-okur anahtar (anahtar.txt olmayan bilgisayarlar). Ortak hafıza ve müşteriler okunur,
+   bu bilgisayarda öğrenilen / eklenen / silinen her şey bu bilgisayarda kalır; ortak hafızaya hiçbir şey yazılmaz. */
+function deltaBirlestir(q){const m=memNorm({});for(const d of q)applyDelta(m,d);return {names:m.names,tr:m.tr,qual:m.qual,extra:m.extra,typ:m.typ,fibers:m.fibers,ignore:m.ignore,saves:m.saves||0}}
 const syncOn=()=>SYNC.token&&!/__TOKEN__/.test(SYNC.token);
 let SYNC_STATE="off";
 const b64e=str=>{const b=new TextEncoder().encode(str);let s="";for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(s)};
@@ -509,6 +512,12 @@ async function syncNow(){
   try{
     let q=pending();
     if(!LS.get("ota_seeded",false)&&((MEM.saves||0)>0||Object.keys(MEM.names).length)){q=[{names:MEM.names,tr:MEM.tr,qual:MEM.qual,extra:MEM.extra,typ:MEM.typ,fibers:MEM.fibers,ignore:MEM.ignore,saves:MEM.saves||0}];LS.set("ota_bekleyen",q)}
+    if(SYNC.salt){
+      const {mem}=await ghGet();for(const d of q)applyDelta(mem,d);MEM=mem;
+      if(q.length>40)LS.set("ota_bekleyen",[deltaBirlestir(q)]);
+      LS.set("ota_seeded",true);memSave();memApply();SYNC_STATE="salt";
+      sablonEsitle().catch(e=>console.warn(e));
+    }else{
     let done=false;
     for(let tries=0;tries<4&&!done;tries++){
       const {mem,sha}=await ghGet();
@@ -523,6 +532,7 @@ async function syncNow(){
     if(!done)throw new Error("GitHub: hafıza yazılamadı (çakışma)");
     LS.set("ota_seeded",true);memSave();memApply();SYNC_STATE="ok";syncSamples();
     sablonEsitle().catch(e=>console.warn(e));
+    }
   }catch(e){console.warn(e);SYNC_STATE="err"}
   finally{SYNC_BUSY=false}
   memInfo();
@@ -531,9 +541,9 @@ async function syncNow(){
 /* ---------------- el yazısı defteri: okunamayan yazıların görüntüsü + senin yazdığın doğru metin ---------------- */
 const HWQ={async get(){try{return (await IDB.get("hw_kuyruk"))||[]}catch(e){return []}},async set(v){try{await IDB.set("hw_kuyruk",v)}catch(e){}}};
 let HW_WAIT=0;
-async function addSamples(list){if(!list.length)return;const q=await HWQ.get();q.push(...list);await HWQ.set(q);HW_WAIT=q.length;LS.set("ota_hw_toplam",(LS.get("ota_hw_toplam",0))+list.length);memInfo();syncSamples()}
+async function addSamples(list){if(!list.length||SYNC.salt)return;const q=await HWQ.get();q.push(...list);await HWQ.set(q);HW_WAIT=q.length;LS.set("ota_hw_toplam",(LS.get("ota_hw_toplam",0))+list.length);memInfo();syncSamples()}
 let HW_BUSY=false;
-async function syncSamples(){if(!syncOn()||HW_BUSY)return;HW_BUSY=true;
+async function syncSamples(){if(!syncOn()||HW_BUSY||SYNC.salt)return;HW_BUSY=true;
   try{let q=await HWQ.get();HW_WAIT=q.length;
     while(q.length){const smp=q[0];const d=new Date(smp.t);const path=`${SYNC.dir}/el_yazisi/${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}/${smp.t}_${smp.id}.json`;
       const r=await fetch(`https://api.github.com/repos/${SYNC.owner}/${SYNC.repo}/contents/${path}`,{method:"PUT",headers:{Authorization:"Bearer "+SYNC.token,Accept:"application/vnd.github+json","Content-Type":"application/json"},body:JSON.stringify({message:"el yazısı örneği",content:b64e(JSON.stringify(smp))})});
@@ -625,7 +635,7 @@ let AYAR=AYAR0();
 async function exeJson(method,url,body){const r=await fetch(url,{method,cache:"no-store",headers:{"X-Olcu":"1"},body:method==="GET"?undefined:(body||"{}")});if(!r.ok)throw new Error("Sunucu "+r.status);return r.json()}
 const PLAT={
   async hazirla(){if(!KHTTP)return false;try{const j=await exeJson("GET","/olcu/durum");if(j&&j.olcu){EXE=true;EXE_DURUM=j}}catch(e){}return EXE},
-  async anahtar(){if(!EXE)return "";try{const j=await exeJson("GET","/olcu/anahtar");return (j&&j.anahtar)||""}catch(e){return ""}},
+  async anahtar(){if(!EXE)return null;try{return await exeJson("GET","/olcu/anahtar")}catch(e){return null}},
   async klasor(cust){ // {ad,yol} | null
     if(EXE){try{const j=await exeJson("GET","/olcu/klasor?musteri="+enc(cust));return j&&j.var?{ad:String(j.klasor).split(/[\\/]/).filter(Boolean).pop()||j.klasor,yol:j.klasor}:null}catch(e){return null}}
     const h=await IDB.get("dir:"+cust).catch(()=>null);return h?{ad:h.name,yol:h.name}:null},
@@ -763,7 +773,7 @@ async function sablonEsitle(){
   if(!syncOn()||SAB_BUSY)return;SAB_BUSY=true;
   try{
     const dir=SYNC.dir+"/sablonlar";let degisti=false;
-    for(const c of CUSTOM.filter(x=>x.bekliyor)){
+    for(const c of CUSTOM.filter(x=>x.bekliyor&&!SYNC.salt)){
       const path=`${dir}/${c.slug}.json`;
       if(c.silindi){if(c.sha){const r=await gh("DELETE",path,{message:"şablon kaldırıldı: "+c.name,sha:c.sha});if(!r.ok&&![404,409,422].includes(r.status))throw new Error("GitHub "+r.status)}CUSTOM=CUSTOM.filter(x=>x!==c);degisti=true;continue}
       const body=sha=>({message:"şablon: "+c.name,content:b64e(JSON.stringify({name:c.name,prefix:c.prefix,b64:c.b64,t:c.t})),...(sha?{sha}:{})});
@@ -1332,14 +1342,14 @@ function learn(){
   memInfo();syncNow();
 }
 function memInfo(){const n=Object.keys(MEM.names).length+Object.keys(MEM.extra).length,q=Object.keys(MEM.qual).length;const pq=pending().length;
-  const st=SYNC_STATE==="ok"?(pq?"Ortak hafıza: gönderiliyor…":"Ortak hafıza bağlı"):SYNC_STATE==="err"?`Ortak hafızaya ulaşılamadı (internet?) · ${pq} kayıt sırada, bağlanınca gönderilecek`:"Ortak hafıza ayarlanmadı, sadece bu bilgisayar öğreniyor";
+  const st=SYNC_STATE==="salt"?"Ortak hafıza: yalnız okuma. Müşteriler ve öğrenilenler bu bilgisayara gelir; burada öğrenilen, eklenen ya da silinen bu bilgisayarda kalır, kimseninkine dokunmaz":SYNC_STATE==="ok"?(pq?"Ortak hafıza: gönderiliyor…":"Ortak hafıza bağlı"):SYNC_STATE==="err"?`Ortak hafızaya ulaşılamadı (internet?) · ${pq} kayıt sırada, bağlanınca gönderilecek`:"Ortak hafıza ayarlanmadı, sadece bu bilgisayar öğreniyor";
   const hwT=LS.get("ota_hw_toplam",0);const hwInfo=hwT?` · El yazısı defteri: ${hwT} örnek${HW_WAIT?` (${HW_WAIT} gönderilmeyi bekliyor)`:""}`:"";
   const el=$("#memInfo");if(el)el.textContent=`${st} · ${MEM.saves||0} kayıttan öğrenildi · ${n} ölçü adı · ${Object.keys(MEM.tr).length} Türkçe tercih · ${q} kumaş düzeltmesi${hwInfo}`;
-  const cls="st "+(SYNC_STATE==="ok"?(pq?"chk":"ok"):SYNC_STATE==="err"?"chk":"new");
+  const cls="st "+(SYNC_STATE==="salt"?"ok":SYNC_STATE==="ok"?(pq?"chk":"ok"):SYNC_STATE==="err"?"chk":"new");
   for(const id of ["#syncDot","#syncDot2"]){const d=$(id);if(d)d.className=cls}
-  const t=$("#syncTxt");if(t)t.textContent=SYNC_STATE==="ok"?(pq||HW_WAIT?"Gönderiliyor…":"Ortak hafıza"):SYNC_STATE==="err"?"Bağlantı yok":"Sadece bu bilgisayar";
+  const t=$("#syncTxt");if(t)t.textContent=SYNC_STATE==="salt"?"Ortak hafıza (okuma)":SYNC_STATE==="ok"?(pq||HW_WAIT?"Gönderiliyor…":"Ortak hafıza"):SYNC_STATE==="err"?"Bağlantı yok":"Sadece bu bilgisayar";
   const pl=$("#syncPill");if(pl)pl.title=st;
-  if(GOMULU)try{parent.postMessage({t:"hafiza",uygulama:"olcu",id:SAYFA,durum:SYNC_STATE==="ok"?(pq||HW_WAIT?"gonder":"ok"):SYNC_STATE==="err"?"err":"yok",yazi:t?t.textContent:"",ipucu:st},"*")}catch(e){}
+  if(GOMULU)try{parent.postMessage({t:"hafiza",uygulama:"olcu",id:SAYFA,durum:SYNC_STATE==="salt"?"ok":SYNC_STATE==="ok"?(pq||HW_WAIT?"gonder":"ok"):SYNC_STATE==="err"?"err":"yok",yazi:t?t.textContent:"",ipucu:st},"*")}catch(e){}
   hafizaCiz()}
 $("#syncPill").onclick=()=>ayarAc("hafiza");
 /* kaydet: önce şablon sırası, sonra boş satır uyarıları, sonra klasöre yaz (klasör bir kez sorulur, sonra hatırlanır) */
@@ -1651,7 +1661,7 @@ $("#mList").onclick=async e=>{const b=e.target.closest("[data-m]");if(!b)return;
   if(b.dataset.m==="kaldir")sablonKaldir(n)};
 function hafizaCiz(){const el=$("#hafizaInfo");if(!el||$("#ayarModal").classList.contains("hidden"))return;
   const pq=pending().length,n=Object.keys(MEM.names).length+Object.keys(MEM.extra).length,sb=CUSTOM.some(c=>c.bekliyor);
-  const durum=SYNC_STATE==="ok"?"Bağlı ✓":SYNC_STATE==="err"?"Şu an ulaşılamıyor (internet?)":"Ayarlanmadı: sadece bu bilgisayar öğreniyor";
+  const durum=SYNC_STATE==="salt"?"Yalnız okuma ✓ (müşteriler ve öğrenilenler gelir; burada yaptıkların bu bilgisayarda kalır)":SYNC_STATE==="ok"?"Bağlı ✓":SYNC_STATE==="err"?"Şu an ulaşılamıyor (internet?)":"Ayarlanmadı: sadece bu bilgisayar öğreniyor";
   el.innerHTML=`<div class="kv"><span>Durum</span><span>${durum}</span><span>Öğrenilen</span><span>${MEM.saves||0} kayıt · ${n} ölçü adı · ${Object.keys(MEM.tr).length} Türkçe tercih · ${Object.keys(MEM.qual).length} kumaş düzeltmesi</span><span>El yazısı defteri</span><span>${LS.get("ota_hw_toplam",0)} örnek${HW_WAIT?` · ${HW_WAIT} gönderilmeyi bekliyor`:""}</span><span>Gönderilmeyi bekleyen</span><span>${pq} kayıt${sb?" · şablon değişikliği":""}</span></div>`
    +(SYNC_STATE==="ok"&&!pq&&!HW_WAIT&&!sb?'<div class="okline">✓ Bu bilgisayarda öğrenilen her şey ortak hafızada. Eleman programına geçerken hiçbir şey kaybolmaz.</div>':"")}
 $("#esitleBtn").onclick=async()=>{const b=$("#esitleBtn");b.disabled=true;try{await syncNow();await syncSamples();await sablonEsitle().catch(()=>{})}finally{b.disabled=false;hafizaCiz()}};
@@ -1728,7 +1738,7 @@ initCust();
 (async function basla(){
   await PLAT.hazirla();
   if(EXE){document.documentElement.classList.add("exe");$("#taraBtn").classList.remove("hidden");
-    const k=await PLAT.anahtar();if(k)SYNC.token=k}
+    const k=await PLAT.anahtar();if(k&&k.anahtar){SYNC.token=k.anahtar;SYNC.salt=!!k.salt}}
   AYAR=await PLAT.ayarAl();taraYazi();
   await customYukle();
   memApply();memInfo();HW_WAIT=(await HWQ.get()).length;memInfo();

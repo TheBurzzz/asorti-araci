@@ -22,32 +22,28 @@ Her sohbet işe başlamadan önce bunu okur, iş bitince "Son durum" bölümün�
 
 ## Herkese açık depoya asla girmeyenler
 
-- Ortak hafıza anahtarı (`github_pat_…`) → Eleman'da `C:\AsortiAraci\anahtar.txt` (kurulumla elden verilir).
+- Okur-yazar ortak hafıza anahtarı (`github_pat_…`, `anahtar.txt`): yalnız kullanıcının bilgisayarlarında. Salt-okur anahtar
+  yalnız karışık yazılmış hâliyle girer (aşağıda "Anahtarlar").
 - Müşteri şablonları (`sablonlar.json`: müşteri adları, logolar), müşteri kağıtları/taramaları, KESİM RAPORLARI,
   deneme verileri (`base.json`). Bunlar gizli `eleman-hafiza` deposunda ya da Eleman sohbetinin çalışma alanında durur.
 - Kök `.gitignore`: `anahtar.txt`, `guncelleme_anahtari.txt`, `sablonlar.json`, `olcu_sablonlar.json` yanlışlıkla eklenmesin.
 
-## Gizli depo ve anahtarlar (kullanıcının kararı, 6 Kasım 2026 gece)
+## Anahtarlar (kullanıcının kararı, 6 Kasım 2026 gece)
 
-Kullanıcı: "uygulamayı indirdiğim an kendinden anahtarlı olsun; müşteri bilgileri çok gizli değil, ama GitHub'da dosyaları
-gören bir kurnaz anahtarı alıp bilgilerime erişmesin." Çözüm: program deposu `asorti-araci` **gizli** olacak, anahtarlar
-programın içinde gelecek. İki anahtar:
-- `anahtar.txt` = ortak hafıza anahtarı (yalnız `eleman-hafiza`, Contents okuma-yazma). Ölçü şablonları / hafıza.
-- `guncelleme_anahtari.txt` = güncelleme anahtarı (yalnız `asorti-araci`, Contents **salt okur**). Sızsa bile kimse
-  programa kötü kod gönderemez; yalnız okuyabilir. Kullanıcı GitHub'da "eleman-guncelleme" adıyla oluşturacak.
-Aşamalar (sırası önemli, kurulu programlar güncellemesiz kalmasın):
-1. ✓ 3.0.2 (`eleman`): güncelleyici anahtarla okur/indirir (api.github.com contents + zipball → codeload yönlendirmesi,
-   anahtar yönlendirilen adrese gitmez); anahtar yoksa ya da tutmazsa eski herkese açık yol. `guncelleme_anahtari.txt`
-   yoksa `anahtar.txt` ile `eleman-hafiza/guncelleme/anahtar.txt`'den bir kez alınır (30 dk'da bir dener); 401 gelirse
-   yereldeki bırakılır, hafızadaki yenisi alınır. Eski PowerShell sunucusu (sunucu.ps1, yedek yol) da anahtarı kullanır.
-   Kurulum.bat yanında `guncelleme_anahtari.txt` varsa kurulum onu da koyar.
-2. Kullanıcı salt-okur anahtarı oluşturur → Claude `eleman-hafiza/guncelleme/anahtar.txt`'ye koyar.
-3. Eleman onaylanınca `eleman` → `main` (depo hâlâ herkese açık; iş bilgisayarı 2.0.4'ten güncellenir). İş bilgisayarına
-   `C:\AsortiAraci\anahtar.txt` köprüyle konur (güncelleme anahtarını kendisi hafızadan alır). Bütün kurulumların
-   `guncelleme_anahtari.txt` aldığı Ayarlar/kayıttan doğrulanır.
-4. Kullanıcı depoyu gizli yapar (Settings → Danger Zone → Change visibility). Sonra iki anahtar `AsortiAraci/` içine
-   `git add -f` ile eklenir: GitHub'dan indirilen her paket ve her güncelleme anahtarlı gelir. Arkadaşa zip elden verilir.
-   **Depo bir daha herkese açık yapılmaz** (geçmişte anahtar var). Anahtar değişecekse: önce yenisi hafızaya/depoya, sonra eskisi silinir.
+Kullanıcı: "uygulamayı indirdiğim an kendinden anahtarlı olsun; müşteri bilgileri çok gizli değil." Önce gizli depo
+düşünüldü; kullanıcı istemedi (başka bilgisayarda adını yazıp programı gösterebilmek, hesabına girmeden indirebilmek
+istiyor). **Program deposu herkese açık kalır.** Karar:
+- `anahtar.txt` = okur-yazar ortak hafıza anahtarı (yalnız `eleman-hafiza`, Contents RW). **Depoya asla girmez**; yalnız
+  kullanıcının kendi bilgisayarlarında durur (ev: var; iş: Eleman'a geçince köprüyle konur). Bu bilgisayarlar ortak
+  hafızayı eskisi gibi eşitler (öğrenilenler, eklenen/silinen müşteriler, el yazısı örnekleri).
+- **Salt-okur anahtar** (`eleman-okuma`: yalnız `eleman-hafiza`, Contents Read-only) programın içinde:
+  `SunucuOlcu.cs` → `OKUMA` (ters + "eleman-okuma" ile XOR + base64). Düz yazılmaz çünkü GitHub herkese açık depoda gördüğü
+  anahtarı iptal eder; gizleme değildir, kurcalayan çözebilir, yalnız okuyabilir (kullanıcı bunu kabul etti).
+  `anahtar.txt` olmayan her kurulum müşterileri ve ortak hafızayı **okur**, hiçbir şey yazmaz (Ölçü: `SYNC.salt`,
+  durum "Ortak hafıza (okuma)"): orada öğrenilen / eklenen / silinen o bilgisayarda kalır, kullanıcınınkine dokunmaz,
+  el yazısı örneği toplanmaz. `eleman-hafiza`'ya müşteri / ölçü hafızası dışında gizli bir şey konmaz (okuma anahtarı görür).
+- Güncellemeler herkese açık yoldan, eskisi gibi. 3.0.2'deki `guncelleme_anahtari.txt` desteği boşta bekler (dosya yoksa
+  hiçbir şey yapmaz); depo bir gün gizli yapılırsa işe yarar.
 
 ## Tasarım kararları (6 Kasım 2026, kullanıcı)
 
@@ -119,7 +115,11 @@ Aşamalar (sırası önemli, kurulu programlar güncellemesiz kalmasın):
 
 - 2026-11-06 gece: **Eleman 3.0.2** (yalnız `eleman`): anahtarlı güncelleme (yukarıdaki "Gizli depo" 1. aşama),
   güncelleme yedeğine `olcu_tablosu_araci.html` de girdi, kök `.gitignore`. Linux'ta mono ile denendi: anahtarla surum.json,
-  zipball (302 → codeload, 10 MB, `TheBurzzz-asorti-araci-<sha>/AsortiAraci/...`), hafızada anahtar yokken sessiz 404.
+  zipball (302 → codeload, 10 MB, `TheBurzzz-asorti-araci-<sha>/AsortiAraci/...`). (Gizli depo planı sonra iptal edildi.)
+- 2026-11-06 gece: salt-okur hafıza (yukarıda "Anahtarlar") yazıldı; `OKUMA` boş, kullanıcının `eleman-okuma` anahtarı
+  bekleniyor → gelince karışık yazılıp **3.0.3** olarak `eleman`'a. mono + Playwright (GitHub taklit) ile denendi:
+  okuma anahtarıyla yalnız GET (hafiza.json, sablonlar), PUT/DELETE hiç yok; yerel öğrenilen, eklenen ve silinen
+  müşteri yerelde kalıyor; `anahtar.txt` varken `salt:false`, okur-yazar anahtar.
 
 ## Sıradaki işler
 

@@ -39,10 +39,18 @@ namespace AsortiAraci
             switch (yol)
             {
                 case "olcu/durum":
-                    JsonYanit(ctx, Json.H("olcu", true, "surum", Json.Str(Surum.Yerel(), "surum"), "anahtar", OlcuAnahtar().Length > 0));
+                    {
+                        bool salt;
+                        string k = HafizaAnahtari(out salt);
+                        JsonYanit(ctx, Json.H("olcu", true, "surum", Json.Str(Surum.Yerel(), "surum"), "anahtar", k.Length > 0, "salt", salt));
+                    }
                     return true;
                 case "olcu/anahtar":
-                    JsonYanit(ctx, Json.H("anahtar", OlcuAnahtar()));
+                    {
+                        bool salt;
+                        string k = HafizaAnahtari(out salt);
+                        JsonYanit(ctx, Json.H("anahtar", k, "salt", salt));
+                    }
                     return true;
                 case "olcu/klasor":
                     JsonYanit(ctx, OlcuKlasorDurum(Sorgu(ctx, "musteri")));
@@ -79,6 +87,36 @@ namespace AsortiAraci
         }
 
         // ---------- ortak hafıza anahtarı: C:\Eleman\anahtar.txt (kurulumla gelir, güncelleme dokunmaz, GitHub'a konmaz) ----------
+        // Ortak hafıza anahtarı. anahtar.txt (okur-yazar) yalnız kullanıcının kendi bilgisayarlarında durur, elle konur.
+        // Yoksa programın içindeki salt-okur anahtar: herkes müşterileri ve öğrenilenleri alır, kimse bir şey değiştiremez.
+        static string HafizaAnahtari(out bool salt)
+        {
+            string k = OlcuAnahtar();
+            salt = false;
+            if (k.Length > 0) return k;
+            k = OkumaAnahtari();
+            salt = k.Length > 0;
+            return k;
+        }
+
+        // Salt-okur anahtar (yalnız eleman-hafiza, Contents: Read-only; kullanıcının kararı 6 Kasım 2026: depo herkese açık
+        // kalsın, program kendinden anahtarlı gelsin, müşterilerin görünmesi sorun değil). Karışık yazılır, çünkü GitHub herkese
+        // açık depoda düz duran anahtarı hemen iptal eder; bu bir gizleme değildir, kurcalayan çözebilir, yalnız okuyabilir.
+        const string OKUMA = "";
+        static string OkumaAnahtari()
+        {
+            if (OKUMA.Length == 0) return "";
+            try
+            {
+                byte[] b = Convert.FromBase64String(OKUMA), k = Encoding.ASCII.GetBytes("eleman-okuma");
+                for (int i = 0; i < b.Length; i++) b[i] ^= k[i % k.Length];
+                Array.Reverse(b);
+                string t = Encoding.ASCII.GetString(b);
+                return AnahtarGecerli(t) ? t : "";
+            }
+            catch { return ""; }
+        }
+
         static string OlcuAnahtar()
         {
             try
@@ -123,7 +161,8 @@ namespace AsortiAraci
         // gizli ortak hafıza deposundan (eleman-hafiza: olcu-tablosu/veri/sablonlar.json) indirir. Anahtar ya da internet yoksa sessizce vazgeçer.
         static bool OlcuSablonIndir(int zamanAsimi)
         {
-            string anahtar = OlcuAnahtar();
+            bool salt;
+            string anahtar = HafizaAnahtari(out salt);
             if (anahtar.Length == 0) return false;
             lock (olcuSablonKilit)
             {

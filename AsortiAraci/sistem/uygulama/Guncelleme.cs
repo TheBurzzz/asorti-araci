@@ -132,34 +132,21 @@ namespace AsortiAraci
             finally { try { Directory.Delete(tmp, true); } catch { } }
         }
 
-        // Güncelleme anahtarı (program deposunu yalnız okuyabilir, değiştiremez): <kök>\guncelleme_anahtari.txt.
-        // Yoksa ortak hafıza anahtarıyla gizli eleman-hafiza deposundan (guncelleme/anahtar.txt) bir kez alınır.
-        // Program deposu herkese açıkken gerekmez; depo gizli yapılınca güncellemeler bu anahtarla gelir.
-        static DateTime guncAnahtarDenendi = DateTime.MinValue;
+        // Güncelleme anahtarı (program deposunu yalnız okuyabilir): <kök>\guncelleme_anahtari.txt. Şimdilik kullanılmıyor:
+        // kullanıcı depo herkese açık kalsın dedi (6 Kasım 2026). Depo bir gün gizli yapılırsa güncellemeler bu dosyadaki
+        // anahtarla gelir; dosya yoksa ya da anahtar tutmazsa eski herkese açık yol.
         static string GuncellemeAnahtari()
         {
-            string f = Yer.Yol("guncelleme_anahtari.txt");
-            try { if (File.Exists(f)) { string t = File.ReadAllText(f, Encoding.UTF8).Trim(); if (AnahtarGecerli(t)) return t; } } catch { }
-            string m = OlcuAnahtar();
-            if (m.Length == 0 || (DateTime.Now - guncAnahtarDenendi).TotalMinutes < 30) return "";
-            guncAnahtarDenendi = DateTime.Now;
             try
             {
-                Web.Hazirla();
-                string t = Web.MetinAnahtarla("https://api.github.com/repos/TheBurzzz/eleman-hafiza/contents/guncelleme/anahtar.txt", 8000, m).Trim();
-                if (AnahtarGecerli(t)) { File.WriteAllText(f, t, Encoding.ASCII); Kayit.Yaz("guncelleme anahtari ortak hafizadan alindi"); return t; }
+                string f = Yer.Yol("guncelleme_anahtari.txt");
+                if (File.Exists(f)) { string t = File.ReadAllText(f, Encoding.UTF8).Trim(); if (AnahtarGecerli(t)) return t; }
             }
-            catch (WebException ex)
-            {
-                HttpWebResponse y = ex.Response as HttpWebResponse;
-                if (y == null || (int)y.StatusCode != 404) Kayit.Yaz("guncelleme anahtari alinamadi: " + ex.Message);
-            }
-            catch (Exception ex) { Kayit.Yaz("guncelleme anahtari alinamadi: " + ex.Message); }
+            catch { }
             return "";
         }
 
-        // GitHub anahtarı tanımadıysa (süresi doldu / iptal edildi: 401) yereldekini bırak; bir sonraki denemede
-        // ortak hafızadaki yenisi alınır. Anahtar değiştirilecekse önce yenisi hafızaya konur, sonra eskisi silinir.
+        // GitHub anahtarı tanımadıysa (süresi doldu / iptal edildi: 401) bırak; herkese açık yoldan devam edilir.
         static void AnahtarReddedildiyse(Exception ex)
         {
             WebException w = ex as WebException;
@@ -171,7 +158,6 @@ namespace AsortiAraci
                 if (File.Exists(f)) { File.Delete(f); Kayit.Yaz("guncelleme anahtari GitHub'da gecersiz, birakildi"); }
             }
             catch { }
-            guncAnahtarDenendi = DateTime.MinValue;
         }
 
         static bool AnahtarGecerli(string t) { return System.Text.RegularExpressions.Regex.IsMatch(t ?? "", "^(github_pat_|ghp_)[A-Za-z0-9_]{20,}$"); }
