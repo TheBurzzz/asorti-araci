@@ -69,6 +69,10 @@ namespace AsortiAraci
                 case "olcu/ayar":
                     OlcuAyar(ctx, m);
                     return true;
+                case "olcu/sablonlar":
+                    // müşteri şablonları herkese açık program deposunda durmaz: kurulumla gelen gizli dosyadan okunur
+                    Yanit(ctx, 200, OlcuSablonlar(), "application/json; charset=utf-8", null);
+                    return true;
             }
             Yanit(ctx, 404);
             return true;
@@ -88,6 +92,27 @@ namespace AsortiAraci
             }
             catch { }
             return "";
+        }
+
+        // ---------- müşteri şablonları: <kurulum>\olcu_sablonlar.json (kurulumla elden gelir; güncelleme dokunmaz, GitHub'a konmaz) ----------
+        static byte[] OlcuSablonlar()
+        {
+            try
+            {
+                string f = Yer.Yol("olcu_sablonlar.json");
+                if (File.Exists(f))
+                {
+                    byte[] b = File.ReadAllBytes(f);
+                    int bas = (b.Length >= 3 && b[0] == 0xEF && b[1] == 0xBB && b[2] == 0xBF) ? 3 : 0;
+                    if (b.Length - bas > 1 && b[bas] == (byte)'[')
+                    {
+                        if (bas == 0) return b;
+                        byte[] c = new byte[b.Length - 3]; Buffer.BlockCopy(b, 3, c, 0, c.Length); return c;
+                    }
+                }
+            }
+            catch { }
+            return Encoding.ASCII.GetBytes("[]");
         }
 
         // ---------- müşteriye göre kayıt klasörü ----------
