@@ -10,7 +10,7 @@ Her sohbet işe başlamadan önce bunu okur, iş bitince "Son durum" bölümün�
 | `main` | Çalışan **Asorti Aracı** (v2.x). Kurulu bütün programlar güncellemeyi buradan alır. | Eleman hazır ve iş bilgisayarında denenmiş olmadan **Eleman buraya girmez**. |
 | `exe-deneme` | Asorti'nin çalışma dalı (Asorti sohbeti). | Asorti düzeltmeleri eskisi gibi: exe-deneme → main. |
 | `eleman` | **Eleman** geliştirme dalı. | Asorti'ye gelen her düzeltme buraya da alınır: `git merge main`. |
-| `surum-vX.Y.Z`, `arsiv` | Eski sürümlerin arşivi. | Dokunulmaz. |
+| ~~`surum-vX.Y.Z`, `arsiv`~~ | **Kaldırıldı** (7 Kasım 2026, kullanıcının isteği): eski sürümler artık GitHub **Releases**'ta (etiket `v1.0.0`…`v2.0.4`, `ilk-deneme`). | Yeni sürüm dalı açılmaz. |
 
 ## Değişmeyecekler (çalışan hiçbir şey bozulmasın diye)
 
@@ -190,6 +190,12 @@ istiyor). **Program deposu herkese açık kalır.** Karar:
   tanır; README Eleman'ın vitrin sayfası oldu (simge, iki uygulama, kurulum, klasörler, dallar).
 
 ## Sıradaki işler
+0. **Sürüm arşivi = GitHub Releases.** 32 sürüm (ilk-deneme, v1.0.0–v1.1.22, v2.0.0–v2.0.4) bir kerelik GitHub Actions işiyle
+   taşındı, `surum-v*`, `arsiv`, `surum-test` dalları silindi (dallar: eleman, main, exe-deneme). Bu oturumlardan etiket ve
+   Release oluşturulamıyor (git vekili etiket itmeye 403, API Release yazmaya izin vermiyor); işi Actions yapar:
+   `.github/workflows/surum.yml` main'de `AsortiAraci/surum.json` değişince `v<sürüm>` Release'ini kendisi ekler
+   (Eleman main'e geçince çalışmaya başlar). O zamana kadar main'e yeni Asorti sürümü çıkarsa dal açılmaz, Eleman sohbetine söylenir.
+   Kurulum, Releases zip'inin klasör adındaki sürüm numarasını (eleman-1.1.22) dal sanmaz.
 0. **main'e geçmeden önce:** güncelleyici (Guncelleme.cs, sunucu.ps1) ve kurulum (Kurulum.ps1) paketteki program klasörünü
    hem `Eleman/` hem `AsortiAraci/` olarak tanısın (önce Eleman). İş bilgisayarı Eleman'a geçtikten sonra klasör `Eleman/`
    yapılır (kullanıcı adların "Asorti Aracı" kalmasını sordu: şimdilik böyle durmalı, sonra değişecek). İstenirse eski

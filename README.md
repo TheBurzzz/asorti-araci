@@ -36,7 +36,11 @@ Eleman açılışta kendisi bakar, yeni sürüm varsa haber verir. Elle: **⚙ �
 
 Müşteri şablonları ve öğrenilen ölçüler ayrı, gizli **eleman-hafiza** deposunda durur; program deposunda müşteri bilgisi yoktur.
 
+## Sürümler
+Bütün sürümler sağdaki **Releases** bölümünde: her birinin altında **Source code (zip)** → klasöre çıkar → **Kurulum.bat**.
+Kurulum ayarlara ve çalışma sayfalarına dokunmaz; program sonra yine en yeni sürümü önerir.
+
 ## Dallar
 - **`eleman`**: Eleman (en yeni sürüm).
 - **`main`**: iş bilgisayarındaki sürüm; Eleman orada denenip onaylanınca buraya geçer.
-- **`surum-v…`**, **`arsiv`**: eski sürümler. Dal seçiciden seç → **Code** → **Download ZIP** → **Kurulum.bat**.
+- **`exe-deneme`**: Asorti Aracı'nın deneme dalı.
