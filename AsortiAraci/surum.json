@@ -1,8 +1,8 @@
 {
- "surum": "3.0.5",
+ "surum": "3.0.6",
  "tarih": "2026-11-06",
  "notlar": [
-  "Ölçü Tablosu: her bilgisayar ortak hafızadan hem öğrenir hem ona öğretir; yeni bir bilgisayarda ayrıca bir şey yapmak gerekmez",
-  "Ortak hafıza ya da müşteriler silinir veya bozulursa bilgisayardaki kopyayla kendiliğinden geri yüklenir"
+  "Yeni açılış: Eleman simgesi geri çekilip üstüne geliyor, adamın içine girilip uygulama ekrana çarparak açılıyor",
+  "Ölçü Tablosu: müşteri logoları zemininden kırpılıp saydam PNG yapılıyor; Excel'de kutuya olabildiğince büyük sığıyor, müşteri düğmelerinde de büyük görünüyor"
  ]
 }

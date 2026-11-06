@@ -730,7 +730,8 @@ async function logoBul(t){const key=t.name+"|"+(t.b64||"").length;if(LOGO.has(ke
   try{const z=await JSZip.loadAsync(b64buf(t.b64));const med=Object.keys(z.files).filter(n=>/^xl\/media\/[^/]+\.(png|jpe?g|webp|gif|bmp)$/i.test(n));
     let ad=med.find(n=>/image2\./i.test(n))||med.find(n=>!/image1\.png$/i.test(n));if(!ad)return null;
     const tip=/\.png$/i.test(ad)?"image/png":/\.webp$/i.test(ad)?"image/webp":/\.gif$/i.test(ad)?"image/gif":"image/jpeg";
-    const u=URL.createObjectURL(new Blob([await z.file(ad).async("uint8array")],{type:tip}));LOGO.set(key,u);return u}catch(e){return null}}
+    const by=await z.file(ad).async("uint8array"),sn=await logoIsle(by,(ad.split(".").pop()||"").toLowerCase());   // zemini kırpılmış logo: döşemede de büyük görünsün
+    const u=URL.createObjectURL(sn?new Blob([sn.png],{type:"image/png"}):new Blob([by],{type:tip}));LOGO.set(key,u);return u}catch(e){return null}}
 function initCust(){const box=$("#cust");
   box.innerHTML=CUSTS.map(t=>{const lg=LOGO.get(t.name+"|"+(t.b64||"").length);const bas=String(t.name).trim().slice(0,1).toLocaleUpperCase("tr");
     return `<button type="button" class="chip${t.name===CUSTN?" on":""}" data-n="${esc(t.name)}" title="${t.eklenen?"Sonradan eklenen şablon":t.degisti?"Şablonu değiştirildi":esc(t.name)}">${t.eklenen?"<em>yeni</em>":""}<span class="mLogo">${lg?`<img src="${lg}" alt="">`:`<i>${esc(bas)}</i>`}</span><span class="mAd">${esc(t.name)}</span></button>`}).join("");
@@ -1449,34 +1450,88 @@ function colN(c){let n=0;for(const ch of c)n=n*26+ch.charCodeAt(0)-64;return n}
 function colL(n){let s="";while(n>0){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s}
 /* Excel sütun genişliği -> piksel (Calibri 11: en geniş rakam 7 px; genişlik iç boşluğu da içerir) */
 const xlPx=w=>Math.trunc((256*w+18)/256*7);
-/* müşteri logosu: merkezinin düştüğü boş birleşik hücreye sığdırılır (oran korunur, ortalanır, kenarda pay bırakılır).
-   Şablonlarda logo kutudan taşabiliyor (ör. Lykka F7:I10'un üstüne/altına, Strikkeby yanlara). */
+/* müşteri logosunun resmi: zemini (saydam ya da düz renk) kırpılır, düz renk zemin saydam yapılır, PNG olur.
+   Desenli zemine (ör. Deerberg) dokunulmaz. Sonuç: yazı ve simge kutuya olabildiğince büyük sığar. */
+const LOGO_ISLE=new Map();
+async function logoIsle(bytes,ext){
+  const key=ext+":"+bytes.length+":"+bytes[64]+":"+bytes[bytes.length>>1]+":"+bytes[bytes.length-9];
+  if(LOGO_ISLE.has(key))return LOGO_ISLE.get(key);
+  let s=null;
+  try{
+    const mime=/^jpe?g$/i.test(ext)?"image/jpeg":/^webp$/i.test(ext)?"image/webp":/^gif$/i.test(ext)?"image/gif":/^bmp$/i.test(ext)?"image/bmp":"image/png";
+    const bm=await createImageBitmap(new Blob([bytes],{type:mime}));const W=bm.width,H=bm.height;
+    if(W>=4&&H>=4&&W*H<=16e6){
+      const c=document.createElement("canvas");c.width=W;c.height=H;const g=c.getContext("2d",{willReadFrequently:true});g.drawImage(bm,0,0);
+      const d=g.getImageData(0,0,W,H),p=d.data;
+      const saydam=[0,W-1,(H-1)*W,H*W-1].filter(i=>p[i*4+3]<16).length>=3;
+      let bg=null,uz=null;
+      if(!saydam){const ks=[],ad=Math.max(1,Math.floor(Math.max(W,H)/256));
+        for(let x=0;x<W;x+=ad)ks.push(x,(H-1)*W+x);for(let y=0;y<H;y+=ad)ks.push(y*W,y*W+W-1);
+        const med=k=>{const v=ks.map(i=>p[i*4+k]).sort((a,b)=>a-b);return v[v.length>>1]};bg=[med(0),med(1),med(2)];
+        uz=i=>Math.max(Math.abs(p[i*4]-bg[0]),Math.abs(p[i*4+1]-bg[1]),Math.abs(p[i*4+2]-bg[2]));
+        if(ks.filter(i=>uz(i)<=24).length<ks.length*.85)bg=null}
+      if(saydam||bg){
+        const ic=saydam?(i=>p[i*4+3]>24):(i=>p[i*4+3]>24&&uz(i)>34);
+        let x0=W,y0=H,x1=-1,y1=-1;
+        for(let y=0;y<H;y++){const r=y*W;for(let x=0;x<W;x++)if(ic(r+x)){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;y1=y}}
+        if(x1>=0){
+          const m=Math.max(2,Math.round(Math.max(x1-x0,y1-y0)*.02));x0=Math.max(0,x0-m);y0=Math.max(0,y0-m);x1=Math.min(W-1,x1+m);y1=Math.min(H-1,y1+m);
+          if(bg){for(let i=0;i<W*H;i++){const u=uz(i);if(u>=56)continue;const a=u<=14?0:(u-14)/42;
+              if(a<=0){p[i*4+3]=0;continue}
+              for(let k=0;k<3;k++)p[i*4+k]=Math.max(0,Math.min(255,Math.round((p[i*4+k]-(1-a)*bg[k])/a)));p[i*4+3]=Math.round(p[i*4+3]*a)}
+            g.putImageData(d,0,0)}
+          const w=x1-x0+1,h=y1-y0+1,o=document.createElement("canvas");o.width=w;o.height=h;o.getContext("2d").drawImage(c,x0,y0,w,h,0,0,w,h);
+          const b=await new Promise(r=>o.toBlob(r,"image/png"));if(b)s={png:new Uint8Array(await b.arrayBuffer()),w,h}}}}
+    if(bm.close)bm.close();
+  }catch(e){console.warn("logo işlenemedi",e)}
+  LOGO_ISLE.set(key,s);return s}
+/* müşteri logosu: merkezinin düştüğü boş birleşik hücreye (ör. F7:I10) olabildiğince büyük sığdırılır: resim zemininden
+   kırpılır (logoIsle), oran korunur, ortalanır, kenarda az pay kalır, gölgesi kaldırılır. Şablonlarda logo kutudan taşabiliyor
+   (ör. Lykka üstüne/altına, Strikkeby yanlara) ya da zemini yüzünden çok küçük kalıyordu. */
 async function logoSigdir(zip,sheetPath,mergeRefs,colPx,rowPx,bosMu){
   let dp=null;const rf=zip.file(sheetPath.replace("worksheets/","worksheets/_rels/")+".rels");
   if(rf){const r=await rf.async("string");const m=r.match(/<Relationship [^>]*Type="[^"]*\/drawing"[^>]*>/);const tg=m&&(m[0].match(/Target="([^"]+)"/)||[])[1];if(tg)dp="xl/"+tg.replace(/^\.\.\//,"").replace(/^\/?xl\//,"")}
   if(!dp||!zip.file(dp))dp=Object.keys(zip.files).find(f=>/^xl\/drawings\/drawing\d+\.xml$/.test(f));
   if(!dp)return 0;
+  const relP=dp.replace("drawings/","drawings/_rels/")+".rels";let rels=zip.file(relP)?await zip.file(relP).async("string"):"";
   const X=c=>{let s=0;for(let i=1;i<c;i++)s+=colPx(i);return s},Y=r=>{let s=0;for(let i=1;i<r;i++)s+=rowPx(i);return s};
   const kutular=mergeRefs.map(ref=>{const m=ref.match(/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/);return m&&{c1:colN(m[1]),r1:+m[2],c2:colN(m[3]),r2:+m[4]}}).filter(k=>k&&bosMu(k));
   if(!kutular.length)return 0;
   const yer=t=>{const m=t.match(/<xdr:col>(\d+)<\/xdr:col>\s*<xdr:colOff>(-?\d+)<\/xdr:colOff>\s*<xdr:row>(\d+)<\/xdr:row>\s*<xdr:rowOff>(-?\d+)<\/xdr:rowOff>/);return m&&{x:X(+m[1]+1)+(+m[2])/9525,y:Y(+m[3]+1)+(+m[4])/9525}};
-  let n=0;const dx=(await zip.file(dp).async("string")).replace(/<xdr:(twoCellAnchor|oneCellAnchor)\b[^>]*>([\s\S]*?)<\/xdr:\1>/g,(tum,tur,ic)=>{
-    if(!/<xdr:pic\b/.test(ic))return tum;
-    const f=yer((ic.match(/<xdr:from>([\s\S]*?)<\/xdr:from>/)||[])[1]||"");if(!f)return tum;
+  let dx=await zip.file(dp).async("string"),n=0,say=0;const eskiler=[];
+  for(const [tum,tur,ic] of [...dx.matchAll(/<xdr:(twoCellAnchor|oneCellAnchor)\b[^>]*>([\s\S]*?)<\/xdr:\1>/g)]){
+    if(!/<xdr:pic\b/.test(ic))continue;
+    const f=yer((ic.match(/<xdr:from>([\s\S]*?)<\/xdr:from>/)||[])[1]||"");if(!f)continue;
     const ext=ic.match(/<a:ext cx="(\d+)" cy="(\d+)"\s*\/>/);const t=tur==="twoCellAnchor"?yer((ic.match(/<xdr:to>([\s\S]*?)<\/xdr:to>/)||[])[1]||""):null;
-    const x2=t?t.x:ext?f.x+ext[1]/9525:null,y2=t?t.y:ext?f.y+ext[2]/9525:null;if(x2==null)return tum;
+    const x2=t?t.x:ext?f.x+ext[1]/9525:null,y2=t?t.y:ext?f.y+ext[2]/9525:null;if(x2==null)continue;
     const cx=(f.x+x2)/2,cy=(f.y+y2)/2;
-    const k=kutular.find(k=>cx>=X(k.c1)&&cx<=X(k.c2+1)&&cy>=Y(k.r1)&&cy<=Y(k.r2+1));if(!k)return tum;
-    const bx=X(k.c1),by=Y(k.r1),bw=X(k.c2+1)-bx,bh=Y(k.r2+1)-by,pay=Math.max(5,Math.round(Math.min(bw,bh)*.09));
-    const ow=ext?+ext[1]:(x2-f.x)*9525,oh=ext?+ext[2]:(y2-f.y)*9525;if(!(ow>0&&oh>0)||bw-2*pay<10||bh-2*pay<10)return tum;
+    const k=kutular.find(k=>cx>=X(k.c1)&&cx<=X(k.c2+1)&&cy>=Y(k.r1)&&cy<=Y(k.r2+1));if(!k)continue;
+    let pic=(ic.match(/<xdr:pic\b[\s\S]*?<\/xdr:pic>/)||[])[0];if(!pic)continue;
+    let ow=ext?+ext[1]:(x2-f.x)*9525,oh=ext?+ext[2]:(y2-f.y)*9525;
+    const rid=(pic.match(/r:embed="([^"]+)"/)||[])[1],relEl=rid&&(rels.match(new RegExp(`<Relationship [^>]*Id="${rid}"[^>]*>`))||[])[0];
+    const tg=relEl&&(relEl.match(/Target="([^"]+)"/)||[])[1];
+    if(tg&&!/TargetMode="External"/.test(relEl)){const mp="xl/"+tg.replace(/^\.\.\//,"").replace(/^\/?xl\//,"");const mf=zip.file(mp);
+      if(mf){const sn=await logoIsle(await mf.async("uint8array"),(mp.split(".").pop()||"").toLowerCase());
+        if(sn){const ad=`eleman_logo${++say}.png`;zip.file("xl/media/"+ad,sn.png,{createFolders:false});
+          rels=rels.replace(relEl,relEl.replace(/Target="[^"]+"/,`Target="../media/${ad}"`));eskiler.push(mp);
+          ow=sn.w;oh=sn.h;pic=pic.replace(/<a:effectLst>[\s\S]*?<\/a:effectLst>|<a:effectLst\/>/g,"")}}}
+    const bx=X(k.c1),by=Y(k.r1),bw=X(k.c2+1)-bx,bh=Y(k.r2+1)-by,pay=Math.max(4,Math.round(Math.min(bw,bh)*.05));
+    if(!(ow>0&&oh>0)||bw-2*pay<10||bh-2*pay<10)continue;
     const o=Math.min((bw-2*pay)*9525/ow,(bh-2*pay)*9525/oh),w=Math.round(ow*o),h=Math.round(oh*o);
     const px=bx+(bw-w/9525)/2,py=by+(bh-h/9525)/2;
     let c=k.c1;while(c<k.c2&&X(c+1)<=px)c++;let r=k.r1;while(r<k.r2&&Y(r+1)<=py)r++;
-    let pic=(ic.match(/<xdr:pic\b[\s\S]*?<\/xdr:pic>/)||[])[0];if(!pic)return tum;
     pic=pic.replace(/<a:off x="-?\d+" y="-?\d+"\s*\/>/,`<a:off x="${Math.round(px*9525)}" y="${Math.round(py*9525)}"/>`).replace(/<a:ext cx="\d+" cy="\d+"\s*\/>/,`<a:ext cx="${w}" cy="${h}"/>`);
     const cd=(ic.match(/<xdr:clientData[^>]*\/>|<xdr:clientData[^>]*>[\s\S]*?<\/xdr:clientData>/)||["<xdr:clientData/>"])[0];n++;
-    return `<xdr:oneCellAnchor><xdr:from><xdr:col>${c-1}</xdr:col><xdr:colOff>${Math.round((px-X(c))*9525)}</xdr:colOff><xdr:row>${r-1}</xdr:row><xdr:rowOff>${Math.round((py-Y(r))*9525)}</xdr:rowOff></xdr:from><xdr:ext cx="${w}" cy="${h}"/>${pic}${cd}</xdr:oneCellAnchor>`});
-  if(n)zip.file(dp,dx);return n}
+    dx=dx.replace(tum,`<xdr:oneCellAnchor><xdr:from><xdr:col>${c-1}</xdr:col><xdr:colOff>${Math.round((px-X(c))*9525)}</xdr:colOff><xdr:row>${r-1}</xdr:row><xdr:rowOff>${Math.round((py-Y(r))*9525)}</xdr:rowOff></xdr:from><xdr:ext cx="${w}" cy="${h}"/>${pic}${cd}</xdr:oneCellAnchor>`)}
+  if(!n)return 0;
+  zip.file(dp,dx,{createFolders:false});if(rels)zip.file(relP,rels,{createFolders:false});
+  if(say){const ctf=zip.file("[Content_Types].xml");let ct=ctf?await ctf.async("string"):"";
+    const relsHepsi=(await Promise.all(Object.keys(zip.files).filter(f=>/\.rels$/.test(f)).map(f=>zip.file(f).async("string")))).join("");
+    for(const mp of eskiler){const ad=mp.split("/").pop();if(relsHepsi.includes("/"+ad+'"')||relsHepsi.includes('"'+ad+'"'))continue;
+      zip.remove(mp);ct=ct.replace(new RegExp(`<Override [^>]*PartName="/${mp.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}"[^>]*/>`),"")}
+    if(ct&&!/Extension="png"/i.test(ct))ct=ct.replace(/(<Types[^>]*>)/,'$1<Default Extension="png" ContentType="image/png"/>');
+    if(ct)zip.file("[Content_Types].xml",ct)}
+  return n}
 async function buildXlsx(buf,{art,qual,date,rows,sizes,sample}){
   const zip=await JSZip.loadAsync(buf);
   const wbx=await zip.file("xl/workbook.xml").async("string");
@@ -1565,14 +1620,14 @@ async function buildXlsx(buf,{art,qual,date,rows,sizes,sample}){
   {const rh={};for(const m of sx.matchAll(/<row r="(\d+)"([^>]*?)(?:\/>|>)/g)){const h=(m[2].match(/ ht="([\d.]+)"/)||[])[1];if(h)rh[+m[1]]=+h}
    const dH=+((sx.match(/defaultRowHeight="([\d.]+)"/)||[])[1]||15);
    try{await logoSigdir(zip,sheetPath,merges.filter(m=>+m.match(/\d+/)[0]<=hdr),c=>xlPx(cw(c)),r=>(rh[r]!=null?rh[r]:dH)*4/3,k=>!String(cellVal(colL(k.c1)+k.r1)||"").trim())}catch(e){console.warn("logo",e)}}
-  zip.file(sheetPath,sx);zip.file("xl/styles.xml",st);
+  zip.file(sheetPath,sx,{createFolders:false});zip.file("xl/styles.xml",st,{createFolders:false});
   // yazdırma alanı
   let wb2=wbx;const pa=`<definedName name="_xlnm.Print_Area" localSheetId="0">'${sheetName.replace(/'/g,"''")}'!$B$1:$${colL(Math.max(lastCol,tplLast))}$${last}</definedName>`; // az bedenli dizide de başlığın tamamı (Development) sayfada kalsın
   if(/_xlnm\.Print_Area/.test(wb2))wb2=wb2.replace(/<definedName name="_xlnm\.Print_Area"[^>]*>[\s\S]*?<\/definedName>/,pa);
   else if(/<definedNames>/.test(wb2))wb2=wb2.replace("<definedNames>","<definedNames>"+pa);
   else wb2=wb2.replace("</sheets>","</sheets><definedNames>"+pa+"</definedNames>");
-  zip.file("xl/workbook.xml",wb2);
-  if(zip.file("xl/calcChain.xml")){zip.remove("xl/calcChain.xml");let ct=await zip.file("[Content_Types].xml").async("string");ct=ct.replace(/<Override[^>]*calcChain[^>]*\/>/,"");zip.file("[Content_Types].xml",ct);let r2=rels.replace(/<Relationship[^>]*calcChain[^>]*\/>/,"");zip.file("xl/_rels/workbook.xml.rels",r2)}
+  zip.file("xl/workbook.xml",wb2,{createFolders:false});
+  if(zip.file("xl/calcChain.xml")){zip.remove("xl/calcChain.xml");let ct=await zip.file("[Content_Types].xml").async("string");ct=ct.replace(/<Override[^>]*calcChain[^>]*\/>/,"");zip.file("[Content_Types].xml",ct);let r2=rels.replace(/<Relationship[^>]*calcChain[^>]*\/>/,"");zip.file("xl/_rels/workbook.xml.rels",r2,{createFolders:false})}
   return zip.generateAsync({type:"blob",mimeType:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",compression:"DEFLATE"});
 }
 

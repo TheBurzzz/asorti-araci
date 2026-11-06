@@ -143,6 +143,16 @@ istiyor). **Program deposu herkese açık kalır.** Karar:
   yalnız okumaya geçer, silinen / bozulan hafıza ve müşteriler geri yüklenir. Playwright + GitHub taklidiyle 6 durum denendi
   (yazabilen, 403, hafıza 404, hafıza küçülmüş, 3 müşteriden 2'si kayıp, 1'i silinmiş).
 
+- 2026-11-06 gece: **Eleman 3.0.6** (yalnız `eleman`):
+  - Açılış (kullanıcı: "daha efektli, logonun içine giriliyormuş gibi, ekrana çarpıyormuş gibi, saçma efekt yok"): simge
+    vektör çizilir (`ADAM` = eleman.svg'deki çizgiler, kabuk_yap.py çıkarır). 300 ms geri çekilme (0,82), 640 ms dalış
+    (üstel büyüme, yakınlaşma merkezi simge ortasından yüze kayar: FX,FY=32,28.6; yüzün içi ekranı p≈0,74'te kaplar),
+    sarı dağılırken üst çubuk ve ana sayfa "çarpar" (1,18 → 0,982 → 1,004 → 1, 620 ms). Toplam ≈1,3 sn. Kareler denendi.
+  - Ölçü Tablosu `logoIsle`: müşteri logosunun zemini kırpılır (saydam ya da düz renk; düz renk zemin yumuşak kenarla
+    saydam yapılır), PNG olur (`xl/media/eleman_logoN.png`, eski resim kullanılmıyorsa silinir), gölgesi kaldırılır, kutuya
+    %5 payla sığar. Desenli zemine (Deerberg) dokunulmaz. Müşteri döşemelerinde de kırpılmış logo. JSZip'e
+    `createFolders:false` (çıktıda klasör girdisi kalmasın). LibreOffice ile 7 müşteri denendi.
+
 ## Sıradaki işler
 
 1. ✓ Müşteri şablonları gizli `eleman-hafiza` deposunda: `olcu-tablosu/veri/sablonlar.json` (2026-11-06, 7 müşteri).

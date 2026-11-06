@@ -205,10 +205,11 @@ $('olAyar').onclick=e=>{e.stopPropagation();menu(false);const f=document.querySe
 setInterval(()=>{if(UYG==='ana')$('anaSelam').textContent=selam()},60000);
 uygGit('ana');
 
-/* ---------- açılış: Eleman simgesi önce hafifçe küçülür, sonra büyüyerek uygulamayı açar (X / Twitter'ın iOS açılışı gibi) ----------
+/* ---------- açılış: Eleman simgesinin içine dalış (X / Twitter'ın iOS açılışı gibi, daha güçlü) ----------
    Yerel açılış ekranı (pencerenin kendisi) ve bu katman aynı görüntü: düz zemin, ortada 104 px simge. Yerel ekran kalkınca
-   (Eleman haber verir) simgenin içi bir pencere olur ve büyüdükçe uygulama görünür. */
-const ACILIS_SVG=__ACILIS_SVG__,KARE=__KARE__;
+   (Eleman haber verir): simge geri çekilir, sonra hızlanarak üstümüze gelir; adamın yüzünün içine girilir, sarı ekranı
+   kaplar ve dağılırken uygulama ekrana "çarpar" (büyükten gelir, bir tık küçülüp oturur). Simge vektör çizilir: dev boyda da net. */
+const KARE=__KARE__,ADAM=__ADAM__;
 let acilisKalkti=false,acilisBasladi=false,acilisBekliyor=false;
 if(PW)PW.addEventListener('message',e=>{if((e.data||{}).t==='acilis'){acilisKalkti=true;if(acilisBekliyor)requestAnimationFrame(acilisOyna)}});
 function acilisBekle(){const ov=$('acilis');if(!ov||document.documentElement.classList.contains('acildi'))return;
@@ -222,11 +223,10 @@ function acilisOyna(){const ov=$('acilis');if(!ov||acilisBasladi)return;acilisBa
  const dpr=window.devicePixelRatio||1,W=innerWidth,H=innerHeight,S0=104,cx=W/2,cy=H/2;
  cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);cv.style.width=W+'px';cv.style.height=H+'px';
  const g=cv.getContext('2d'),bg=cs.getPropertyValue('--bg').trim()||'#eef0f6',ink=cs.getPropertyValue('--ink').trim()||'#1d1d1f';
- const kare=new Path2D(KARE),img=new Image(),pencere=h.classList.contains('pencere'),tam=h.classList.contains('tam');
- img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(ACILIS_SVG);
- const K=Math.hypot(W,H)/S0*1.45,T1=240,T2=660,LK=Math.log(K/.88);
- const io=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;                  // yumuşak küçülme
- const buyu=p=>.88*Math.exp(LK*Math.pow(p,1.7));                     // hızlanarak büyüme (göze düzgün gelen üstel yakınlaşma)
+ const kare=new Path2D(KARE),adam=ADAM.map(a=>({p:new Path2D(a.d),dolu:a.dolu})),pencere=h.classList.contains('pencere'),tam=h.classList.contains('tam');
+ const T1=300,T2=640,FX=32,FY=28.6;   // FX,FY: adamın yüzünün ortası (simge birimi, 64'lük): içine buradan girilir
+ const dk=Math.max(W/12,H/7.6)*64/S0*1.1,LK=Math.log(dk/.82)/Math.pow(.74,1.5);   // yüzün içi ekranı p≈0,74'te kaplasın
+ const io=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
  const yumu=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t)};
  const cizgi=(x0,y0,x1,y1)=>{g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke()};
  const dugmeler=()=>{if(!pencere)return;g.save();g.strokeStyle=ink;g.lineWidth=1;g.globalAlpha=.92;
@@ -234,25 +234,38 @@ function acilisOyna(){const ov=$('acilis');if(!ov||acilisBasladi)return;acilisBa
   cizgi(x1,y+5,x1+10,y+5);
   if(tam){g.strokeRect(x2,y+2,7,7);cizgi(x2+2,y+2,x2+2,y);cizgi(x2+2,y,x2+9,y);cizgi(x2+9,y,x2+9,y+7);cizgi(x2+9,y+7,x2+7,y+7)}else g.strokeRect(x2,y,9,9);
   cizgi(x3,y,x3+9,y+9);cizgi(x3+9,y,x3,y+9);g.restore()};
- const kare1=(s,a)=>{g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);g.fillStyle=bg;g.fillRect(0,0,W,H);
-  const k=S0*s/64*(.94+.06*(1-a));   // simge tam görünürken delik bir tık küçük: kenarda arkası sızmasın
-  g.save();g.globalCompositeOperation='destination-out';g.translate(cx-32*k,cy-32*k);g.scale(k,k);g.fill(kare);g.restore();
-  if(a>0&&img.complete&&img.naturalWidth){g.save();g.globalAlpha=a;g.imageSmoothingQuality='high';g.drawImage(img,cx-S0*s/2,cy-S0*s/2,S0*s,S0*s);g.restore()}
+ const simge=(s,a,odak,golge)=>{const k=S0*s/64,ox=32+(FX-32)*odak,oy=32+(FY-32)*odak;
+  g.save();g.translate(cx-ox*k,cy-oy*k);g.scale(k,k);g.globalAlpha=a;
+  const sari=g.createLinearGradient(0,0,0,64);sari.addColorStop(0,'#FFE36E');sari.addColorStop(1,'#FFC21A');g.fillStyle=sari;
+  if(golge>.01){g.save();g.shadowColor='rgba(0,0,0,'+(.3*golge)+')';g.shadowBlur=24*s*dpr;g.shadowOffsetY=10*s*dpr;g.fill(kare);g.restore()}
+  g.fill(kare);
+  const isik=g.createRadialGradient(32,0,0,32,0,60.8);isik.addColorStop(0,'rgba(255,255,255,.3)');isik.addColorStop(.6,'rgba(255,255,255,0)');g.fillStyle=isik;g.fill(kare);
+  g.clip(kare);g.strokeStyle='#1D1D1F';g.fillStyle='#1D1D1F';g.lineWidth=3.2;g.lineCap='round';g.lineJoin='round';
+  for(const y of adam){if(y.dolu)g.fill(y.p);g.stroke(y.p)}
+  g.restore()};
+ const kare1=(s,a,odak,golge,za)=>{g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
+  if(za>0){g.globalAlpha=za;g.fillStyle=bg;g.fillRect(0,0,W,H);g.globalAlpha=1}
+  if(a>0)simge(s,a,odak,golge);
   dugmeler()};
- const basla=()=>{kare1(1,1);cv.style.display='block';ov.style.background='transparent';ik.style.display='none';
-  const ana=UYG==='ana'?$('ana'):null;let t0=0;
-  const adim=now=>{if(!t0)t0=now;const t=now-t0;
-   if(t<T1){kare1(1-.12*io(t/T1),1);requestAnimationFrame(adim);return}
-   const p=Math.min(1,(t-T1)/T2),s=buyu(p),a=1-yumu(.04,.36,p);
-   kare1(s,a);
-   if(p<1)requestAnimationFrame(adim);else bitir()};
-  if(ana)ana.animate([{transform:'scale(1.045)',opacity:.75},{transform:'none',opacity:1}],{duration:T1+T2,delay:0,easing:'cubic-bezier(.25,.1,.25,1)'});
-  requestAnimationFrame(adim)};
- if(img.complete&&img.naturalWidth)basla();else{img.onload=basla;img.onerror=()=>{const a=ov.animate([{opacity:1},{opacity:0}],{duration:260,fill:'forwards'});a.onfinish=bitir}}}
+ kare1(1,1,0,0,1);cv.style.display='block';ov.style.background='transparent';ik.style.display='none';
+ // uygulama: simgenin içinden çıkınca ekrana çarpar (büyükten gelir, bir tık küçülür, oturur)
+ for(const e of [$('bar'),UYG==='ana'?$('ana'):null]){if(!e)continue;const r=e.getBoundingClientRect();e.style.transformOrigin=(cx-r.left)+'px '+(cy-r.top)+'px';
+  const a=e.animate([{transform:'scale(1.18)',opacity:.25,easing:'cubic-bezier(.16,.8,.3,1)'},{offset:.58,transform:'scale(.982)',opacity:1,easing:'cubic-bezier(.4,0,.4,1)'},{offset:.82,transform:'scale(1.004)',opacity:1,easing:'ease-out'},{transform:'none',opacity:1}],{duration:620,delay:T1+T2*.64,fill:'backwards'});
+  a.onfinish=()=>{e.style.transformOrigin=''}}
+ let t0=0;
+ const adim=now=>{if(!t0)t0=now;const t=now-t0;
+  if(t<T1){kare1(1-.18*io(t/T1),1,0,0,1);requestAnimationFrame(adim);return}       // geri çekilir
+  const p=Math.min(1,(t-T1)/T2),s=.82*Math.exp(LK*Math.pow(p,1.5));             // hızlanarak üstümüze gelir
+  kare1(s,1-yumu(.7,.93,p),yumu(0,.45,p),Math.sin(Math.PI*Math.min(1,p/.4))*.9,1-yumu(.6,.76,p));
+  if(p<1)requestAnimationFrame(adim);else bitir()};
+ requestAnimationFrame(adim)}
 '''
 
 import json
-JS = JS.replace('__ACILIS_SVG__', json.dumps(ELEMAN_SVG)).replace('__KARE__', json.dumps(SQ))
+# açılışta çizilen adam: eleman.svg'deki çizgiler (simge değişirse açılış da değişir)
+ADAM = [{"d": m.group(1), "dolu": bool(m.group(2))} for m in re.finditer(r'<path d="([^"]+)"( fill="#[0-9A-Fa-f]{3,6}")?\s*/>', ELEMAN_SVG.split("clip-path=")[1])]
+assert len(ADAM) >= 3, ADAM
+JS = JS.replace('__KARE__', json.dumps(SQ)).replace('__ADAM__', json.dumps(ADAM))
 
 # ---------- üst çubuk: Eleman simgesi (menü) ----------
 i = s.find('<div id="logo"')
