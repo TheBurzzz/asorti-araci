@@ -66,9 +66,9 @@ namespace AsortiAraci
             koyuTema = cizim.Koyu;
             ozelBaslik = Kullanici.Al("pencere_basligi") != "windows";   // "windows": eski tip başlık satırı (gerekirse)
             seritRenk = BarRengi(cizim.Koyu);
-            Text = "Asorti Aracı";
+            Text = "Eleman";
             // simgenin bütün boyutları (16…256): başlıkta ve görev çubuğunda her ekran ölçeğinde keskin
-            try { Icon = new Icon(Path.Combine(Yer.Sistem, "asorti.ico")); }
+            try { Icon = new Icon(Simge.Ico); }
             catch { try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { } }
             StartPosition = FormStartPosition.Manual;
             BackColor = cizim.Zemin;
@@ -314,16 +314,16 @@ namespace AsortiAraci
                 if (bildirimSimge == null)
                 {
                     bildirimSimge = new NotifyIcon();
-                    try { bildirimSimge.Icon = new Icon(Path.Combine(Yer.Sistem, "asorti.ico"), SystemInformation.SmallIconSize); }
+                    try { bildirimSimge.Icon = new Icon(Simge.Ico, SystemInformation.SmallIconSize); }
                     catch { bildirimSimge.Icon = Icon; }
-                    bildirimSimge.Text = "Asorti Aracı";
+                    bildirimSimge.Text = "Eleman";
                     bildirimSimge.BalloonTipClicked += delegate { BildirimeGit(); };
                     bildirimSimge.MouseClick += delegate { BildirimeGit(); };
                 }
                 bildirimSayfa = sayfa;
                 string b = Kisalt(baslik, 63), m = Kisalt(metin, 255);
-                if (m.Length == 0) { m = b; b = "Asorti Aracı"; }
-                if (b.Length == 0) b = "Asorti Aracı";
+                if (m.Length == 0) { m = b; b = "Eleman"; }
+                if (b.Length == 0) b = "Eleman";
                 bildirimSimge.Visible = true;
                 bildirimSimge.ShowBalloonTip(10000, b, m, hata ? ToolTipIcon.Warning : ToolTipIcon.None);
                 // görev çubuğundaki düğme de turuncu yanar (pencereye dönünce söner)

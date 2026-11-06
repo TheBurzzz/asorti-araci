@@ -279,7 +279,7 @@ namespace AsortiAraci
             try { File.Delete(yeni); } catch { }
             StringBuilder a = new StringBuilder("/nologo /target:winexe /optimize+ /platform:anycpu /codepage:65001");
             a.Append(" \"/out:").Append(yeni).Append('"');
-            a.Append(" \"/win32icon:").Append(Path.Combine(Yer.Sistem, "asorti.ico")).Append('"');
+            a.Append(" \"/win32icon:").Append(Simge.Ico).Append('"');
             a.Append(" \"/win32manifest:").Append(Path.Combine(Klasor, "uygulama.manifest")).Append('"');
             foreach (string b in Basvurular())
             {

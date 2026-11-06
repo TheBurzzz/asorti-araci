@@ -49,7 +49,7 @@ namespace AsortiAraci
             float s = 1f;
             try { using (Graphics g = Graphics.FromHwnd(IntPtr.Zero)) s = Math.Max(1f, g.DpiX / 96f); } catch { }
 
-            Text = "Asorti Aracı";
+            Text = "Eleman";
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             MinimizeBox = false;
@@ -135,7 +135,7 @@ namespace AsortiAraci
         {
             try
             {
-                using (MemoryStream ms = new MemoryStream(File.ReadAllBytes(Path.Combine(Yer.Sistem, "asorti.png"))))
+                using (MemoryStream ms = new MemoryStream(File.ReadAllBytes(Simge.Png)))
                 using (Image i = Image.FromStream(ms))
                     return new Bitmap(i);
             }

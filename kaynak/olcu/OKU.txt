@@ -1,0 +1,20 @@
+﻿Ölçü Tablosu Aracı - kaynak (sürüm 1.0.0, 6 Kasım 2026)
+==========================================================
+Bu klasör programı yeniden üretmek ve Eleman'a taşımak için. Günlük kullanımda gerekmez.
+
+src.html            programın kaynağı (tasarım + kod). Veriler derlenirken içine konur.
+derle.py            python derle.py            -> cikti/olcu_tablosu_araci.html (anahtarsız, Eleman için)
+                    python derle.py --anahtar X -> ortak hafıza anahtarı gömülü (tarayıcıda tek başına)
+veri/               dict.json (ölçü sözlüğü), sablonlar.json (7 müşteri şablonu), sozluk.json (kelime karşılıkları),
+                    tipik_olculer.json (ölçü aralıkları), Inter yazı tipi (SIL OFL).
+denemeler/          otomatik denemeler (Playwright): reg2.py örnek taramalar (base.json ile birebir aynı çıkmalı),
+                    ui3.py arayüz, proto_test.py Eleman önizlemesi, exe_test.py + sunucu_sim.py Eleman sunucusu taklidi,
+                    cs_test.py + deneme_main.cs + stub.cs gerçek C# sunucusuyla (mono) uçtan uca deneme.
+
+Kurallar
+- Anahtar (github_pat_...) asla GitHub'daki program deposuna konmaz. Eleman'da C:\Eleman\anahtar.txt'den okunur.
+- Program "Ortak Ölçü Tabloları" klasörüne hiçbir şey koymaz; kayıt yeri her müşteri için kullanıcının seçtiği klasördür.
+- Tarayıcı deposu anahtarları "ota_" ile başlar, veritabanı "olcu-tablosu-araci"; görünüm anahtarı "eleman-tema".
+- Eleman/Asorti penceresinde ?sayfa=olcu ile açılır (gömülü görünüm). Mesajlar: tema, kaydet, ayarlar (gelen);
+  tema, sayfa {uygulama:"olcu"}, bildirim {tur:"olcu"} (giden).
+- Sunucu adresleri yalnız /olcu/... (SunucuOlcu.cs). Her istekte "X-Olcu: 1" başlığı gerekir.

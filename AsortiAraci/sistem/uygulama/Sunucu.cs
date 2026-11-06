@@ -43,7 +43,8 @@ namespace AsortiAraci
         {
             { ".html", "text/html; charset=utf-8" }, { ".js", "text/javascript; charset=utf-8" }, { ".json", "application/json; charset=utf-8" },
             { ".txt", "text/plain; charset=windows-1254" }, { ".png", "image/png" }, { ".ico", "image/x-icon" }, { ".css", "text/css; charset=utf-8" },
-            { ".woff2", "font/woff2" }, { ".svg", "image/svg+xml" }
+            { ".woff2", "font/woff2" }, { ".svg", "image/svg+xml" },
+            { ".gz", "application/octet-stream" }, { ".wasm", "application/wasm" }   // Ölçü Tablosu: okuma motorunun dil dosyaları
         };
 
         public Sunucu()
@@ -252,6 +253,7 @@ namespace AsortiAraci
                         return;
                     case "yerel-kayit": YerelKayit(ctx, m); return;
                 }
+                if (yol.StartsWith("olcu/") && OlcuIstek(ctx, yol, m)) return;   // Ölçü Tablosu Aracı (SunucuOlcu.cs)
                 DosyaIstek(ctx, yol, m);
             }
             catch (Exception ex)

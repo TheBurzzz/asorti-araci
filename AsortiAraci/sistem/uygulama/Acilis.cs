@@ -21,7 +21,7 @@ namespace AsortiAraci
         public Rectangle HalR, NotR;
         public readonly Color Zemin;
         Font notYazi;
-        readonly Color soluk, iz = Color.FromArgb(46, 120, 120, 128), mavi = Color.FromArgb(10, 132, 255);
+        readonly Color soluk, iz = Color.FromArgb(46, 120, 120, 128), mavi = Color.FromArgb(245, 176, 0);   // Eleman sarısı (çubuk)
         Size boyut = Size.Empty;
 
         public AcilisCizim(bool koyu)

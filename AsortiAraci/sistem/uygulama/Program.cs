@@ -13,9 +13,9 @@ using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
 
-[assembly: System.Reflection.AssemblyTitle("Asorti Aracı")]
-[assembly: System.Reflection.AssemblyProduct("Asorti Aracı")]
-[assembly: System.Reflection.AssemblyDescription("Asorti Aracı")]
+[assembly: System.Reflection.AssemblyTitle("Eleman")]
+[assembly: System.Reflection.AssemblyProduct("Eleman")]
+[assembly: System.Reflection.AssemblyDescription("Eleman")]
 [assembly: System.Reflection.AssemblyCompany("Şamil Yeşil")]
 [assembly: System.Reflection.AssemblyCopyright("Created by Şamil Yeşil")]
 [assembly: System.Reflection.AssemblyVersion("2.0.4.0")]
@@ -93,7 +93,7 @@ namespace AsortiAraci
                     else
                     {
                         if (eskiPencere) { EskiPencereyiOneGetir(s.A.Port); return; }
-                        MessageBox.Show("Asorti Aracı açılamadı: " + s.A.Port + " numaralı adres başka bir program tarafından kullanılıyor.\n\nBilgisayarı yeniden başlatıp tekrar dene.", "Asorti Aracı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        MessageBox.Show("Eleman açılamadı: " + s.A.Port + " numaralı adres başka bir program tarafından kullanılıyor.\n\nBilgisayarı yeniden başlatıp tekrar dene.", "Asorti Aracı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
                 }
@@ -253,7 +253,7 @@ namespace AsortiAraci
                 {
                     try
                     {
-                        if (p.MainWindowHandle != IntPtr.Zero && p.MainWindowTitle.StartsWith("Asorti Ara", StringComparison.Ordinal))
+                        if (p.MainWindowHandle != IntPtr.Zero && (p.MainWindowTitle.StartsWith("Asorti Ara", StringComparison.Ordinal) || p.MainWindowTitle.StartsWith("Eleman", StringComparison.Ordinal)))
                         {
                             if (IsIconic(p.MainWindowHandle)) ShowWindow(p.MainWindowHandle, 9);
                             SetForegroundWindow(p.MainWindowHandle);

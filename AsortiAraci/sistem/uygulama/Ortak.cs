@@ -10,6 +10,18 @@ using System.Text.RegularExpressions;
 
 namespace AsortiAraci
 {
+    // Eleman simgesi; dosya yoksa (eski paket) Asorti simgesi
+    static class Simge
+    {
+        public static string Ico { get { return Sec("eleman.ico", "asorti.ico"); } }
+        public static string Png { get { return Sec("eleman.png", "asorti.png"); } }
+        static string Sec(string yeni, string eski)
+        {
+            string y = System.IO.Path.Combine(Yer.Sistem, yeni);
+            return System.IO.File.Exists(y) ? y : System.IO.Path.Combine(Yer.Sistem, eski);
+        }
+    }
+
     static class Yer
     {
         public static string Kok = "";       // kurulum klasörü (C:\AsortiAraci)
