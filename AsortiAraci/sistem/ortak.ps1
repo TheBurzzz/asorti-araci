@@ -12,7 +12,7 @@ function Ayarlar([string]$Kok) {
     surucu2  = 'z:'                    # ikinci harf (birinci calismazsa denenir)
     tarayici = ''
     gerber   = $true                   # false: Gerber/OTOPASTAL yok, sadece asorti
-    guncelleme = 'TheBurzzz/asorti-araci'   # GitHub deposu (yeni surumler buradan gelir)
+    guncelleme = 'TheBurzzz/eleman'   # GitHub deposu (yeni surumler buradan gelir; eski adi asorti-araci, GitHub yonlendirir)
   }
   $f = Join-Path $Kok 'ayarlar.json'
   if (Test-Path $f) {

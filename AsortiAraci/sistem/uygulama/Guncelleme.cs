@@ -27,13 +27,30 @@ namespace AsortiAraci
             if (!taze && uzak != null && (DateTime.Now - uzakZaman).TotalMinutes < 10) return uzak;
             Web.Hazirla();
             string metin = null, k = GuncellemeAnahtari();
-            if (k.Length > 0)
+            WebException son = null;
+            foreach (string depo in DepoAdaylari(a))
             {
-                // gizli depo: anahtarla (depo herkese açıkken de çalışır); olmazsa herkese açık yol
-                try { metin = Web.MetinAnahtarla("https://api.github.com/repos/" + a.Guncelleme + "/contents/AsortiAraci/surum.json?ref=" + Uri.EscapeDataString(a.Dal), 8000, k); }
-                catch (Exception ex) { AnahtarReddedildiyse(ex); Kayit.Yaz("guncelleme (anahtarla) okunamadi, herkese acik yol deneniyor: " + ex.Message); }
+                if (k.Length > 0)
+                {
+                    // gizli depo: anahtarla (depo herkese açıkken de çalışır); olmazsa herkese açık yol
+                    try { metin = Web.MetinAnahtarla("https://api.github.com/repos/" + depo + "/contents/AsortiAraci/surum.json?ref=" + Uri.EscapeDataString(a.Dal), 8000, k); }
+                    catch (Exception ex) { AnahtarReddedildiyse(ex); Kayit.Yaz("guncelleme (anahtarla) okunamadi, herkese acik yol deneniyor: " + ex.Message); }
+                }
+                if (metin == null)
+                {
+                    try { metin = Web.Metin("https://raw.githubusercontent.com/" + depo + "/" + a.Dal + "/AsortiAraci/surum.json?t=" + DateTime.UtcNow.Ticks, 8000); }
+                    catch (WebException ex)
+                    {
+                        // bu adda depo yok (404): öbür adı dene; bağlantı hatasıysa denemeye gerek yok
+                        HttpWebResponse y = ex.Response as HttpWebResponse;
+                        if (y != null && (int)y.StatusCode == 404) { son = ex; continue; }
+                        throw;
+                    }
+                }
+                aktifDepo = depo;
+                break;
             }
-            if (metin == null) metin = Web.Metin("https://raw.githubusercontent.com/" + a.Guncelleme + "/" + a.Dal + "/AsortiAraci/surum.json?t=" + DateTime.UtcNow.Ticks, 8000);
+            if (metin == null) throw son ?? new WebException("surum.json bulunamadı");
             uzak = Json.Oku(metin);
             uzakZaman = DateTime.Now;
             return uzak;
@@ -85,6 +102,8 @@ namespace AsortiAraci
             yenidenBaslat = false;
             Web.Hazirla();
             Ayarlar a = A;
+            if (aktifDepo == null) { try { UzakSurum(true); } catch { } }
+            string depo = aktifDepo ?? a.Guncelleme;
             string tmp = Path.Combine(Path.GetTempPath(), "asorti_guncelleme_" + Guid.NewGuid().ToString("N").Substring(0, 8));
             Directory.CreateDirectory(tmp);
             try
@@ -94,10 +113,10 @@ namespace AsortiAraci
                 string k = GuncellemeAnahtari();
                 if (k.Length > 0)
                 {
-                    try { Web.IndirAnahtarla("https://api.github.com/repos/" + a.Guncelleme + "/zipball/" + a.Dal, zip, 120000, k); indi = true; }
+                    try { Web.IndirAnahtarla("https://api.github.com/repos/" + depo + "/zipball/" + a.Dal, zip, 120000, k); indi = true; }
                     catch (Exception ex) { AnahtarReddedildiyse(ex); Kayit.Yaz("guncelleme (anahtarla) indirilemedi, herkese acik yol deneniyor: " + ex.Message); }
                 }
-                if (!indi) Web.Indir("https://codeload.github.com/" + a.Guncelleme + "/zip/refs/heads/" + a.Dal, zip, 120000);
+                if (!indi) Web.Indir("https://codeload.github.com/" + depo + "/zip/refs/heads/" + a.Dal, zip, 120000);
                 string ac = Path.Combine(tmp, "ac");
                 System.IO.Compression.ZipFile.ExtractToDirectory(zip, ac);
                 string[] ici = Directory.GetDirectories(ac);
@@ -130,6 +149,16 @@ namespace AsortiAraci
                 return yeni;
             }
             finally { try { Directory.Delete(tmp, true); } catch { } }
+        }
+
+        // Depo adı: kullanıcı GitHub'da "asorti-araci"yı "eleman" yaptı (7 Kasım 2026). GitHub eski adı yeni ada yönlendirir;
+        // yine de ikisi sırayla denenir (yönlendirme bir gün kalksa da, ad henüz değişmemiş olsa da güncellemeler sürer).
+        static readonly string[] ElemanDepolari = { "TheBurzzz/eleman", "TheBurzzz/asorti-araci" };
+        string aktifDepo;   // en son surum.json'u veren depo; indirme de oradan yapılır
+        static string[] DepoAdaylari(Ayarlar a)
+        {
+            foreach (string d in ElemanDepolari) if (string.Equals(d, a.Guncelleme, StringComparison.OrdinalIgnoreCase)) return ElemanDepolari;
+            return new string[] { a.Guncelleme };
         }
 
         // Güncelleme anahtarı (program deposunu yalnız okuyabilir): <kök>\guncelleme_anahtari.txt. Şimdilik kullanılmıyor:

@@ -194,7 +194,11 @@ function UzakSurum([bool]$taze) {
   Web
   $r = $null; $k = GuncAnahtar
   if ($k) { try { $r = Invoke-WebRequest -UseBasicParsing -TimeoutSec 8 -Headers @{ Authorization = "Bearer $k"; Accept = 'application/vnd.github.raw' } -Uri ("https://api.github.com/repos/$($A.guncelleme)/contents/AsortiAraci/surum.json?ref=" + (Dal)) } catch { $r = $null } }
-  if (-not $r) { $r = Invoke-WebRequest -UseBasicParsing -TimeoutSec 8 -Uri ("https://raw.githubusercontent.com/$($A.guncelleme)/$(Dal)/AsortiAraci/surum.json?t=" + [DateTime]::UtcNow.Ticks) }
+  if (-not $r) {
+    # depo adi degisti (asorti-araci -> eleman): ikisi sirayla denenir
+    $adaylar = @("$($A.guncelleme)"); if ($adaylar[0] -in 'TheBurzzz/eleman', 'TheBurzzz/asorti-araci') { $adaylar = @('TheBurzzz/eleman', 'TheBurzzz/asorti-araci') }
+    foreach ($d in $adaylar) { try { $r = Invoke-WebRequest -UseBasicParsing -TimeoutSec 8 -Uri ("https://raw.githubusercontent.com/$d/$(Dal)/AsortiAraci/surum.json?t=" + [DateTime]::UtcNow.Ticks); $script:aktifDepo = $d; break } catch { if ($d -eq $adaylar[-1]) { throw } } }
+  }
   $metin = [Text.Encoding]::UTF8.GetString($r.RawContentStream.ToArray()).TrimStart([char]0xFEFF)
   $script:uzak = $metin | ConvertFrom-Json; $script:uzakZaman = Get-Date
   return $script:uzak
@@ -305,7 +309,8 @@ function Guncelle {
     $zip = Join-Path $tmp 'paket.zip'
     $indi = $false; $k = GuncAnahtar
     if ($k) { try { Invoke-WebRequest -UseBasicParsing -TimeoutSec 120 -Headers @{ Authorization = "Bearer $k" } -Uri "https://api.github.com/repos/$($A.guncelleme)/zipball/$(Dal)" -OutFile $zip; $indi = $true } catch { } }
-    if (-not $indi) { Invoke-WebRequest -UseBasicParsing -TimeoutSec 120 -Uri "https://codeload.github.com/$($A.guncelleme)/zip/refs/heads/$(Dal)" -OutFile $zip }
+    $depo = if ($script:aktifDepo) { $script:aktifDepo } else { $A.guncelleme }
+    if (-not $indi) { Invoke-WebRequest -UseBasicParsing -TimeoutSec 120 -Uri "https://codeload.github.com/$depo/zip/refs/heads/$(Dal)" -OutFile $zip }
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     [IO.Compression.ZipFile]::ExtractToDirectory($zip, (Join-Path $tmp 'ac'))
     $ic = Get-ChildItem (Join-Path $tmp 'ac') -Directory | Select-Object -First 1

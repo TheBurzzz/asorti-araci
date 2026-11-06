@@ -1,75 +1,42 @@
-# Asorti Aracı
+<p align="center"><img src="AsortiAraci/sistem/eleman.png" width="112" alt="Eleman simgesi"></p>
+<h1 align="center">Eleman</h1>
+<p align="center">Kesim planlamanın yardımcısı: <b>Asorti Aracı</b> ve <b>Ölçü Tablosu</b> tek programda.</p>
 
-Gerber AccuMark ile çalışan asorti / pastal planlama uygulaması.
+| Uygulama | Ne yapar |
+|---|---|
+| **Asorti Aracı** | Siparişi yaz, asortiyi hesapla, Excel'e kaydet. Pastalları Gerber'e gönder. |
+| **Ölçü Tablosu** | Müşteri kağıdını tara, ölçü tablosunu kontrol et, Excel'e kaydet ve yazdır. Öğrendiklerini bütün bilgisayarlarla paylaşır. |
+
+Eleman açılınca ana sayfa gelir; sol üstteki Eleman simgesinden (ya da **Ctrl+1 / 2 / 3** ile) uygulamalar arasında geçilir.
 
 ## Kurulum
-1. Sağ üstteki yeşil **Code** düğmesi → **Download ZIP**.
+1. Bu sayfada yeşil **Code** düğmesi → **Download ZIP**.
 2. ZIP'i bir klasöre çıkar.
-3. **Kurulum.bat** dosyasına çift tıkla; sihirbaz adım adım kurar.
+3. **Kurulum.bat**'a çift tıkla. Sihirbaz adım adım kurar; masaüstünde **Eleman** simgesi belirir.
 
-Sihirbaz bilgisayarı kendisi tarar ve ona göre kurar, soru sormaz:
-- **Gerber AccuMark** nerede (hangi sürüm, hangi klasör; açık programdan, kayıt defterinden, bilinen klasörlerden),
-- **müşteri klasörleri** nerede (`userroot\storage`, başka diskte ya da ağda olsa da),
+Müşteri şablonları ve ortak hafıza kendiliğinden gelir. Sihirbaz bilgisayarı kendisi tarar, soru sormaz:
+- **Gerber AccuMark** nerede (sürümü, klasörü), **müşteri klasörleri** nerede (`userroot\storage`, başka diskte ya da ağda olsa da),
 - **OTOPASTAL** (AccuNest kuyruğu) bu bilgisayarda mı, ağdaki başka bir bilgisayarda mı, hiç yok mu,
-- OTOPASTAL pastallara **hangi sürücü harfiyle** ulaşıyor (kuyruktaki geçmiş işlerden öğrenir).
+  pastallara **hangi sürücü harfiyle** ulaşıyor (kuyruktaki geçmiş işlerden öğrenir).
 
-Duruma göre:
-- **OTOPASTAL ayrı bilgisayarda:** gerekiyorsa bu bilgisayarın diskini paylaşır (yönetici izni sorar) ve OTOPASTAL için
-  bir kerelik bağlantı dosyası hazırlar; dosyayı OTOPASTAL'ın masaüstüne koymayı dener. O dosya bağlantıyı her açılışta kendisi yeniler.
-  Geçmiş işlerden harf zaten belliyse OTOPASTAL'da hiçbir şey yapmak gerekmez.
-- **OTOPASTAL bu bilgisayarda:** paylaşım ya da bağlantı gerekmez; köprü OTOPASTAL programı kapalıysa açar.
-- **OTOPASTAL yok:** pastallar Gerber'de oluşturulur, yerleştirme Gerber'de elle yapılır; boy ve verim tabloya Gerber'den okunur.
-- **Gerber yok:** sadece asorti kurulur (asorti hesabı, Excel'e kaydetme, yazdırma çalışır).
-
-Bulunanları değiştirmek istersen sihirbazda **Ayarları elle değiştir…**.
-Kurulduktan sonra bir şey değişirse (AccuMark yeni sürüme geçti, OTOPASTAL başka bilgisayara taşındı) uygulamada
-**⚙ → Gerber bağlantısı → Otomatik bul → Bulunanları kullan** yeterli; yeniden kurmak gerekmez.
+Gerber yoksa yalnız asorti ve ölçü tablosu kurulur. Kurulduktan sonra bir şey değişirse (AccuMark yeni sürüme geçti,
+OTOPASTAL başka bilgisayara taşındı) **⚙ → Gerber bağlantısı → Otomatik bul** yeterli; yeniden kurmak gerekmez.
 
 ## Güncelleme
-Uygulamada **⚙ → Güncellemeleri denetle → Güncelle**.
-Uygulama açılışta da kendisi bakar; yeni sürüm varsa üst çubukta **Güncelle** çıkar.
-Çalışma sayfaları ve ayarlar korunur; bir önceki sürüm kurulum klasöründeki `yedek` klasöründe durur.
+Eleman açılışta kendisi bakar, yeni sürüm varsa haber verir. Elle: **⚙ → Güncellemeleri denetle**.
+Çalışma sayfaları, ayarlar ve öğrenilenler korunur; bir önceki sürüm kurulum klasöründeki `yedek` klasöründe durur.
 
-Sürüm bilgisi: `AsortiAraci/surum.json`
+## Klasörler
+| Klasör | İçinde |
+|---|---|
+| `AsortiAraci/` | Programın kendisi (kurulan dosyalar). Adı, eski sürümler güncellemeyi bu klasörden aldığı için şimdilik böyle. |
+| `kaynak/` | Kaynak dosyalar: Eleman kabuğu (`eleman/`), Ölçü Tablosu (`olcu/`). |
+| `kurulum/` | Kurulum sihirbazı (`Kurulum.bat` bunu çalıştırır). |
+| `ELEMAN_DURUM.md` | Geliştirme notları. |
 
-## Eski sürümler
-Her sürüm GitHub'da kendi dalında saklanır: `surum-v1.0.0`, `surum-v1.0.1`, … (en yenisi en sonda).
-Sayfanın üstündeki dal seçiciden (**main** yazan düğme) istediğin sürümü seç → yeşil **Code** → **Download ZIP** →
-ZIP'i çıkar → **Kurulum.bat**. Kurulum ayarlara ve çalışma sayfalarına dokunmaz; uygulama sonra yine en yeni sürümü önerir.
+Müşteri şablonları ve öğrenilen ölçüler ayrı, gizli **eleman-hafiza** deposunda durur; program deposunda müşteri bilgisi yoktur.
 
-İlk deneme sürümü (paketlenmeden önce `C:\AccuNest` içinde çalışan hali) `arsiv` dalında duruyor.
-
-## Yazı tipi
-Uygulama [Inter](https://rsms.me/inter/) yazı tipini kullanır (programla birlikte gelir, internet gerekmez).
-Inter, SIL Open Font License 1.1 ile dağıtılır: `AsortiAraci/sistem/Inter-OFL.txt`.
-
-## Uygulama penceresi
-Asorti Aracı kendi penceresinde açılır (`sistem\AsortiAraci.exe`). Paketin içinde hazır bir exe yoktur: uygulamanın kaynağı
-(`AsortiAraci/sistem/uygulama/*.cs`) her bilgisayarda o bilgisayarın .NET Framework derleyicisiyle (`csc.exe`) derlenir. Bunu kurulum ya da
-güncellemeden sonra program kendisi yapar, birkaç saniye sürer; derleme kaydı `kopru\log\uygulama_derleme.txt` dosyasına yazılır.
-Hangi kitaplıklara başvurulacağı `AsortiAraci/sistem/uygulama/derleme.txt` dosyasındadır (yeni bir sürüm yeni kitaplık isterse
-çalışan eski sürüm de onu bilir).
-
-- Pencerenin içi Windows'un içindeki Edge motorudur (Microsoft Edge WebView2); Windows 10 ve Windows 11'de hazır gelir.
-- 64 bit, 32 bit ve ARM bilgisayarlarda çalışır (her biri için yükleyici `AsortiAraci/sistem/wv2` klasöründe).
-- Açılış ekranı pencerenin kendisidir: simgeye tıklar tıklamaz pencere açılır, sayfa ekrana çizilince açılış ekranı yumuşakça solar.
-- Tek parça başlık: Windows'un başlık satırı yoktur; küçültme, büyütme ve kapatma uygulamanın üst çubuğundadır. Pencere üst çubuğun boş
-  yerinden tutulup taşınır, çift tıklayınca büyür / küçülür, sağ tıklayınca Windows menüsü açılır. Windows'un başlık satırı istenirse
-  kurulum klasöründeki `kullanici.json` dosyasına `"pencere_basligi": "windows"` yazılır.
-- Uyarı ve onay kutuları uygulamanın kendi görünümündedir (açık / koyu, uygulamanın simgesiyle); Edge'in "localhost şunu diyor"
-  kutusu çıkmaz. Kutudaki yazı Ctrl+C ile kopyalanır.
-- Bildirim: pencere arkadayken ya da küçültülmüşken pastallar hazır olunca (ya da Gerber'de bir iş durunca) Windows bildirimi çıkar,
-  görev çubuğundaki düğme turuncu yanar; bildirime tıklayınca pencere öne gelir ve o sayfa açılır.
-- Gerber köprüsü (`kopru\kopru.ps1`) uygulamanın içinde, Windows'un PowerShell motoruyla çalışır: ayrı program açılmaz, yeni sipariş
-  beklemeden işlenir, bir işin durumu değişince sayfa hemen yeniler. Uygulama köprüyü izler, durursa yeniden başlatır; içeride
-  çalışamazsa eskisi gibi ayrı süreçte çalıştırır. Köprü eski yolda (Edge penceresiyle) de aynen çalışır.
-- Edge motoru yoksa ya da pencere açılamazsa uygulama eskisi gibi Edge penceresiyle açılır (`sistem\hizli_ac.vbs`); hiçbir şey kaybolmaz.
-  Edge motoru hiç kurulu değilse Microsoft'un resmi kurulumu (imzası denetlenerek) arka planda bir kez yapılır; sonraki açılış kendi penceresiyle olur.
-- Çalışma sayfaları ve ayarlar eski pencereden yeni pencereye kendiliğinden taşınır; sayfaların diskteki yedeği `yerel_kayit.json`.
-- Uygulamanın kaydı: `kopru\log\uygulama.txt`.
-
-Edge motorunun bağlantı dosyaları (`Microsoft.Web.WebView2.*.dll`, `wv2\*\WebView2Loader.dll`) Microsoft'undur; lisansı
-`AsortiAraci/sistem/wv2/WebView2-LICENSE.txt`.
-
-Eski yolun açılış ekranı (`AsortiAraci/sistem/acilis.cs` → `sistem\AsortiAcilis.exe`) da aynı şekilde o bilgisayarda derlenir; sadece
-uygulama eski yoldan açıldığında kullanılır (kaydı `kopru\log\acilis_derleme.txt`).
+## Dallar
+- **`eleman`**: Eleman (en yeni sürüm).
+- **`main`**: iş bilgisayarındaki sürüm; Eleman orada denenip onaylanınca buraya geçer.
+- **`surum-v…`**, **`arsiv`**: eski sürümler. Dal seçiciden seç → **Code** → **Download ZIP** → **Kurulum.bat**.

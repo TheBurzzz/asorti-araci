@@ -121,7 +121,7 @@ namespace AsortiAraci
         public string Surucu2 = "z:";
         public string Tarayici = "";
         public bool Gerber = true;
-        public string Guncelleme = "TheBurzzz/asorti-araci";
+        public string Guncelleme = "TheBurzzz/eleman";   // eski adı asorti-araci (GitHub yeni ada yönlendirir; Guncelleme.cs ikisini de dener)
         public string Dal = "main";
 
         public static Ayarlar Oku(string kok)

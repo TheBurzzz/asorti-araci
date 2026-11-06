@@ -14,8 +14,15 @@ Her sohbet işe başlamadan önce bunu okur, iş bitince "Son durum" bölümün�
 
 ## Değişmeyecekler (çalışan hiçbir şey bozulmasın diye)
 
-- Depo adı `asorti-araci` ve paketteki `AsortiAraci/` klasörü **aynı kalır**. Kurulu v2.x programların güncelleyicisi
-  `AsortiAraci/surum.json` dosyasına ve zip içindeki `AsortiAraci/` klasörüne bakıyor; adı değişirse güncelleme durur.
+- **Depo adı `eleman` oluyor** (kullanıcı 7 Kasım 2026: "hepsi tek yerde, Eleman adı altında, düzenli dursun"; eski adı
+  `asorti-araci`, adı kullanıcı GitHub'da değiştirir). GitHub eski adresleri (git, raw.githubusercontent, codeload, API) yeni
+  ada yönlendirir; iş bilgisayarındaki v2.0.4 bu yönlendirmeyle güncellenir. Eleman 3.1.0+ ikisini sırayla dener
+  (`ElemanDepolari`: önce `TheBurzzz/eleman`, 404'te `TheBurzzz/asorti-araci`); kurulum `eleman-<dal>` ve `asorti-araci-<dal>`
+  klasör adlarını tanır. Varsayılan dal `eleman` yapılır (depo sayfası ve Download ZIP Eleman'ı verir; güncelleyiciler dalı
+  açıkça yazdığı için etkilenmez). **Eski adla yeni bir depo açılmaz** (yönlendirme bozulur). Sohbetler depoyu yeni adla
+  (`TheBurzzz/eleman`) eklemeli. Ortak hafıza ayrı gizli depo olarak kalır (`eleman-hafiza`; anahtarlar yalnız ona erişir).
+- Paketteki `AsortiAraci/` klasörü **aynı kalır**: v2.x güncelleyicisi `AsortiAraci/surum.json` ve zip içindeki
+  `AsortiAraci/` klasörüne bakıyor. Bütün kurulumlar Eleman'a geçince `Eleman/` yapılabilir (güncelleyici ikisini de tanımalı).
 - Kurulum klasörü `C:\AsortiAraci` aynı kalır (OTOPASTAL bağlantısı, WebView2 profili, çalışma sayfaları bu yolda).
 - `AsortiAraci.exe` dosya adı şimdilik aynı; görünen ad (pencere, görev yöneticisi, bildirim, uyarılar) **Eleman**.
 - Sunucu adresi `localhost:8642` aynı (sayfaların yerel kaydı bu adrese bağlı).
@@ -176,6 +183,10 @@ istiyor). **Program deposu herkese açık kalır.** Karar:
   `#bar`'ın backdrop-filter'ı içindeki elemanın arkayı bulanıklaştırmasını engelliyor (backdrop root). Bu yüzden ⚙ menüsünün
   açık temadaki `--pop`'u .92 (neredeyse opak). Kısayol: Ctrl+1/2/3 (`kisayol`, `kisayolBagla`: Asorti ve Ölçü iframe'lerinin
   belgesine de bağlanır). Playwright: ok tuşları + Enter, Ölçü ve Asorti içindeyken Ctrl+2/3/1 denendi.
+
+- 2026-11-07 gece: **Eleman 3.1.0** (yalnız `eleman`): depo adı `eleman`'a hazırlık (yukarıda "Değişmeyecekler"): güncelleyici
+  iki adı dener (mono'da denendi: eski adlı ayar, ayarsız, başka depo), eski PowerShell sunucusu da; kurulum yeni klasör adını
+  tanır; README Eleman'ın vitrin sayfası oldu (simge, iki uygulama, kurulum, klasörler, dallar).
 
 ## Sıradaki işler
 
