@@ -319,10 +319,10 @@ ANA = '''<main id="ana" aria-label="Ana sayfa"><div class="anaIc">
 </div></main>
 '''
 ARTI = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>'
-BOS_A = ('<div class="bos" id="bosA" hidden><div class="bosK"><svg class="bosIk" aria-hidden="true"><use href="#ikAsorti"/></svg>'
+BOS_A = ('<div class="bosEkran" id="bosA" hidden><div class="bosK"><svg class="bosIk" aria-hidden="true"><use href="#ikAsorti"/></svg>'
          '<h2>Asorti Aracı</h2><p>Açık sayfa yok. Yeni bir sayfa aç; siparişi yaz, asortiyi hesapla.</p>'
          '<button type="button" class="bosYeni" id="bosYeniA">' + ARTI + 'Yeni sayfa</button></div></div>')
-BOS_O = ('<div class="bos" id="bosO" hidden><div class="bosK"><svg class="bosIk" aria-hidden="true"><use href="#ikOlcu"/></svg>'
+BOS_O = ('<div class="bosEkran" id="bosO" hidden><div class="bosK"><svg class="bosIk" aria-hidden="true"><use href="#ikOlcu"/></svg>'
          '<h2>Ölçü Tablosu Aracı</h2><p>Açık sayfa yok. Yeni bir sayfa aç; müşteri kağıdını tara ya da PDF\'ini bırak.</p>'
          '<button type="button" class="bosYeni" id="bosYeniO">' + ARTI + 'Yeni sayfa</button></div></div>')
 r('<div id="sayfalar"></div>', ANA + '<div id="sayfalar">' + BOS_A + '</div><div id="sayfalarO">' + BOS_O + '</div>')
@@ -396,8 +396,9 @@ html:not([data-uyg=ana]) #ana,html:not([data-uyg=asorti]) #sayfalar,html:not([da
 html:not([data-uyg=ana]) #ana{transform:scale(.985)}
 @media (prefers-reduced-motion:reduce){#ana,#sayfalar,#sayfalarO{transition:none!important}}
 /* açık sayfa yokken: boş ekran */
-.bos{position:absolute;inset:0;z-index:3;display:grid;place-items:center;padding:24px}
-.bos[hidden]{display:none}
+/* "bos" adı kullanılmaz: Asorti'nin ayarlarında .yol.bos var (Excel klasörü seçilmedi); çakışınca ayarları kapatıyordu */
+.bosEkran{position:absolute;inset:0;z-index:3;display:grid;place-items:center;padding:24px}
+.bosEkran[hidden]{display:none}
 #bosA{background:radial-gradient(55vmax 48vmax at 10% 6%,rgba(120,170,255,.30),transparent 62%),radial-gradient(50vmax 44vmax at 92% 10%,rgba(190,160,255,.22),transparent 62%),radial-gradient(56vmax 50vmax at 78% 98%,rgba(255,200,170,.25),transparent 62%),var(--bg)}
 #bosO{background:radial-gradient(55vmax 48vmax at 10% 6%,rgba(90,200,140,.28),transparent 62%),radial-gradient(50vmax 44vmax at 92% 10%,rgba(180,215,140,.22),transparent 62%),radial-gradient(56vmax 50vmax at 78% 98%,rgba(255,205,175,.24),transparent 62%),var(--bg)}
 html[data-theme=dark] #bosA{background:radial-gradient(55vmax 48vmax at 10% 6%,rgba(40,80,200,.30),transparent 62%),radial-gradient(56vmax 50vmax at 78% 98%,rgba(90,50,120,.25),transparent 62%),var(--bg)}

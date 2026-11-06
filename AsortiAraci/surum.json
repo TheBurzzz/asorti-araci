@@ -1,8 +1,7 @@
 {
- "surum": "3.0.7",
- "tarih": "2026-11-06",
+ "surum": "3.0.8",
+ "tarih": "2026-11-07",
  "notlar": [
-  "Açık görünüm yenilendi (Liquid Glass): renkli zemin, kenarı parlayan buzlu cam kartlar, cam düğmeler; ana sayfa, Asorti Aracı ve Ölçü Tablosu'nda",
-  "Koyu görünüm olduğu gibi kaldı"
+  "Asorti Aracı ayarlarındaki düğmeler yeniden çalışıyor (Excel klasörü seçilmemişken bir yazı hepsinin üstünü kapatıyordu)"
  ]
 }

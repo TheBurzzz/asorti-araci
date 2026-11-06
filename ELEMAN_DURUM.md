@@ -163,6 +163,12 @@ istiyor). **Program deposu herkese açık kalır.** Karar:
   Yerel açılış zemini (Acilis.cs) açıkta 226,231,240 (yeni --bg ile aynı, geçişte renk atlamasın). Koyu görünüm piksel
   piksel aynı kaldı (karşılaştırıldı). **Asorti sohbeti:** açık temada renk değişkenlerini değiştirirse eleman_cam.css'e de bakmalı.
 
+- 2026-11-07 gece: **Eleman 3.0.8** (yalnız `eleman`): ⚙'deki Asorti ayarlarının hiçbir düğmesi çalışmıyordu. Sebep:
+  3.0.1'de boş ekran için eklenen `.bos{position:absolute;inset:0;z-index:3}` kuralı, Asorti'nin Excel klasörü yazısındaki
+  `.yol.bos` (klasör seçilmemiş) ile çakıştı; yazı bütün menünün üstünü kapattı. Sınıf `.bosEkran` oldu.
+  **Kural:** kabuk_yap.py'de main'in kullandığı sınıf adları (bos, ok, on, ad, x, ik, t, is, bekle, bad, tab ...) kapsamsız
+  kullanılmaz; yeni sınıflara Eleman'a özgü ad verilir. Playwright ile ⚙'deki her düğmenin üstte olduğu ve çalıştığı denendi.
+
 ## Sıradaki işler
 
 1. ✓ Müşteri şablonları gizli `eleman-hafiza` deposunda: `olcu-tablosu/veri/sablonlar.json` (2026-11-06, 7 müşteri).
